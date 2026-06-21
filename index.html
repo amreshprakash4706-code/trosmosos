@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mangernise • AI-Powered Real Estate Platform</title>
+    <meta name="description" content="Mangernise is the leading AI-powered real estate platform. Autonomous AI agents deliver instant property valuations, smart lead qualification, automated marketing content, and predictive market intelligence — helping agents and brokerages close more deals faster.">
+    <meta name="keywords" content="real estate AI, AI property valuation, real estate lead generation, AI for realtors, automated real estate marketing, predictive real estate analytics, real estate CRM AI">
+    <meta property="og:title" content="Mangernise • AI-Powered Real Estate Platform">
+    <meta property="og:description" content="Autonomous AI agents that value properties instantly, qualify leads, create marketing content, and nurture buyers & sellers — so you can close faster and scale your business.">
+    <meta property="og:image" content="https://picsum.photos/id/1015/1200/630">
+    <meta property="og:url" content="https://mangernise.com">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Mangernise • AI-Powered Real Estate Platform">
+    <meta name="twitter:description" content="The AI that helps real estate win more deals. Instant valuations, smart leads, automated marketing.">
+    <link rel="canonical" href="https://mangernise.com">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -164,6 +175,68 @@
                 linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
             background-size: 60px 60px;
         }
+
+        /* New improvements */
+        .faq-question {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .faq-question:hover {
+            color: #10b981;
+        }
+        
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        padding 0.3s ease;
+        }
+        
+        .faq-answer.open {
+            max-height: 200px;
+            padding-top: 0.5rem;
+            padding-bottom: 0.75rem;
+        }
+        
+        .pricing-toggle {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        
+        .billing-option {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .billing-option.active {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgb(16 185 129 / 0.3);
+        }
+        
+        .integration-logo {
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+        
+        .integration-logo:hover {
+            transform: translateY(-2px) scale(1.05);
+            filter: brightness(1.1);
+        }
+        
+        .back-to-top {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modern-input:focus {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+            outline: none;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-200 overflow-x-hidden">
@@ -172,14 +245,14 @@
         <div class="max-w-screen-2xl mx-auto">
             <div class="px-8 py-5 flex items-center justify-between">
                 <!-- Logo -->
-                <div class="flex items-center gap-x-3">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-inner">
+                <a href="#" class="flex items-center gap-x-3 group">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
                         <i class="fa-solid fa-home text-white text-2xl"></i>
                     </div>
                     <div>
                         <span class="font-display text-3xl font-semibold tracking-tighter">Mangernise</span>
                     </div>
-                </div>
+                </a>
 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center gap-x-9 text-sm font-medium">
@@ -482,7 +555,7 @@
                             </div>
                         </div>
                         
-                        <button onclick="simulateAgentAction()" 
+                        <button id="deploy-agent-btn"
                                 class="mt-auto w-full py-3 text-xs font-semibold flex items-center justify-center gap-x-2 rounded-2xl border border-white/20 hover:bg-white/5 transition-colors">
                             <i class="fa-solid fa-plus fa-sm"></i>
                             <span>Deploy new real estate agent</span>
@@ -554,6 +627,91 @@
         </div>
     </section>
 
+    <!-- INTEGRATIONS -->
+    <section id="integrations" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-10">
+                <div class="text-emerald-400 text-xs tracking-[2px] font-semibold mb-2">WORKS WITH YOUR STACK</div>
+                <h2 class="section-header tracking-tighter">Seamlessly connects with the<br>tools you already use.</h2>
+                <p class="mt-3 text-slate-400 max-w-md mx-auto">One-click sync with the most popular real estate platforms and CRMs.</p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-home text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div>
+                        <div class="font-semibold text-sm">MLS Systems</div>
+                        <div class="text-[10px] text-slate-500">50+ MLS boards</div>
+                    </div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-brands fa-zillow text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Zillow</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-chart-line text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Realtor.com</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-users text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div>
+                        <div class="font-semibold text-sm">Follow Up Boss</div>
+                        <div class="text-[10px] text-slate-500">CRM</div>
+                    </div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-sync text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">KVCore</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-globe text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Lofty</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-building text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">ShowingTime</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-envelope text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Mailchimp</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-brands fa-linkedin text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">LinkedIn</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-calendar text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Calendly</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-chart-bar text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">Google Analytics</div>
+                </div>
+                
+                <div class="glass-dark rounded-2xl p-5 flex items-center justify-center gap-x-3 hover:border-emerald-500/30 border border-white/10 transition-all group">
+                    <i class="fa-solid fa-plug text-2xl text-emerald-400 group-hover:scale-110 transition-transform"></i>
+                    <div class="font-semibold text-sm">+ 40 more via API</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-8">
+                <a href="#contact" class="text-sm text-emerald-400 hover:text-emerald-300 font-medium flex items-center justify-center gap-x-2">
+                    See all integrations <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- WORKFLOW TIMELINE -->
     <section id="workflow" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10 bg-slate-900/30">
         <div class="max-w-5xl mx-auto">
@@ -618,10 +776,23 @@
     <!-- PRICING CARDS -->
     <section id="pricing" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10">
         <div class="max-w-6xl mx-auto">
-            <div class="text-center mb-10">
+            <div class="text-center mb-8">
                 <div class="text-amber-400 text-xs tracking-[2px] font-semibold mb-2">PRICING</div>
                 <h2 class="section-header tracking-tighter">Simple plans.<br>Powerful results for agents &amp; teams.</h2>
                 <p class="mt-3 text-slate-400">Start free. Scale as you close more deals.</p>
+                
+                <!-- Billing Toggle -->
+                <div class="mt-6 inline-flex items-center bg-white/5 border border-white/10 rounded-3xl p-1">
+                    <button onclick="switchBilling('monthly')" id="billing-monthly"
+                            class="billing-option active px-6 py-2 text-sm font-semibold rounded-3xl flex items-center gap-x-2">
+                        Monthly
+                    </button>
+                    <button onclick="switchBilling('annual')" id="billing-annual"
+                            class="billing-option px-6 py-2 text-sm font-semibold rounded-3xl flex items-center gap-x-2">
+                        Annual 
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-white font-bold">Save 20%</span>
+                    </button>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -630,8 +801,8 @@
                     <div>
                         <div class="font-semibold text-xl">Starter</div>
                         <div class="mt-5 flex items-baseline">
-                            <span class="text-5xl font-semibold tabular-nums">$49</span>
-                            <span class="text-slate-400 ml-1.5">/mo</span>
+                            <span class="text-5xl font-semibold tabular-nums price-value" data-monthly="49" data-annual="39">$49</span>
+                            <span class="text-slate-400 ml-1.5 price-period">/mo</span>
                         </div>
                         <div class="text-xs text-slate-400 mt-1">For individual agents &amp; small teams</div>
                     </div>
@@ -659,8 +830,8 @@
                     <div>
                         <div class="font-semibold text-xl">Pro</div>
                         <div class="mt-5 flex items-baseline">
-                            <span class="text-5xl font-semibold tabular-nums">$149</span>
-                            <span class="text-slate-400 ml-1.5">/mo</span>
+                            <span class="text-5xl font-semibold tabular-nums price-value" data-monthly="149" data-annual="119">$149</span>
+                            <span class="text-slate-400 ml-1.5 price-period">/mo</span>
                         </div>
                         <div class="text-xs text-slate-400 mt-1">For growing teams &amp; brokerages</div>
                     </div>
@@ -778,6 +949,66 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10 bg-slate-900/20">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <div class="text-amber-400 text-xs tracking-[2px] font-semibold mb-2">GOT QUESTIONS?</div>
+                <h2 class="section-header tracking-tighter">Frequently asked<br>questions.</h2>
+            </div>
+
+            <div class="space-y-3">
+                <!-- FAQ Item 1 -->
+                <div class="glass-dark border border-white/10 rounded-2xl overflow-hidden">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full px-6 py-5 flex items-center justify-between text-left font-medium text-lg hover:bg-white/5 transition-colors">
+                        <span>How accurate are the AI property valuations?</span>
+                        <i class="fa-solid fa-chevron-down text-emerald-400 transition-transform"></i>
+                    </button>
+                    <div class="faq-answer px-6 text-slate-300 text-[15px]">
+                        Our valuations combine local comps, recent sales data, market trends, and proprietary predictive models trained on millions of transactions. Most users report accuracy within 3-5% of final sale price — often better than traditional appraisals for initial pricing strategy.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="glass-dark border border-white/10 rounded-2xl overflow-hidden">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full px-6 py-5 flex items-center justify-between text-left font-medium text-lg hover:bg-white/5 transition-colors">
+                        <span>Do I need technical skills to use Mangernise?</span>
+                        <i class="fa-solid fa-chevron-down text-emerald-400 transition-transform"></i>
+                    </button>
+                    <div class="faq-answer px-6 text-slate-300 text-[15px]">
+                        Not at all. Mangernise is designed for busy real estate professionals. Setup takes under 15 minutes with our one-click integrations. Our AI agents work autonomously in the background. We also provide white-glove onboarding for Pro and Enterprise plans.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="glass-dark border border-white/10 rounded-2xl overflow-hidden">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full px-6 py-5 flex items-center justify-between text-left font-medium text-lg hover:bg-white/5 transition-colors">
+                        <span>Is my client and listing data secure?</span>
+                        <i class="fa-solid fa-chevron-down text-emerald-400 transition-transform"></i>
+                    </button>
+                    <div class="faq-answer px-6 text-slate-300 text-[15px]">
+                        Yes. We use bank-level encryption (AES-256), SOC 2 Type II compliance, and never sell or share your data. All processing happens in secure, private environments. You retain full ownership of your data at all times.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="glass-dark border border-white/10 rounded-2xl overflow-hidden">
+                    <button onclick="toggleFAQ(this)" class="faq-question w-full px-6 py-5 flex items-center justify-between text-left font-medium text-lg hover:bg-white/5 transition-colors">
+                        <span>Can I cancel my subscription anytime?</span>
+                        <i class="fa-solid fa-chevron-down text-emerald-400 transition-transform"></i>
+                    </button>
+                    <div class="faq-answer px-6 text-slate-300 text-[15px]">
+                        Absolutely. You can cancel anytime from your dashboard with no hidden fees or long-term contracts. Your data remains accessible for 30 days after cancellation so you can export everything you need.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-8 text-sm text-slate-400">
+                Still have questions? <a href="#contact" class="text-emerald-400 hover:underline font-medium">Talk to our team →</a>
             </div>
         </div>
     </section>
@@ -900,7 +1131,7 @@
             </div>
             
             <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-y-3 text-xs text-slate-500">
-                <div>© 2026 Mangernise. All rights reserved Built by 13 year  ST.Xaviers mohali Amresh 9A.</div>
+                <div>© 2026 Mangernise. All rights reserved. Crafted with ❤️ by Amresh.</div>
                 <div class="flex gap-x-5">
                     <div class="hover:text-white cursor-pointer">Privacy</div>
                     <div class="hover:text-white cursor-pointer">Terms</div>
@@ -1151,7 +1382,7 @@
             const container = document.querySelector('#dashboard .lg\\:col-span-5');
             if (!container) return;
 
-            const btn = event.currentTarget;
+            const btn = document.getElementById('deploy-agent-btn');
             const originalText = btn ? btn.innerHTML : '';
             
             if (btn) {
@@ -1211,6 +1442,51 @@
                 toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
             }, 2600);
+        }
+
+        // Toggle FAQ accordion
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            
+            if (answer.classList.contains('open')) {
+                answer.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // Close all other FAQs
+                document.querySelectorAll('.faq-answer.open').forEach(el => {
+                    el.classList.remove('open');
+                    const otherIcon = el.previousElementSibling.querySelector('i');
+                    if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                });
+                
+                answer.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Pricing billing toggle
+        let currentBilling = 'monthly';
+        
+        function switchBilling(period) {
+            currentBilling = period;
+            
+            // Update toggle buttons
+            document.getElementById('billing-monthly').classList.toggle('active', period === 'monthly');
+            document.getElementById('billing-annual').classList.toggle('active', period === 'annual');
+            
+            // Update all price values
+            document.querySelectorAll('.price-value').forEach(el => {
+                const newPrice = period === 'monthly' 
+                    ? el.dataset.monthly 
+                    : el.dataset.annual;
+                el.textContent = newPrice;
+            });
+            
+            // Update period labels
+            document.querySelectorAll('.price-period').forEach(el => {
+                el.textContent = period === 'monthly' ? '/mo' : '/yr';
+            });
         }
 
         // Plan selection
@@ -1347,6 +1623,18 @@
             initScrollAnimations();
             animateKPIs();
             
+            // Attach deploy agent button listener (fixed from inline onclick)
+            const deployBtn = document.getElementById('deploy-agent-btn');
+            if (deployBtn) {
+                deployBtn.addEventListener('click', simulateAgentAction);
+            }
+            
+            // Initialize pricing to monthly
+            const monthlyBtn = document.getElementById('billing-monthly');
+            if (monthlyBtn) {
+                monthlyBtn.classList.add('active');
+            }
+            
             // Make KPI cards slightly interactive
             const kpis = document.querySelectorAll('#dashboard .glass-dark');
             kpis.forEach(kpi => {
@@ -1360,7 +1648,65 @@
                 });
             });
             
-            console.log('%c[Mangernise] Beautiful Real Estate AI landing page initialized.', 'color:#64748b');
+            // Active nav link highlighting on scroll
+            initActiveNav();
+            
+            // Back to top button
+            initBackToTop();
+            
+            console.log('%c[Mangernise] Beautiful Real Estate AI landing page initialized with improvements.', 'color:#64748b');
+        }
+        
+        function initActiveNav() {
+            const navLinks = document.querySelectorAll('nav a[href^="#"]');
+            const sections = ['features', 'integrations', 'workflow', 'pricing', 'testimonials', 'faq', 'contact'];
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        
+                        navLinks.forEach(link => {
+                            link.classList.remove('nav-active');
+                            if (link.getAttribute('href') === `#${id}`) {
+                                link.classList.add('nav-active');
+                            }
+                        });
+                    }
+                });
+            }, { threshold: 0.3, rootMargin: "-80px 0px -40% 0px" });
+            
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) observer.observe(section);
+            });
+            
+            // Set initial active on features or hero
+            setTimeout(() => {
+                const firstLink = document.querySelector('nav a[href="#features"]');
+                if (firstLink) firstLink.classList.add('nav-active');
+            }, 500);
+        }
+        
+        function initBackToTop() {
+            // Create back to top button
+            const backToTop = document.createElement('button');
+            backToTop.className = `back-to-top fixed bottom-8 right-8 w-12 h-12 rounded-2xl glass-dark border border-white/20 flex items-center justify-center text-emerald-400 hover:text-white z-[90] shadow-xl`;
+            backToTop.innerHTML = `<i class="fa-solid fa-arrow-up"></i>`;
+            backToTop.setAttribute('aria-label', 'Back to top');
+            document.body.appendChild(backToTop);
+            
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 600) {
+                    backToTop.classList.add('visible');
+                } else {
+                    backToTop.classList.remove('visible');
+                }
+            });
         }
 
         window.onload = initializeWebsite;
