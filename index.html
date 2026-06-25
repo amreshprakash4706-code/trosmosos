@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +7,7 @@
     <meta name="description" content="Lumina is the leading AI-powered real estate platform. Autonomous AI agents deliver instant property valuations, smart lead qualification, automated marketing content, and predictive market intelligence — helping agents and brokerages close more deals faster.">
     <meta name="keywords" content="real estate AI, AI property valuation, real estate lead generation, AI for realtors, automated real estate marketing, predictive real estate analytics, real estate CRM AI">
     <meta property="og:title" content="Lumina • AI-Powered Real Estate Platform">
-    <meta property="og:description" content="Autonomous AI agents that value properties instantly, qualify leads, create marketing content, and nurture buyers & sellers — so you can close faster and scale your business.">
+    <meta property="og:description" content="Autonomous AI agents that value properties instantly, qualify leads, create marketing content, and nurture buyers &amp; sellers — so you can close faster and scale your business.">
     <meta property="og:image" content="https://picsum.photos/id/1015/1200/630">
     <meta property="og:url" content="https://lumina.ai">
     <meta property="og:type" content="website">
@@ -22,6 +20,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: #10b981;
+        }
         
         body {
             font-family: 'Inter', system_ui, sans-serif;
@@ -40,17 +42,17 @@
         }
 
         .glass-dark {
-            background: rgba(15, 23, 42, 0.75);
+            background: rgba(15, 23, 42, 0.78);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.12);
         }
 
         .section-header {
             font-size: 2.75rem;
             line-height: 1.05;
             font-weight: 700;
-            letter-spacing: -0.04em;
+            letter-spacing: -0.045em;
         }
 
         .gradient-text {
@@ -81,8 +83,8 @@
         }
 
         .pricing-card.popular {
-            transform: scale(1.03);
-            box-shadow: 0 25px 50px -12px rgb(16 185 129 / 0.25);
+            transform: scale(1.025);
+            box-shadow: 0 25px 50px -12px rgb(16 185 129 / 0.28);
         }
 
         .modern-shadow {
@@ -96,8 +98,8 @@
         }
 
         .dashboard-frame {
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4),
-                        0 10px 10px -6px rgb(0 0 0 / 0.3);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.45),
+                        0 10px 10px -6px rgb(0 0 0 / 0.35);
             border: 1px solid rgba(148, 163, 184, 0.2);
         }
 
@@ -178,7 +180,6 @@
             background-size: 60px 60px;
         }
 
-        /* New improvements */
         .faq-question {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -190,12 +191,12 @@
         .faq-answer {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+            transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), 
                         padding 0.3s ease;
         }
         
         .faq-answer.open {
-            max-height: 200px;
+            max-height: 220px;
             padding-top: 0.5rem;
             padding-bottom: 0.75rem;
         }
@@ -236,8 +237,44 @@
         }
         
         .modern-input:focus {
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
             outline: none;
+            border-color: #10b981;
+        }
+
+        .valuation-result {
+            animation: slideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-chat-message {
+            animation: fadeInMessage 0.3s ease forwards;
+        }
+
+        .value-number {
+            font-variant-numeric: tabular-nums;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .metric-card {
+            transition: all 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .comps-table tr {
+            transition: background-color 0.15s ease;
+        }
+        
+        .comps-table tr:hover {
+            background-color: rgba(255,255,255,0.04);
         }
     </style>
 </head>
@@ -247,7 +284,7 @@
         <div class="max-w-screen-2xl mx-auto">
             <div class="px-8 py-5 flex items-center justify-between">
                 <!-- Logo -->
-                <a href="#" class="flex items-center gap-x-3 group">
+                <a href="#" class="flex items-center gap-x-3 group" onclick="window.scrollTo({top:0, behavior:'smooth'})">
                     <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
                         <i class="fa-solid fa-home text-white text-2xl"></i>
                     </div>
@@ -258,6 +295,7 @@
 
                 <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center gap-x-9 text-sm font-medium">
+                    <a href="#demo" class="nav-link text-slate-300 hover:text-white px-1">Try Demo</a>
                     <a href="#features" class="nav-link text-slate-300 hover:text-white px-1">Features</a>
                     <a href="#workflow" class="nav-link text-slate-300 hover:text-white px-1">How it Works</a>
                     <a href="#pricing" class="nav-link text-slate-300 hover:text-white px-1">Pricing</a>
@@ -288,6 +326,7 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden border-t border-white/10 glass-dark">
             <div class="px-6 py-6 flex flex-col gap-y-4 text-sm font-medium">
+                <a href="#demo" class="py-2 text-slate-300 hover:text-white">Try Demo</a>
                 <a href="#features" class="py-2 text-slate-300 hover:text-white">Features</a>
                 <a href="#workflow" class="py-2 text-slate-300 hover:text-white">How it Works</a>
                 <a href="#pricing" class="py-2 text-slate-300 hover:text-white">Pricing</a>
@@ -311,8 +350,8 @@
     <header class="pt-20 pb-16 md:pt-24 md:pb-20 relative overflow-hidden">
         <!-- Background Effects -->
         <div class="absolute inset-0 ai-grid-bg opacity-40"></div>
-        <div class="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-1/3 left-1/3 w-[400px] h-[400px] bg-teal-500/10 rounded-full blur-[100px]"></div>
+        <div class="absolute top-1/4 right-1/4 w-[520px] h-[520px] bg-emerald-500/10 rounded-full blur-[130px]"></div>
+        <div class="absolute bottom-1/3 left-1/3 w-[420px] h-[420px] bg-teal-500/10 rounded-full blur-[110px]"></div>
         
         <div class="max-w-screen-2xl mx-auto px-6 md:px-12 relative z-10">
             <div class="max-w-5xl mx-auto text-center">
@@ -322,10 +361,10 @@
                         <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                         <span class="text-xs font-semibold tracking-[1px] text-emerald-400">NEW</span>
                     </div>
-                    <span class="text-xs font-medium text-slate-300">Lumina 2.0 — Now with predictive market AI</span>
+                    <span class="text-xs font-medium text-slate-300">Lumina 2.0 — Predictive market AI + Instant Valuation Demo</span>
                 </div>
 
-                <h1 class="text-6xl md:text-7xl lg:text-7xl leading-[1.05] tracking-tighter font-display font-semibold mb-6">
+                <h1 class="text-6xl md:text-7xl lg:text-7xl leading-[1.04] tracking-tighter font-display font-semibold mb-6">
                     The AI that helps<br>
                     <span class="gradient-text">real estate win</span><br>
                     more deals.
@@ -337,9 +376,9 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <button onclick="document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })" 
+                    <button onclick="document.getElementById('demo').scrollIntoView({ behavior: 'smooth' })" 
                             class="group w-full sm:w-auto px-9 py-4 rounded-3xl bg-white text-slate-950 font-semibold text-lg flex items-center justify-center gap-x-3 shadow-xl shadow-emerald-500/30 hover:shadow-emerald-500/40 active:scale-[0.985] transition-all">
-                        Start 14-Day Free Trial
+                        Try Instant Valuation
                         <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                     </button>
                     
@@ -351,15 +390,15 @@
                 </div>
 
                 <!-- Trust bar -->
-                <div class="mt-16 flex flex-wrap justify-center items-center gap-x-10 gap-y-4 opacity-70">
+                <div class="mt-16 flex flex-wrap justify-center items-center gap-x-10 gap-y-4 opacity-75">
                     <div class="flex items-center gap-x-2 text-sm">
                         <span class="font-medium">Trusted by top real estate teams</span>
                     </div>
                     <div class="flex items-center gap-x-8 text-sm font-medium text-slate-400">
-                        <div> Keller Williams </div>
-                        <div> RE/MAX </div>
-                        <div> Compass </div>
-                        <div> eXp Realty </div>
+                        <div>Keller Williams</div>
+                        <div>RE/MAX</div>
+                        <div>Compass</div>
+                        <div>eXp Realty</div>
                     </div>
                 </div>
             </div>
@@ -374,7 +413,7 @@
                     <div class="w-6 h-6 rounded-full bg-cyan-400 ring-2 ring-slate-950"></div>
                 </div>
                 <div>
-                    <div class="text-xs text-slate-400">8,942 properties</div>
+                    <div class="text-xs text-slate-400">12,847 properties</div>
                     <div class="text-emerald-400 text-xs font-semibold">analyzed today</div>
                 </div>
             </div>
@@ -387,7 +426,7 @@
             <div class="text-center mb-10">
                 <div class="inline-block px-4 py-1 rounded-full glass text-xs font-semibold tracking-widest mb-3">LIVE DASHBOARD</div>
                 <h2 class="section-header tracking-tighter">Your entire real estate<br>business in one view.</h2>
-                <p class="mt-3 text-lg text-slate-400 max-w-md mx-auto">Real-time valuations, lead pipeline, and market intelligence.</p>
+                <p class="mt-3 text-lg text-slate-400 max-w-md mx-auto">Real-time valuations, lead pipeline, and market intelligence — all powered by autonomous agents.</p>
             </div>
 
             <!-- Dashboard Frame -->
@@ -411,7 +450,7 @@
                             <i class="fa-solid fa-search mr-2 text-slate-400"></i>
                             <span class="text-slate-400">Search properties or leads...</span>
                         </div>
-                        <div class="w-9 h-9 rounded-2xl bg-slate-800 flex items-center justify-center ring-1 ring-white/10">
+                        <div class="w-9 h-9 rounded-2xl bg-slate-800 flex items-center justify-center ring-1 ring-white/10 cursor-pointer hover:bg-slate-700 transition-colors" onclick="showToastNotification('Notifications panel opened (demo)')">
                             <i class="fa-solid fa-bell text-slate-300"></i>
                         </div>
                         <div class="flex items-center gap-x-2 pl-2 border-l border-white/10">
@@ -427,7 +466,7 @@
                 <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <!-- KPI Cards -->
                     <div class="lg:col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="glass-dark rounded-3xl p-5">
+                        <div onclick="highlightKPI(this, 'properties')" class="glass-dark rounded-3xl p-5 metric-card cursor-pointer">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <div class="text-xs text-slate-400 tracking-wider">PROPERTIES ANALYZED</div>
@@ -443,7 +482,7 @@
                             </div>
                         </div>
                         
-                        <div class="glass-dark rounded-3xl p-5">
+                        <div onclick="highlightKPI(this, 'leads')" class="glass-dark rounded-3xl p-5 metric-card cursor-pointer">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <div class="text-xs text-slate-400 tracking-wider">QUALIFIED LEADS</div>
@@ -459,7 +498,7 @@
                             </div>
                         </div>
                         
-                        <div class="glass-dark rounded-3xl p-5">
+                        <div onclick="highlightKPI(this, 'days')" class="glass-dark rounded-3xl p-5 metric-card cursor-pointer">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <div class="text-xs text-slate-400 tracking-wider">AVG. DAYS TO CLOSE</div>
@@ -475,7 +514,7 @@
                             </div>
                         </div>
                         
-                        <div class="glass-dark rounded-3xl p-5">
+                        <div onclick="highlightKPI(this, 'portfolio')" class="glass-dark rounded-3xl p-5 metric-card cursor-pointer">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <div class="text-xs text-slate-400 tracking-wider">PORTFOLIO VALUE</div>
@@ -516,7 +555,7 @@
                             </div>
                         </div>
                         
-                        <div class="space-y-3 flex-1 text-sm">
+                        <div id="agent-activity" class="space-y-3 flex-1 text-sm">
                             <div class="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors px-3.5 py-3 rounded-2xl">
                                 <div class="flex items-center gap-x-3">
                                     <div class="w-8 h-8 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-400 flex-shrink-0 flex items-center justify-center">
@@ -568,6 +607,154 @@
         </div>
     </section>
 
+    <!-- NEW: INTERACTIVE AI VALUATION DEMO -->
+    <section id="demo" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10 bg-slate-900/30">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center gap-x-2 px-4 py-1 rounded-3xl glass text-xs font-semibold tracking-widest mb-3">
+                    <i class="fa-solid fa-magic text-emerald-400"></i>
+                    <span>LIVE PRODUCT DEMO</span>
+                </div>
+                <h2 class="section-header tracking-tighter">See the AI in action.<br>Instant property valuation.</h2>
+                <p class="mt-3 text-lg text-slate-400 max-w-lg mx-auto">Enter property details below. Our AI analyzes comps, trends, and predictive signals in seconds.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 max-w-[1100px] mx-auto">
+                <!-- Input Form -->
+                <div class="lg:col-span-2 glass-dark border border-white/10 rounded-3xl p-8">
+                    <div class="mb-6">
+                        <div class="font-semibold text-xl mb-1">Property Details</div>
+                        <div class="text-sm text-slate-400">Get an accurate AI-powered valuation instantly</div>
+                    </div>
+                    
+                    <form id="valuation-form" onsubmit="runValuationDemo(event)">
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">PROPERTY ADDRESS</label>
+                                <input type="text" id="prop-address" required value="2847 Maple Grove Lane, Austin, TX"
+                                       class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white placeholder:text-slate-500 rounded-2xl px-5 py-3 text-sm">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">PROPERTY TYPE</label>
+                                    <select id="prop-type" class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white rounded-2xl px-5 py-3 text-sm">
+                                        <option>Single Family</option>
+                                        <option>Townhouse</option>
+                                        <option>Condo</option>
+                                        <option>Multi-Family</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">YEAR BUILT</label>
+                                    <input type="number" id="prop-year" value="2018" class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white rounded-2xl px-5 py-3 text-sm">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">BEDS</label>
+                                    <input type="number" id="prop-beds" value="4" min="1" max="10" class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white rounded-2xl px-5 py-3 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">BATHS</label>
+                                    <input type="number" id="prop-baths" value="3.5" step="0.5" min="1" class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white rounded-2xl px-5 py-3 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs tracking-wider text-slate-400 mb-1.5 font-medium">SQ FT</label>
+                                    <input type="number" id="prop-sqft" value="2850" class="modern-input w-full bg-white/5 border border-white/10 focus:border-emerald-400 text-white rounded-2xl px-5 py-3 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" id="valuation-submit-btn"
+                                class="mt-8 w-full py-4 bg-white hover:bg-white/90 active:scale-[0.985] transition-all text-slate-950 font-semibold rounded-3xl flex items-center justify-center gap-x-2 text-sm shadow-xl">
+                            <i class="fa-solid fa-calculator mr-2"></i>
+                            <span>Get Instant AI Valuation</span>
+                        </button>
+                        
+                        <div class="text-center mt-4">
+                            <div class="text-[10px] text-slate-500">Powered by Lumina’s proprietary predictive model • 98.7% accuracy on recent sales</div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Results Panel -->
+                <div class="lg:col-span-3">
+                    <div id="valuation-result" class="hidden glass-dark border border-white/10 rounded-3xl p-8 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <div class="text-emerald-400 text-xs tracking-[1.5px] font-semibold">AI VALUATION COMPLETE</div>
+                                <div id="result-address" class="font-semibold text-xl mt-1"></div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-slate-400">CONFIDENCE</div>
+                                <div id="result-confidence" class="text-3xl font-semibold text-emerald-400"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-7">
+                            <div class="text-xs text-slate-400 tracking-wider mb-1">ESTIMATED MARKET VALUE</div>
+                            <div class="flex items-baseline gap-x-3">
+                                <div id="result-value" class="text-6xl font-semibold tabular-nums value-number"></div>
+                                <div class="text-sm text-emerald-400">+2.8% from last month</div>
+                            </div>
+                            <div class="text-xs text-slate-400 mt-1">Range: <span id="result-range-low"></span> — <span id="result-range-high"></span></div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="flex justify-between text-xs mb-2 px-1">
+                                <div class="font-medium text-slate-300">Recent Comparable Sales</div>
+                                <div class="text-emerald-400 cursor-pointer text-xs" onclick="showToastNotification('Full comps report downloaded (demo)')">View full report →</div>
+                            </div>
+                            
+                            <table class="comps-table w-full text-sm">
+                                <thead>
+                                    <tr class="text-xs text-slate-400 border-b border-white/10">
+                                        <th class="text-left pb-2 font-normal">Address</th>
+                                        <th class="text-right pb-2 font-normal">Sold</th>
+                                        <th class="text-right pb-2 font-normal">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comps-body" class="text-sm divide-y divide-white/10"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-auto pt-5 border-t border-white/10 flex flex-col sm:flex-row gap-3">
+                            <button onclick="copyValuationToClipboard()" 
+                                    class="flex-1 py-3 text-sm font-semibold rounded-2xl border border-white/20 hover:bg-white/5 transition-all flex items-center justify-center gap-x-2">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Copy Report</span>
+                            </button>
+                            <button onclick="resetValuationDemo()" 
+                                    class="flex-1 py-3 text-sm font-semibold rounded-2xl border border-white/20 hover:bg-white/5 transition-all flex items-center justify-center gap-x-2">
+                                <i class="fa-solid fa-redo"></i>
+                                <span>Try Another Property</span>
+                            </button>
+                            <button onclick="document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })" 
+                                    class="flex-1 py-3 text-sm font-semibold rounded-2xl bg-emerald-500 hover:bg-emerald-600 transition-all text-white flex items-center justify-center gap-x-2">
+                                <span>Get Full Analysis</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Placeholder when no result -->
+                    <div id="valuation-placeholder" class="glass-dark border border-white/10 rounded-3xl p-8 h-full flex flex-col items-center justify-center text-center">
+                        <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-5">
+                            <i class="fa-solid fa-robot text-emerald-400 text-3xl"></i>
+                        </div>
+                        <div class="font-semibold text-xl mb-2">Ready when you are</div>
+                        <p class="text-sm text-slate-400 max-w-[260px]">Fill out the form on the left and click “Get Instant AI Valuation” to see Lumina’s analysis in real time.</p>
+                        
+                        <div class="mt-6 text-xs px-4 py-2 bg-white/5 rounded-2xl text-slate-400">
+                            Avg. response time: <span class="font-mono text-emerald-400">1.8s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- FEATURES GRID -->
     <section id="features" class="max-w-screen-2xl mx-auto px-6 md:px-12 py-16 border-t border-white/10">
         <div class="max-w-5xl mx-auto">
@@ -583,7 +770,10 @@
                         <i class="fa-solid fa-calculator text-3xl text-emerald-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Instant AI Valuations</h3>
-                    <p class="text-slate-400 leading-relaxed">Get accurate, data-backed property valuations in seconds using local comps, market trends, and predictive modeling.</p>
+                    <p class="text-slate-400 leading-relaxed">Get accurate, data-backed property valuations in seconds using local comps, market trends, and predictive modeling trained on millions of transactions.</p>
+                    <div class="mt-4 text-xs text-emerald-400 font-medium flex items-center gap-x-1">
+                        <span>98.7% accuracy</span> <i class="fa-solid fa-check-circle"></i>
+                    </div>
                 </div>
 
                 <div class="feature-card glass-dark p-7 rounded-3xl group">
@@ -591,7 +781,7 @@
                         <i class="fa-solid fa-user-check text-3xl text-teal-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Smart Lead Qualification</h3>
-                    <p class="text-slate-400 leading-relaxed">AI agents automatically qualify, score, and nurture buyer and seller leads from your website, Zillow, and social channels.</p>
+                    <p class="text-slate-400 leading-relaxed">AI agents automatically qualify, score, and nurture buyer and seller leads from your website, Zillow, and social channels — booking appointments directly to your calendar.</p>
                 </div>
 
                 <div class="feature-card glass-dark p-7 rounded-3xl group">
@@ -599,7 +789,7 @@
                         <i class="fa-solid fa-link text-3xl text-cyan-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Intelligent Property Matching</h3>
-                    <p class="text-slate-400 leading-relaxed">Match the right buyers with the right properties using deep preference learning and behavioral signals.</p>
+                    <p class="text-slate-400 leading-relaxed">Match the right buyers with the right properties using deep preference learning, behavioral signals, and lifestyle data.</p>
                 </div>
 
                 <div class="feature-card glass-dark p-7 rounded-3xl group">
@@ -607,7 +797,7 @@
                         <i class="fa-solid fa-file-lines text-3xl text-amber-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Automated Marketing Content</h3>
-                    <p class="text-slate-400 leading-relaxed">Generate high-converting listing descriptions, social posts, email campaigns, and virtual staging in one click.</p>
+                    <p class="text-slate-400 leading-relaxed">Generate high-converting listing descriptions, social posts, email campaigns, and virtual staging in one click. SEO-optimized and brand-consistent.</p>
                 </div>
 
                 <div class="feature-card glass-dark p-7 rounded-3xl group">
@@ -615,7 +805,7 @@
                         <i class="fa-solid fa-chart-line text-3xl text-rose-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Predictive Market Intelligence</h3>
-                    <p class="text-slate-400 leading-relaxed">Forecast neighborhood trends, price movements, and inventory shifts weeks before they happen.</p>
+                    <p class="text-slate-400 leading-relaxed">Forecast neighborhood trends, price movements, and inventory shifts weeks before they happen with our proprietary market models.</p>
                 </div>
 
                 <div class="feature-card glass-dark p-7 rounded-3xl group">
@@ -623,7 +813,7 @@
                         <i class="fa-solid fa-plug text-3xl text-violet-400"></i>
                     </div>
                     <h3 class="font-semibold text-xl mb-3">Seamless Integrations</h3>
-                    <p class="text-slate-400 leading-relaxed">Connect with MLS, Zillow, Realtor.com, Follow Up Boss, KVCore, Lofty, and 50+ other real estate tools.</p>
+                    <p class="text-slate-400 leading-relaxed">Connect with MLS, Zillow, Realtor.com, Follow Up Boss, KVCore, Lofty, ShowingTime, and 50+ other real estate tools in seconds.</p>
                 </div>
             </div>
         </div>
@@ -708,7 +898,7 @@
             
             <div class="text-center mt-8">
                 <a href="#contact" class="text-sm text-emerald-400 hover:text-emerald-300 font-medium flex items-center justify-center gap-x-2">
-                    See all integrations <i class="fa-solid fa-arrow-right text-xs"></i>
+                    Request a custom integration <i class="fa-solid fa-arrow-right text-xs"></i>
                 </a>
             </div>
         </div>
@@ -744,7 +934,7 @@
                             <div class="w-14 h-14 flex-shrink-0 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold shadow-inner ring-1 ring-white/20">02</div>
                             <div class="pt-1 lg:pt-6">
                                 <div class="font-semibold text-xl mb-2">Sync your inventory</div>
-                                <p class="text-slate-400 text-[15px]">Import active and upcoming listings. Lumina instantly analyzes comps and generates valuations.</p>
+                                <p class="text-slate-400 text-[15px]">Import active and upcoming listings. Lumina instantly analyzes comps and generates valuations for every property.</p>
                             </div>
                         </div>
                     </div>
@@ -755,7 +945,7 @@
                             <div class="w-14 h-14 flex-shrink-0 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-white text-2xl font-bold shadow-inner ring-1 ring-white/20">03</div>
                             <div class="pt-1 lg:pt-6">
                                 <div class="font-semibold text-xl mb-2">Deploy AI agents</div>
-                                <p class="text-slate-400 text-[15px]">Launch specialized agents for lead qualification, content creation, follow-ups, and market monitoring.</p>
+                                <p class="text-slate-400 text-[15px]">Launch specialized agents for lead qualification, content creation, follow-ups, market monitoring, and more.</p>
                             </div>
                         </div>
                     </div>
@@ -907,7 +1097,7 @@
                         <div class="flex text-amber-400 mb-4">
                             <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                         </div>
-                        <p class="italic text-[15px] leading-relaxed">"Lumina valuations are scarily accurate. I use them in every listing presentation now. My clients are impressed and I close listings faster."</p>
+                        <p class="italic text-[15px] leading-relaxed">"Lumina valuations are scarily accurate. I use them in every listing presentation now. My clients are impressed and I close listings faster than ever."</p>
                     </div>
                     <div class="mt-7 flex items-center gap-x-4">
                         <img src="https://i.pravatar.cc/40?img=28" class="w-11 h-11 rounded-2xl ring-1 ring-white/20" alt="David Chen">
@@ -924,7 +1114,7 @@
                         <div class="flex text-amber-400 mb-4">
                             <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
                         </div>
-                        <p class="italic text-[15px] leading-relaxed">"The lead qualification agent is a game changer. It filters out tire-kickers and books qualified appointments directly into my calendar. I went from 40 leads/week to 12 high-intent ones."</p>
+                        <p class="italic text-[15px] leading-relaxed">"The lead qualification agent is a total game changer. It filters out tire-kickers and books qualified appointments directly into my calendar. I went from 40 leads/week to 12 high-intent ones."</p>
                     </div>
                     <div class="mt-7 flex items-center gap-x-4">
                         <img src="https://i.pravatar.cc/40?img=32" class="w-11 h-11 rounded-2xl ring-1 ring-white/20" alt="Maria Gonzalez">
@@ -941,7 +1131,7 @@
                         <div class="flex text-amber-400 mb-4">
                             <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                         </div>
-                        <p class="italic text-[15px] leading-relaxed">"We onboarded Lumina across our entire team. Listing descriptions, market reports, and follow-ups are now handled by AI. Our agents are closing 30% more deals with less admin work."</p>
+                        <p class="italic text-[15px] leading-relaxed">"We onboarded Lumina across our entire 42-agent team. Listing descriptions, market reports, and follow-ups are now handled by AI. Our agents are closing 30% more deals with less admin work."</p>
                     </div>
                     <div class="mt-7 flex items-center gap-x-4">
                         <img src="https://i.pravatar.cc/40?img=40" class="w-11 h-11 rounded-2xl ring-1 ring-white/20" alt="James Patel">
@@ -1076,8 +1266,6 @@
     </section>
 
     <!-- FOOTER -->
-	
-	
     <footer class="border-t border-white/10 pt-12 pb-8">
         <div class="max-w-screen-2xl mx-auto px-6 md:px-12">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-y-8">
@@ -1133,7 +1321,7 @@
             </div>
             
             <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-y-3 text-xs text-slate-500">
-                <div>© 2026 Lumina. All rights reserved. Crafted with ❤️ by Amresh 14 year old.</div>
+                <div>© 2026 Lumina. All rights reserved. Built with ❤️ by Amresh (14-year-old builder)</div>
                 <div class="flex gap-x-5">
                     <div class="hover:text-white cursor-pointer">Privacy</div>
                     <div class="hover:text-white cursor-pointer">Terms</div>
@@ -1151,13 +1339,53 @@
                 <i class="fa-solid fa-check text-4xl text-emerald-400"></i>
             </div>
             <h3 class="font-semibold text-3xl tracking-tight">You're all set!</h3>
-            <p class="mt-3 text-slate-300">Thank you! We've received your request. A member of our team will reach out within the next few hours to get you started.</p>
+            <p class="mt-3 text-slate-300">Thank you! We've received your request. A member of our team will reach out within the next few hours to get you started with Lumina.</p>
             
             <div class="mt-8">
                 <button onclick="hideSuccessModal()" 
                         class="px-8 py-3 text-sm font-semibold rounded-2xl bg-white text-slate-950 hover:bg-white/90">
                     Back to homepage
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simple AI Chat Demo Modal -->
+    <div id="ai-chat-modal" onclick="if (event.target.id === 'ai-chat-modal') closeAIChat()" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-[200] flex items-center justify-center p-6">
+        <div onclick="event.stopImmediatePropagation()" class="glass-dark border border-white/10 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
+            <!-- Chat Header -->
+            <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-slate-950/80">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 flex items-center justify-center">
+                        <i class="fa-solid fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold">Lumina Valuation Agent</div>
+                        <div class="text-xs text-emerald-400 flex items-center gap-x-1"><i class="fa-solid fa-circle text-[8px]"></i> Online • v2.4</div>
+                    </div>
+                </div>
+                <button onclick="closeAIChat()" class="text-2xl text-white/60 hover:text-white leading-none">×</button>
+            </div>
+            
+            <!-- Chat Messages -->
+            <div id="chat-messages" class="h-[320px] p-5 overflow-y-auto space-y-4 text-sm bg-slate-950/60">
+                <!-- Messages populated by JS -->
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-white/10 bg-slate-950/80">
+                <div class="flex gap-x-2">
+                    <input id="chat-input" type="text" placeholder="Ask about a property valuation..." 
+                           class="flex-1 modern-input bg-white/5 border border-white/10 focus:border-emerald-400 text-white placeholder:text-slate-500 rounded-2xl px-4 py-3 text-sm"
+                           onkeypress="if (event.key === 'Enter') sendChatMessage()">
+                    <button onclick="sendChatMessage()" 
+                            class="px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="text-center mt-2">
+                    <div class="text-[10px] text-slate-500">This is a simulated AI agent. Try asking about "2847 Maple Grove" or market trends.</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1176,7 +1404,7 @@
             };
         }
 
-        // Navbar scroll effect
+        // Navbar scroll effect + mobile menu
         function initNavbar() {
             const navbar = document.getElementById('navbar');
             
@@ -1218,7 +1446,7 @@
             mobileBtn.innerHTML = '<i class="fa-solid fa-bars text-xl"></i>';
         }
 
-        // Initialize performance chart (Real Estate themed)
+        // Initialize performance chart
         let performanceChartInstance = null;
         
         function initDashboardChart() {
@@ -1311,11 +1539,11 @@
                     }
                 });
             }, {
-                threshold: 0.15,
-                rootMargin: "0px 0px -60px 0px"
+                threshold: 0.12,
+                rootMargin: "0px 0px -50px 0px"
             });
 
-            const animatedElements = document.querySelectorAll('.feature-card, .pricing-card, .testimonial-card, .timeline-step, #dashboard > div');
+            const animatedElements = document.querySelectorAll('.feature-card, .pricing-card, .testimonial-card, .timeline-step');
             
             animatedElements.forEach(el => {
                 el.classList.add('fade-up');
@@ -1332,7 +1560,7 @@
                 setTimeout(() => {
                     el.style.opacity = '1';
                     el.style.transform = 'translateY(0)';
-                }, 400);
+                }, 380);
             });
         }
 
@@ -1355,7 +1583,7 @@
                             <div class="mx-auto w-20 h-20 flex items-center justify-center rounded-full bg-white/10 mb-5">
                                 <i class="fa-solid fa-play text-white text-4xl ml-1"></i>
                             </div>
-                            <div class="text-sm text-slate-400">Demo video would play here.<br>In a real product this would be an embedded video.</div>
+                            <div class="text-sm text-slate-400">Demo video would play here.<br>In a real product this would be an embedded video from Vimeo or YouTube.</div>
                         </div>
                         
                         <div class="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-black/70 to-transparent flex items-center px-6">
@@ -1366,7 +1594,7 @@
                         </div>
                     </div>
                     
-                    <div class="text-center mt-4 text-xs text-slate-400">This is a simulated demo experience.</div>
+                    <div class="text-center mt-4 text-xs text-slate-400">This is a simulated demo experience. In production, embed your actual product walkthrough video here.</div>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -1381,7 +1609,7 @@
 
         // Simulate deploying a new real estate agent
         function simulateAgentAction() {
-            const container = document.querySelector('#dashboard .lg\\:col-span-5');
+            const container = document.getElementById('agent-activity');
             if (!container) return;
 
             const btn = document.getElementById('deploy-agent-btn');
@@ -1393,8 +1621,6 @@
             }
             
             setTimeout(() => {
-                const activityContainer = container.querySelector('.space-y-3');
-                
                 const newAgent = document.createElement('div');
                 newAgent.className = `flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-3 rounded-2xl`;
                 newAgent.innerHTML = `
@@ -1410,13 +1636,13 @@
                     <div class="text-xs px-2.5 py-1 rounded-xl bg-emerald-400/10 text-emerald-400 font-medium">LIVE</div>
                 `;
                 
-                activityContainer.appendChild(newAgent);
+                container.appendChild(newAgent);
                 
                 // Update KPI
                 const kpi = document.getElementById('kpi-properties');
                 if (kpi) {
                     let current = parseFloat(kpi.innerText.replace('k', ''));
-                    kpi.innerText = (current + 0.3).toFixed(1) + 'k';
+                    kpi.innerText = (current + 0.4).toFixed(1) + 'k';
                 }
                 
                 if (btn) {
@@ -1424,26 +1650,26 @@
                     btn.disabled = false;
                 }
                 
-                showToastNotification('New AI agent deployed successfully!');
-            }, 1400);
+                showToastNotification('New AI agent deployed successfully! It is now active.');
+            }, 1350);
         }
 
         function showToastNotification(message) {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 right-6 glass-dark border border-white/10 px-5 py-3 rounded-2xl flex items-center gap-x-3 z-[300] shadow-2xl`;
+            toast.className = `fixed bottom-6 right-6 glass-dark border border-white/10 px-5 py-3.5 rounded-2xl flex items-center gap-x-3 z-[300] shadow-2xl max-w-xs`;
             toast.innerHTML = `
                 <div class="flex items-center gap-x-3">
-                    <i class="fa-solid fa-check-circle text-emerald-400"></i>
+                    <i class="fa-solid fa-check-circle text-emerald-400 text-lg"></i>
                     <span class="text-sm">${message}</span>
                 </div>
             `;
             document.body.appendChild(toast);
             
             setTimeout(() => {
-                toast.style.transition = 'all 0.3s ease';
+                toast.style.transition = 'all 0.35s ease';
                 toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 2600);
+                setTimeout(() => toast.remove(), 280);
+            }, 2650);
         }
 
         // Toggle FAQ accordion
@@ -1473,11 +1699,9 @@
         function switchBilling(period) {
             currentBilling = period;
             
-            // Update toggle buttons
             document.getElementById('billing-monthly').classList.toggle('active', period === 'monthly');
             document.getElementById('billing-annual').classList.toggle('active', period === 'annual');
             
-            // Update all price values
             document.querySelectorAll('.price-value').forEach(el => {
                 const newPrice = period === 'monthly' 
                     ? el.dataset.monthly 
@@ -1485,7 +1709,6 @@
                 el.textContent = newPrice;
             });
             
-            // Update period labels
             document.querySelectorAll('.price-period').forEach(el => {
                 el.textContent = period === 'monthly' ? '/mo' : '/yr';
             });
@@ -1500,15 +1723,16 @@
                 const messageField = document.getElementById('message');
                 if (messageField) {
                     if (plan === 'Pro') {
-                        messageField.value = `I'm interested in the Pro plan. I want to use Lumina for my team to handle valuations, lead qualification, and automated marketing.`;
+                        messageField.value = `I'm interested in the Pro plan. I want to use Lumina for my team to handle unlimited valuations, lead qualification, and automated marketing.`;
                     } else if (plan === 'Enterprise') {
-                        messageField.value = `We're a larger brokerage evaluating the Enterprise plan. We need custom integrations, team management, and dedicated support.`;
+                        messageField.value = `We're a larger brokerage evaluating the Enterprise plan. We need custom integrations, team management, dedicated support, and possibly on-premise deployment.`;
                     } else {
                         messageField.value = `I'd like to start with the Starter plan to test Lumina on my current listings and leads.`;
                     }
                     messageField.focus();
+                    messageField.select();
                 }
-            }, 800);
+            }, 750);
         }
 
         // Form submission
@@ -1527,9 +1751,10 @@
                 submitBtn.innerHTML = originalBtnText;
                 submitBtn.disabled = false;
                 
-                document.getElementById('success-modal').classList.remove('hidden');
-                document.getElementById('success-modal').classList.add('flex');
-            }, 1250);
+                const modal = document.getElementById('success-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }, 1180);
         }
 
         function hideSuccessModal() {
@@ -1564,17 +1789,21 @@
                             <div class="font-medium">James Patel (Compass) — 30% increase in team productivity</div>
                             <div class="text-xs text-emerald-400 mt-0.5">"We rolled Lumina out to 40+ agents. Admin work dropped dramatically while deals increased."</div>
                         </div>
+                        <div>
+                            <div class="font-medium">Sarah Kim (eXp Realty) — $18M in additional closed volume in first 90 days</div>
+                            <div class="text-xs text-emerald-400 mt-0.5">"The predictive market reports helped us list at the perfect price and time."</div>
+                        </div>
                     </div>
                     
                     <div class="mt-8 pt-6 border-t border-white/10 text-xs text-center text-slate-400">
-                        More stories available in our <span class="text-white">Case Studies</span> section.
+                        More stories and case studies available in our resource center.
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
         }
 
-        // Animate KPI numbers
+        // Animate KPI numbers on scroll
         function animateKPIs() {
             const kpiSection = document.getElementById('dashboard');
             if (!kpiSection) return;
@@ -1582,11 +1811,11 @@
             const observer = new IntersectionObserver((entries) => {
                 if (entries[0].isIntersecting) {
                     const propertiesEl = document.getElementById('kpi-properties');
-                    if (propertiesEl) animateValue('kpi-properties', 9800, 12800, 1400, true);
+                    if (propertiesEl) animateValue('kpi-properties', 9800, 12800, 1350, true);
                     
                     observer.disconnect();
                 }
-            }, { threshold: 0.6 });
+            }, { threshold: 0.55 });
             
             observer.observe(kpiSection);
         }
@@ -1617,51 +1846,294 @@
             window.requestAnimationFrame(step);
         }
 
-        // Main initialization
-        function initializeWebsite() {
-            initializeTailwind();
-            initNavbar();
-            initDashboardChart();
-            initScrollAnimations();
-            animateKPIs();
+        // Highlight KPI on click
+        function highlightKPI(element, type) {
+            element.style.transitionDuration = '60ms';
+            element.style.transform = 'scale(0.96)';
             
-            // Attach deploy agent button listener (fixed from inline onclick)
-            const deployBtn = document.getElementById('deploy-agent-btn');
-            if (deployBtn) {
-                deployBtn.addEventListener('click', simulateAgentAction);
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 140);
+            
+            let message = '';
+            if (type === 'properties') message = '12,847 properties analyzed this month. Top performing neighborhoods: Downtown, Westlake, Cedar Park.';
+            else if (type === 'leads') message = '1,942 qualified leads this month. Conversion rate: 34%.';
+            else if (type === 'days') message = 'Average days to close is now 18 — 12 days faster than the market average.';
+            else if (type === 'portfolio') message = 'Portfolio value at $2.4B. Strong growth in luxury segment (+27%).';
+            
+            if (message) {
+                showToastNotification(message);
             }
+        }
+
+        // ========== NEW: Interactive Valuation Demo ==========
+        function runValuationDemo(e) {
+            e.preventDefault();
             
-            // Initialize pricing to monthly
-            const monthlyBtn = document.getElementById('billing-monthly');
-            if (monthlyBtn) {
-                monthlyBtn.classList.add('active');
-            }
+            const form = document.getElementById('valuation-form');
+            const resultPanel = document.getElementById('valuation-result');
+            const placeholder = document.getElementById('valuation-placeholder');
+            const submitBtn = document.getElementById('valuation-submit-btn');
             
-            // Make KPI cards slightly interactive
-            const kpis = document.querySelectorAll('#dashboard .glass-dark');
-            kpis.forEach(kpi => {
-                kpi.style.cursor = 'pointer';
-                kpi.addEventListener('click', () => {
-                    kpi.style.transitionDuration = '80ms';
-                    kpi.style.transform = 'scale(0.96)';
-                    setTimeout(() => {
-                        kpi.style.transform = 'scale(1)';
-                    }, 120);
-                });
+            // Loading state
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> <span>Analyzing with AI...</span>`;
+            submitBtn.disabled = true;
+            
+            // Get values
+            const address = document.getElementById('prop-address').value.trim();
+            const type = document.getElementById('prop-type').value;
+            const year = parseInt(document.getElementById('prop-year').value) || 2015;
+            const beds = parseFloat(document.getElementById('prop-beds').value) || 3;
+            const baths = parseFloat(document.getElementById('prop-baths').value) || 2;
+            const sqft = parseInt(document.getElementById('prop-sqft').value) || 2000;
+            
+            // Simple but realistic AI simulation
+            // Base price per sqft varies by type and year
+            let basePricePerSqft = 420;
+            if (type === 'Single Family') basePricePerSqft = 465;
+            else if (type === 'Townhouse') basePricePerSqft = 395;
+            else if (type === 'Condo') basePricePerSqft = 385;
+            else if (type === 'Multi-Family') basePricePerSqft = 355;
+            
+            // Adjust for age (newer = higher)
+            const age = 2026 - year;
+            const ageFactor = Math.max(0.92, 1 - (age * 0.008));
+            
+            // Adjust for beds/baths
+            const bedBathFactor = 1 + ((beds - 3) * 0.04) + ((baths - 2.5) * 0.035);
+            
+            let estimatedValue = Math.round(sqft * basePricePerSqft * ageFactor * bedBathFactor / 1000) * 1000;
+            
+            // Add some randomness for realism
+            estimatedValue = Math.round(estimatedValue * (0.97 + Math.random() * 0.06));
+            
+            const confidence = Math.floor(94 + Math.random() * 5);
+            const rangeLow = Math.round(estimatedValue * 0.94 / 1000) * 1000;
+            const rangeHigh = Math.round(estimatedValue * 1.06 / 1000) * 1000;
+            
+            // Update UI
+            document.getElementById('result-address').innerText = address || 'Property Valuation';
+            document.getElementById('result-value').innerText = '$' + (estimatedValue / 1000000).toFixed(2) + 'M';
+            document.getElementById('result-confidence').innerText = confidence + '%';
+            document.getElementById('result-range-low').innerText = '$' + (rangeLow / 1000).toLocaleString() + 'k';
+            document.getElementById('result-range-high').innerText = '$' + (rangeHigh / 1000).toLocaleString() + 'k';
+            
+            // Populate comps
+            const compsBody = document.getElementById('comps-body');
+            compsBody.innerHTML = '';
+            
+            const comps = [
+                { addr: '2812 Maple Grove Ln', sold: 'Jan 12', price: Math.round(estimatedValue * 0.96 / 1000) * 1000 },
+                { addr: '2901 Cedar Ridge Dr', sold: 'Dec 18', price: Math.round(estimatedValue * 1.03 / 1000) * 1000 },
+                { addr: '2755 Oak Hollow Way', sold: 'Feb 3', price: Math.round(estimatedValue * 0.99 / 1000) * 1000 }
+            ];
+            
+            comps.forEach(comp => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2.5 text-sm">${comp.addr}</td>
+                    <td class="py-2.5 text-right text-xs text-slate-400">${comp.sold}</td>
+                    <td class="py-2.5 text-right font-medium">$${(comp.price / 1000).toFixed(0)}k</td>
+                `;
+                compsBody.appendChild(row);
             });
             
-            // Active nav link highlighting on scroll
-            initActiveNav();
+            // Show result, hide placeholder
+            placeholder.classList.add('hidden');
+            resultPanel.classList.remove('hidden');
+            resultPanel.classList.add('valuation-result');
             
-            // Back to top button
-            initBackToTop();
+            // Reset button
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = false;
             
-            console.log('%c[Lumina] Beautiful Real Estate AI landing page initialized with improvements.', 'color:#64748b');
+            // Bonus: show a toast
+            setTimeout(() => {
+                showToastNotification('Valuation saved to your dashboard. Ready to share with client?');
+            }, 2200);
+        }
+
+        function copyValuationToClipboard() {
+            const address = document.getElementById('result-address').innerText;
+            const value = document.getElementById('result-value').innerText;
+            const conf = document.getElementById('result-confidence').innerText;
+            
+            const text = `Lumina AI Valuation\n${address}\nEstimated Value: ${value}\nConfidence: ${conf}\n\nGenerated with Lumina • lumina.ai`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToastNotification('Valuation report copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToastNotification('Valuation report copied to clipboard!');
+            });
+        }
+
+        function resetValuationDemo() {
+            const resultPanel = document.getElementById('valuation-result');
+            const placeholder = document.getElementById('valuation-placeholder');
+            
+            resultPanel.classList.remove('valuation-result');
+            resultPanel.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            
+            // Optional: clear form or keep values for quick re-run
+            showToastNotification('Ready for the next property!');
+        }
+
+        // ========== AI Chat Demo ==========
+        let chatOpen = false;
+        
+        function openAIChat() {
+            const modal = document.getElementById('ai-chat-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            chatOpen = true;
+            
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            // Only add welcome message if empty
+            if (messagesContainer.children.length === 0) {
+                addChatMessage('ai', "Hello! I'm Lumina's Valuation Agent. I can help you with instant property valuations, market insights, or answer questions about listings. What would you like to know?");
+                
+                // Add quick suggestion chips
+                setTimeout(() => {
+                    const suggestions = document.createElement('div');
+                    suggestions.className = 'flex flex-wrap gap-2 mt-3';
+                    suggestions.innerHTML = `
+                        <button onclick="quickChatReply(this, 'What is the value of 2847 Maple Grove Lane?')" class="text-xs px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">Value of 2847 Maple Grove?</button>
+                        <button onclick="quickChatReply(this, 'How is the Austin market trending?')" class="text-xs px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">Austin market trends?</button>
+                        <button onclick="quickChatReply(this, 'Compare 4-bed vs 3-bed homes')" class="text-xs px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">4-bed vs 3-bed value?</button>
+                    `;
+                    messagesContainer.appendChild(suggestions);
+                }, 800);
+            }
+            
+            // Focus input
+            setTimeout(() => {
+                document.getElementById('chat-input').focus();
+            }, 300);
         }
         
+        function closeAIChat() {
+            const modal = document.getElementById('ai-chat-modal');
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            chatOpen = false;
+        }
+        
+        function addChatMessage(sender, text) {
+            const container = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            
+            if (sender === 'ai') {
+                msg.className = `ai-chat-message flex gap-x-3`;
+                msg.innerHTML = `
+                    <div class="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-400 flex-shrink-0 flex items-center justify-center mt-0.5">
+                        <i class="fa-solid fa-robot text-white text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-emerald-400 text-xs font-medium mb-0.5">Lumina AI</div>
+                        <div class="text-sm leading-relaxed text-slate-200">${text}</div>
+                    </div>
+                `;
+            } else {
+                msg.className = `ai-chat-message flex justify-end`;
+                msg.innerHTML = `
+                    <div class="max-w-[80%] bg-emerald-500/90 text-white px-4 py-2.5 rounded-3xl rounded-br-none text-sm">
+                        ${text}
+                    </div>
+                `;
+            }
+            
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            addChatMessage('user', text);
+            input.value = '';
+            
+            // Simulate AI thinking + response
+            setTimeout(() => {
+                const response = generateAIResponse(text);
+                addChatMessage('ai', response);
+            }, 850);
+        }
+        
+        function quickChatReply(element, query) {
+            element.style.opacity = '0.4';
+            element.style.pointerEvents = 'none';
+            
+            addChatMessage('user', query);
+            
+            setTimeout(() => {
+                const response = generateAIResponse(query);
+                addChatMessage('ai', response);
+            }, 780);
+        }
+        
+        function generateAIResponse(query) {
+            const q = query.toLowerCase();
+            
+            if (q.includes('2847') || q.includes('maple grove')) {
+                return "2847 Maple Grove Lane is currently valued at approximately $1.33M (confidence 97%). It has appreciated 4.8% in the last 90 days. Would you like me to run a full comparative market analysis?";
+            }
+            
+            if (q.includes('austin') && (q.includes('market') || q.includes('trend'))) {
+                return "Austin market is strong. Median prices up 6.2% YoY. Inventory is tight in Westlake and Tarrytown. Downtown condos are moving fastest. I can pull neighborhood-specific forecasts if you'd like.";
+            }
+            
+            if (q.includes('4-bed') || q.includes('bed vs')) {
+                return "In the current Austin market, 4-bedroom homes are commanding a 14-18% premium over similar 3-bedroom properties. The sweet spot right now is 3.5+ baths with a home office. Want me to show you the top 5 listings matching that?";
+            }
+            
+            if (q.includes('value') || q.includes('valuation') || q.includes('price')) {
+                return "I'd be happy to run a precise valuation. Just give me the address, beds, baths, and square footage — or use the Instant Valuation tool on this page!";
+            }
+            
+            if (q.includes('how') && q.includes('accurate')) {
+                return "Our model is currently 98.7% accurate within ±3.8% of final sale price on properties sold in the last 6 months. We continuously retrain on new closed transactions.";
+            }
+            
+            // Default helpful response
+            return "Thanks for the question! I can help with valuations, market trends, lead scoring, or listing optimization. Try asking about a specific property address or neighborhood, or use the demo form above for an instant valuation.";
+        }
+
+        // Add floating AI chat button
+        function addFloatingChatButton() {
+            const btn = document.createElement('button');
+            btn.className = `fixed bottom-8 left-8 z-[90] w-14 h-14 rounded-2xl glass-dark border border-white/20 flex items-center justify-center text-emerald-400 hover:text-white shadow-xl hover:scale-105 transition-all`;
+            btn.innerHTML = `<i class="fa-solid fa-robot text-2xl"></i>`;
+            btn.setAttribute('aria-label', 'Chat with Lumina AI');
+            btn.onclick = openAIChat;
+            document.body.appendChild(btn);
+            
+            // Tooltip on hover
+            btn.onmouseenter = () => {
+                const tip = document.createElement('div');
+                tip.className = `absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 text-xs rounded-xl bg-slate-900 border border-white/10 whitespace-nowrap`;
+                tip.innerText = 'Talk to our AI Valuation Agent';
+                btn.appendChild(tip);
+                
+                btn.onmouseleave = () => tip.remove();
+            };
+        }
+
+        // Active nav link highlighting
         function initActiveNav() {
             const navLinks = document.querySelectorAll('nav a[href^="#"]');
-            const sections = ['features', 'integrations', 'workflow', 'pricing', 'testimonials', 'faq', 'contact'];
+            const sections = ['demo', 'features', 'integrations', 'workflow', 'pricing', 'testimonials', 'faq', 'contact'];
             
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -1676,22 +2148,21 @@
                         });
                     }
                 });
-            }, { threshold: 0.3, rootMargin: "-80px 0px -40% 0px" });
+            }, { threshold: 0.25, rootMargin: "-90px 0px -35% 0px" });
             
             sections.forEach(id => {
                 const section = document.getElementById(id);
                 if (section) observer.observe(section);
             });
             
-            // Set initial active on features or hero
+            // Set initial active
             setTimeout(() => {
-                const firstLink = document.querySelector('nav a[href="#features"]');
-                if (firstLink) firstLink.classList.add('nav-active');
-            }, 500);
+                const demoLink = document.querySelector('nav a[href="#demo"]');
+                if (demoLink) demoLink.classList.add('nav-active');
+            }, 600);
         }
         
         function initBackToTop() {
-            // Create back to top button
             const backToTop = document.createElement('button');
             backToTop.className = `back-to-top fixed bottom-8 right-8 w-12 h-12 rounded-2xl glass-dark border border-white/20 flex items-center justify-center text-emerald-400 hover:text-white z-[90] shadow-xl`;
             backToTop.innerHTML = `<i class="fa-solid fa-arrow-up"></i>`;
@@ -1703,7 +2174,7 @@
             });
             
             window.addEventListener('scroll', () => {
-                if (window.scrollY > 600) {
+                if (window.scrollY > 650) {
                     backToTop.classList.add('visible');
                 } else {
                     backToTop.classList.remove('visible');
@@ -1711,7 +2182,85 @@
             });
         }
 
+        // Keyboard shortcuts
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+                    e.preventDefault();
+                    const demoSection = document.getElementById('demo');
+                    if (demoSection) demoSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                if (e.metaKey && e.key === 'k') {
+                    e.preventDefault();
+                    const chatModal = document.getElementById('ai-chat-modal');
+                    if (!chatModal.classList.contains('hidden')) {
+                        closeAIChat();
+                    } else {
+                        openAIChat();
+                    }
+                }
+            });
+            
+            // Easter egg: press "?" to open chat
+            document.addEventListener('keypress', (e) => {
+                if (e.key === '?' && document.activeElement.tagName === 'BODY') {
+                    e.preventDefault();
+                    openAIChat();
+                }
+            });
+        }
+
+        // Main initialization
+        function initializeWebsite() {
+            initializeTailwind();
+            initNavbar();
+            initDashboardChart();
+            initScrollAnimations();
+            animateKPIs();
+            
+            // Attach deploy agent button
+            const deployBtn = document.getElementById('deploy-agent-btn');
+            if (deployBtn) {
+                deployBtn.addEventListener('click', simulateAgentAction);
+            }
+            
+            // Initialize pricing
+            const monthlyBtn = document.getElementById('billing-monthly');
+            if (monthlyBtn) monthlyBtn.classList.add('active');
+            
+            // Make KPI cards interactive (already have onclick in HTML)
+            
+            initActiveNav();
+            initBackToTop();
+            addFloatingChatButton();
+            initKeyboardShortcuts();
+            
+            // Pre-fill one nice address in valuation form (already done in HTML)
+            
+            // Bonus: Show a gentle hint about the demo after 12 seconds
+            setTimeout(() => {
+                const demoSection = document.getElementById('demo');
+                if (demoSection && window.scrollY < 400) {
+                    // Only show if user hasn't scrolled much
+                    // Could add a subtle pulse or toast, but skip for cleanliness
+                }
+            }, 12000);
+            
+            // Log for builder
+            console.log('%c[Lumina v2.1] Improved landing page initialized successfully. Added interactive valuation demo + AI chat agent.', 'color:#64748b; font-size: 9px');
+            
+            // Optional: Auto-open chat after long idle? No, don't be annoying.
+        }
+        
         window.onload = initializeWebsite;
+        
+        // Expose some functions for console debugging / advanced users
+        window.Lumina = {
+            runValuation: () => document.getElementById('valuation-form').dispatchEvent(new Event('submit')),
+            openChat: () => document.getElementById('ai-chat-modal').classList.contains('hidden') ? openAIChat() : null,
+            deployAgent: () => document.getElementById('deploy-agent-btn').click()
+        };
     </script>
 </body>
 </html>
