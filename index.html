@@ -75,6 +75,13 @@
             animation: window-enter 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
             box-shadow: 0 25px 60px -15px rgb(0 0 0 / 0.5), 
                        0 10px 20px -5px rgb(0 0 0 / 0.3);
+            will-change: left, top; /* Performance hint for smooth dragging */
+        }
+
+        .window.dragging {
+            box-shadow: 0 35px 80px -15px rgb(0 0 0 / 0.65), 
+                       0 20px 30px -8px rgb(0 0 0 / 0.45);
+            transition: box-shadow 0.08s ease;
         }
 
         @keyframes window-enter {
@@ -689,29 +696,41 @@
     <!-- ============================================ -->
     <!-- SETTINGS APP -->
     <!-- ============================================ -->
-    <div id="settings-window" class="hidden fixed top-16 left-[12%] w-[920px] h-[620px] glass rounded-3xl overflow-hidden flex shadow-2xl z-[70] window">
-        <!-- Sidebar -->
-        <div class="w-60 border-r border-white/10 p-4 bg-white/5">
-            <div class="px-4 py-3 text-xs font-semibold tracking-widest text-white/50">SETTINGS</div>
-            
-            <div class="mt-2 space-y-1 text-sm">
-                <div onclick="switchSettingsTab(this, 'general')" class="settings-nav-item active flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                    <i class="fa-solid fa-sliders-h w-4"></i> <span>General</span>
-                </div>
-                <div onclick="switchSettingsTab(this, 'appearance')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                    <i class="fa-solid fa-palette w-4"></i> <span>Appearance</span>
-                </div>
-                <div onclick="switchSettingsTab(this, 'privacy')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                    <i class="fa-solid fa-shield-halved w-4"></i> <span>Privacy &amp; Security</span>
-                </div>
-                <div onclick="switchSettingsTab(this, 'ai')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                    <i class="fa-solid fa-robot w-4"></i> <span>AI Preferences</span>
-                </div>
+    <div id="settings-window" class="hidden fixed top-16 left-[12%] w-[920px] h-[620px] glass rounded-3xl overflow-hidden flex flex-col shadow-2xl z-[70] window">
+        <!-- Premium Title Bar (drag handle + close button) -->
+        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5 flex-shrink-0 window-header">
+            <div class="flex items-center gap-x-3">
+                <i class="fa-solid fa-cog text-xl text-white/80"></i>
+                <span class="font-semibold tracking-tight">Settings</span>
             </div>
+            <button onclick="closeWindow('settings-window')" class="text-white/60 hover:text-white px-2 py-1 transition-colors">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
         </div>
         
-        <!-- Content -->
-        <div class="flex-1 p-8 overflow-auto">
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar -->
+            <div class="w-60 border-r border-white/10 p-4 bg-white/5">
+                <div class="px-4 py-3 text-xs font-semibold tracking-widest text-white/50">SETTINGS</div>
+                
+                <div class="mt-2 space-y-1 text-sm">
+                    <div onclick="switchSettingsTab(this, 'general')" class="settings-nav-item active flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                        <i class="fa-solid fa-sliders-h w-4"></i> <span>General</span>
+                    </div>
+                    <div onclick="switchSettingsTab(this, 'appearance')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                        <i class="fa-solid fa-palette w-4"></i> <span>Appearance</span>
+                    </div>
+                    <div onclick="switchSettingsTab(this, 'privacy')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                        <i class="fa-solid fa-shield-halved w-4"></i> <span>Privacy &amp; Security</span>
+                    </div>
+                    <div onclick="switchSettingsTab(this, 'ai')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                        <i class="fa-solid fa-robot w-4"></i> <span>AI Preferences</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="flex-1 p-8 overflow-auto">
             <!-- General Tab -->
             <div id="settings-general" class="settings-tab">
                 <h2 class="text-3xl font-semibold tracking-tight mb-8">General</h2>
@@ -797,7 +816,8 @@
                     </div>
                 </div>
             </div>
-        </div>
+            </div> <!-- close inner flex row (sidebar + content) -->
+        </div> <!-- close flex-col settings-window -->
     </div>
 
     <!-- ============================================ -->
@@ -1032,20 +1052,134 @@
             const win = document.getElementById(id);
             if (!win) return;
             
-            // Hide all other windows first for clean UX
-            document.querySelectorAll('.window').forEach(w => {
-                if (w.id !== id) w.classList.add('hidden');
-            });
-            
+            // Multi-window support enabled: do NOT hide other windows.
+            // This allows true desktop multitasking (multiple apps visible simultaneously).
+            // Previously forced single-window mode which felt limited for a premium OS.
             win.classList.remove('hidden');
-            win.style.zIndex = Date.now(); // Bring to front
+            
+            // Ensure draggable behavior is attached (safe to call multiple times)
+            makeWindowDraggable(win);
+            
+            // Bring this window to the front
+            bringToFront(win);
         }
         
         function closeWindow(id) {
             const win = document.getElementById(id);
-            if (win) win.classList.add('hidden');
+            if (win) {
+                win.classList.add('hidden');
+                // Optional: could reset z but not necessary
+            }
         }
-        
+
+        // ============================================
+        // PREMIUM WINDOW MANAGER
+        // Draggable windows + Multi-window support + Smart focus/z-index
+        // This makes Trosmos feel like a real commercial desktop OS.
+        // ============================================
+        let windowZIndex = 100; // Controlled z-index counter (better than Date.now())
+
+        function bringToFront(win) {
+            if (!win) return;
+            win.style.zIndex = ++windowZIndex;
+        }
+
+        function makeWindowDraggable(win) {
+            if (!win || win.dataset.draggable === 'true') return;
+            win.dataset.draggable = 'true';
+
+            // Find the best drag handle:
+            // 1. Prefer explicit title bar (most windows)
+            // 2. For settings (now has .window-header)
+            // 3. Fallback to first child or whole window
+            let header = win.querySelector('.window-header') || 
+                         win.querySelector('div.px-6.py-4.border-b.border-white\\/10') ||
+                         win.querySelector('div:first-child');
+
+            const isWholeWindowDrag = !header || header === win;
+
+            if (isWholeWindowDrag) {
+                // Fallback (should rarely happen now)
+                header = win;
+                win.style.cursor = 'move';
+            } else {
+                header.style.cursor = 'move';
+                header.style.userSelect = 'none'; // Prevent text selection while dragging
+            }
+
+            let isDragging = false;
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+            function onMouseDown(e) {
+                // Ignore drag start on interactive elements (buttons, inputs, selects, icons in header)
+                if (e.target.closest('button, input, select, textarea, .fa-times, .fa-cog')) {
+                    return;
+                }
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+
+                // Get current visual position (works even if % based initially)
+                const rect = win.getBoundingClientRect();
+                startLeft = rect.left;
+                startTop = rect.top;
+
+                // Ensure fixed positioning for reliable dragging
+                win.style.position = 'fixed';
+                win.style.left = `${startLeft}px`;
+                win.style.top = `${startTop}px`;
+                win.style.margin = '0';
+
+                // Visual feedback
+                win.classList.add('dragging');
+                bringToFront(win);
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp, { once: true });
+
+                e.preventDefault();
+            }
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                let newLeft = startLeft + deltaX;
+                let newTop = startTop + deltaY;
+
+                // Premium viewport clamping - keep window usable (title bar visible)
+                const padding = 60; // keep at least titlebar-ish area on screen
+                const maxLeft = Math.max(0, window.innerWidth - padding);
+                const maxTop = Math.max(0, window.innerHeight - 50);
+
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                win.style.left = `${newLeft}px`;
+                win.style.top = `${newTop}px`;
+            }
+
+            function onMouseUp() {
+                if (!isDragging) return;
+                isDragging = false;
+                win.classList.remove('dragging');
+                document.removeEventListener('mousemove', onMouseMove);
+                // Position is now "remembered" for this session (premium persistence)
+            }
+
+            header.addEventListener('mousedown', onMouseDown);
+
+            // Click anywhere on window (except header drag) brings it to front
+            win.addEventListener('mousedown', function(e) {
+                if (!isDragging) {
+                    bringToFront(win);
+                }
+            });
+        }
+
         // AI Assistant
         let aiMessages = [];
         
@@ -1306,7 +1440,18 @@
                 }
                 
                 if (e.key === "Escape") {
-                    document.querySelectorAll('.window').forEach(w => w.classList.add('hidden'));
+                    // Close only the frontmost window (better multi-window UX)
+                    // Find highest z-index visible window
+                    const openWindows = Array.from(document.querySelectorAll('.window:not(.hidden)'));
+                    if (openWindows.length > 0) {
+                        const frontmost = openWindows.reduce((prev, curr) => 
+                            (parseInt(curr.style.zIndex) || 0) > (parseInt(prev.style.zIndex) || 0) ? curr : prev
+                        );
+                        frontmost.classList.add('hidden');
+                    } else {
+                        // Fallback: close all if none have z
+                        document.querySelectorAll('.window').forEach(w => w.classList.add('hidden'));
+                    }
                     document.getElementById('start-menu').classList.add('hidden');
                     document.getElementById('notification-center').classList.add('hidden');
                 }
@@ -1325,6 +1470,12 @@
             initializeTailwind();
             setupKeyboardShortcuts();
             
+            // Pre-attach draggable behavior to all window elements (idempotent)
+            // This ensures even if windows are shown by other means, they are ready
+            document.querySelectorAll('.window').forEach(win => {
+                makeWindowDraggable(win);
+            });
+            
             // Boot straight into desktop for demo purposes (or comment out)
             // For real flow: landing → login → desktop
             // We'll start at landing for authenticity
@@ -1332,7 +1483,7 @@
             // Optional: Auto open desktop after 3s for quick testing (comment if not needed)
             // setTimeout(() => { document.getElementById('landing-page').classList.add('hidden'); showDesktop(); }, 3000);
             
-            console.log('%c[Trosmos OS] Premium UI prototype initialized. All systems nominal.', 'color:#3B82F6');
+            console.log('%c[Trosmos OS] Premium UI prototype initialized. All systems nominal. + Draggable Windows + Multi-window', 'color:#3B82F6');
         }
         
         // Boot the experience
