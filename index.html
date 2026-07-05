@@ -2395,11 +2395,37 @@
                 this.conversation = [];
             }
 
+            async callGrok(message) {
+                try {
+                    const response = await fetch('/.netlify/functions/grok', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            message: message,
+                            conversation: this.conversation 
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `Server responded with ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    return data.reply || "Grok returned an empty response.";
+                } catch (error) {
+                    console.error('Grok integration error:', error);
+                    return `I'm having trouble reaching Grok at the moment. ${error.message.includes('fetch') ? 'Please ensure the site is deployed to Netlify with the function and XAI_API_KEY environment variable set.' : ''}`;
+                }
+            }
+
             open() {
                 Trosmos.windows.open('ai-window');
                 const chat = document.getElementById('ai-chat');
                 if (chat && chat.children.length === 0) {
-                    this.addMessage('ai', "Hello Aria! I'm your Trosmos Copilot. I can control apps, files, settings, create notes, snap windows, and more. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, <b>snap files left</b>, <b>list processes</b>, or <b>change accent to purple</b>.");
+                    this.addMessage('ai', "Hello Aria! I'm your Trosmos Copilot <span class='text-emerald-400'>powered by Grok</span>. I can control apps, files, settings, create notes, snap windows, and more — plus answer any question. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, <b>snap files left</b>, or just chat with me!");
                 }
                 setTimeout(() => document.getElementById('ai-input')?.focus(), 400);
             }
@@ -2421,11 +2447,10 @@
                 chat.appendChild(thinking);
                 chat.scrollTop = chat.scrollHeight;
 
-                setTimeout(async () => {
-                    thinking.remove();
-                    const response = await this.processCommand(value);
-                    this.addMessage('ai', response);
-                }, 620);
+                // Call Grok (or local command) — thinking stays until response arrives
+                const response = await this.processCommand(value);
+                thinking.remove();
+                this.addMessage('ai', response);
             }
 
             addMessage(role, text) {
@@ -2452,7 +2477,6 @@
 
             async processCommand(query) {
                 const q = query.toLowerCase().trim();
-                this.conversation.push({ role: 'user', content: query });
 
                 // === SYSTEM CONTROL COMMANDS ===
                 if (q.includes('open ') || q.startsWith('launch ')) {
@@ -2542,23 +2566,20 @@
                 }
 
                 if (q.includes('help') || q.includes('what can you')) {
-                    return `I am a full system copilot. Examples:<br>
+                    return `I am a full system copilot powered by Grok. Examples:<br>
                     • open browser &nbsp;&nbsp;• create note "Meeting Ideas"<br>
                     • search roadmap &nbsp;&nbsp;• snap files left<br>
                     • list processes &nbsp;&nbsp;• kill 203<br>
-                    • change accent to purple`;
+                    • change accent to purple<br>
+                    • or just ask me anything!`;
                 }
 
-                // Fallback to smart original behavior + hint
-                const original = this._originalSmartResponse(q);
-                return original + `<br><span class="text-white/40 text-xs">Tip: I now control the full OS. Type "help" for commands.</span>`;
-            }
-
-            _originalSmartResponse(q) {
-                if (q.includes('hello') || q.includes('hi')) return "Hello! Fully synced and ready to control your workspace.";
-                if (q.includes('weather')) return "18°C in San Francisco — perfect for deep work.";
-                if (q.includes('summarize')) return "Document analyzed. Key insights ready. Would you like action items generated?";
-                return "Understood. I've executed the best action for your request across the system.";
+                // === FALLBACK: Use real Grok for natural conversation ===
+                // (all specific OS commands are handled above with instant local actions)
+                this.conversation.push({ role: 'user', content: query });
+                const grokResponse = await this.callGrok(query);
+                this.conversation.push({ role: 'assistant', content: grokResponse });
+                return grokResponse;
             }
         }
 
