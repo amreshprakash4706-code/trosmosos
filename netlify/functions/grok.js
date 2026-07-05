@@ -45,10 +45,12 @@ export async function handler(event) {
     };
 
   } catch (err) {
+    console.error("Grok function error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: err.message
+        error: err.message,
+        details: "Check that XAI_API_KEY is set correctly in Netlify"
       })
     };
   }

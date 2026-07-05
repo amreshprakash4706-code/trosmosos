@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trosmos OS • Next-Gen AI Operating System buit by Amresh</title>
+    <title>Trosmos OS • Next-Gen AI Operating System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -2417,7 +2417,8 @@
                     return data.reply || "Grok returned an empty response.";
                 } catch (error) {
                     console.error('Grok integration error:', error);
-                    return `I'm having trouble reaching Grok right now. Common fixes: 1) Make sure XAI_API_KEY is set in Netlify Environment Variables 2) Deploy the site (or use 'netlify dev' locally) 3) Check that your xAI API key is valid and has credits.`;
+                    // Show actual error for debugging
+                    return `Error: ${error.message || 'Unknown error'}. Please check browser console (F12) and Netlify function logs.`;
                 }
             }
 
