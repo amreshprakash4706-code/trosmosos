@@ -1,6 +1,14 @@
 export async function handler(event) {
   try {
-    const { message } = JSON.parse(event.body);
+    const { message, conversation = [] } = JSON.parse(event.body || '{}');
+
+    const messages = [
+      {
+        role: "system",
+        content: "You are Trosmos AI, the premium intelligent copilot inside Trosmos OS — a beautiful AI-native operating system. Be helpful, concise, friendly, and witty. Answer questions naturally. The frontend handles direct OS actions (like opening apps or changing settings), so if the user asks for those you can playfully confirm or just respond helpfully."
+      },
+      ...conversation
+    ];
 
     const response = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
@@ -9,18 +17,11 @@ export async function handler(event) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "grok-4.3",
-        messages: [
-          {
-            role: "system",
-            content: "You are Trosmos AI, an intelligent operating system assistant. Be helpful, concise, and friendly."
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        stream: false
+        model: "grok-3",
+        messages: messages,
+        stream: false,
+        temperature: 0.7,
+        max_tokens: 600
       })
     });
 
