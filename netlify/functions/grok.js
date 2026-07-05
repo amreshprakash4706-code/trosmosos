@@ -10,14 +10,14 @@ export async function handler(event) {
       ...conversation
     ];
 
-    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.XAI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "grok-4.3",
+        model: "llama-3.3-70b-versatile",
         messages: messages,
         stream: false,
         temperature: 0.7,
@@ -45,12 +45,12 @@ export async function handler(event) {
     };
 
   } catch (err) {
-    console.error("Grok function error:", err);
+    console.error("AI function error:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({
         error: err.message,
-        details: "Check that XAI_API_KEY is set correctly in Netlify"
+        details: "Check that GROQ_API_KEY is set correctly in Netlify"
       })
     };
   }

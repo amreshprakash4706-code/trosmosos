@@ -2414,9 +2414,9 @@
                     }
 
                     const data = await response.json();
-                    return data.reply || "Grok returned an empty response.";
+                    return data.reply || "AI returned an empty response.";
                 } catch (error) {
-                    console.error('Grok integration error:', error);
+                    console.error('AI integration error:', error);
                     // Show actual error for debugging
                     return `Error: ${error.message || 'Unknown error'}. Please check browser console (F12) and Netlify function logs.`;
                 }
@@ -2426,7 +2426,7 @@
                 Trosmos.windows.open('ai-window');
                 const chat = document.getElementById('ai-chat');
                 if (chat && chat.children.length === 0) {
-                    this.addMessage('ai', "Hello Aria! I'm your Trosmos Copilot <span class='text-emerald-400'>powered by Grok</span>. I can control apps, files, settings, create notes, snap windows, and more — plus answer any question. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, <b>snap files left</b>, or just chat with me!");
+                    this.addMessage('ai', "Hello Aria! I'm your Trosmos Copilot <span class='text-emerald-400'>powered by AI</span>. I can control apps, files, settings, create notes, snap windows, and more — plus answer any question. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, <b>snap files left</b>, or just chat with me!");
                 }
                 setTimeout(() => document.getElementById('ai-input')?.focus(), 400);
             }
