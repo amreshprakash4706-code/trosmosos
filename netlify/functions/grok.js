@@ -17,7 +17,7 @@ export async function handler(event) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "grok-3",
+        model: "grok-4.3",
         messages: messages,
         stream: false,
         temperature: 0.7,

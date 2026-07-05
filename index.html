@@ -2417,7 +2417,7 @@
                     return data.reply || "Grok returned an empty response.";
                 } catch (error) {
                     console.error('Grok integration error:', error);
-                    return `I'm having trouble reaching Grok at the moment. ${error.message.includes('fetch') ? 'Please ensure the site is deployed to Netlify with the function and XAI_API_KEY environment variable set.' : ''}`;
+                    return `I'm having trouble reaching Grok right now. Common fixes: 1) Make sure XAI_API_KEY is set in Netlify Environment Variables 2) Deploy the site (or use 'netlify dev' locally) 3) Check that your xAI API key is valid and has credits.`;
                 }
             }
 
