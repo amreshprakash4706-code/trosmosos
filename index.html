@@ -2,12 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trosmos OS • Next-Gen AI Operating System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <!-- SEO -->
+    <title>Trosmos OS • Premium AI-Native Operating System</title>
+    <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. Interactive production-grade demo.">
+    <meta name="keywords" content="Trosmos OS, AI OS, AI-native operating system, glassmorphism, AI copilot, productivity, demo">
+    <meta name="author" content="Trosmos">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://trosmos.dev/">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://trosmos.dev/">
+    <meta property="og:title" content="Trosmos OS • The Future of AI-Native Computing">
+    <meta property="og:description" content="Premium AI operating system with intelligent copilot that controls apps, files & settings. Built for the AI era.">
+    <meta property="og:image" content="https://picsum.photos/id/1015/1200/630">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Trosmos OS">
+    
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Trosmos OS • AI-Native Operating System">
+    <meta name="twitter:description" content="Zero-latency AI copilot inside a stunning glassmorphism desktop. Try the interactive demo.">
+    <meta name="twitter:image" content="https://picsum.photos/id/1015/1200/630">
+    
+    <!-- PWA & Mobile -->
+    <meta name="theme-color" content="#09090B">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trosmos OS">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233B82F6'/%3E%3Cstop offset='100%25' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='45' fill='url(%23g)'/%3E%3Ctext x='50' y='62' font-size='48' fill='white' text-anchor='middle' font-family='system-ui' font-weight='700'%3ET%3C/text%3E%3C/svg%3E">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Performance: Preconnect CDNs -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts: Preload for performance (avoid @import block) -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap"></noscript>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233B82F6'/%3E%3Cstop offset='100%25' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='42' fill='url(%23g)'/%3E%3Ctext x='50' y='65' font-size='52' fill='white' text-anchor='middle' font-family='Inter, system-ui' font-weight='700'%3ET%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        /* Fonts loaded via preload link above for better performance. Fallback in noscript. */
         
         :root {
             --deep-space: #09090B;
@@ -445,6 +489,27 @@
         .notification {
             animation: slide-in-right 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
         }
+
+        /* Accessibility: Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .smooth, .smooth-slow, .window, .aurora-bg, .live-wallpaper::before,
+            .cosmic-particle, .dock-icon, .file-item, .app-card, .icon-btn,
+            .notification, .window-enter {
+                animation: none !important;
+                transition: none !important;
+                transform: none !important;
+            }
+        }
+
+        /* Enhanced focus for keyboard users */
+        button:focus-visible, 
+        [role="button"]:focus-visible,
+        input:focus-visible,
+        .desktop-icon:focus-visible {
+            outline: 2px solid var(--electric, #3B82F6);
+            outline-offset: 3px;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
     </style>
 </head>
 <body class="bg-[#09090B] text-white overflow-hidden">
@@ -707,31 +772,31 @@
             <div class="dock flex items-center gap-x-2 px-3 py-2 rounded-3xl">
                 
                 <!-- Dock Icons -->
-                <button onclick="openAIAssistant()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all group">
+                <button onclick="openAIAssistant()" aria-label="Open Trosmos AI Copilot" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all group">
                     <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center group-hover:scale-110 transition-transform">
                         <i class="fa-solid fa-robot text-white text-xl"></i>
                     </div>
                 </button>
                 
-                <button onclick="openFileManager()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                <button onclick="openFileManager()" aria-label="Open Files" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-folder text-3xl text-white/90"></i>
                 </button>
                 
-                <button onclick="openBrowser()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                <button onclick="openBrowser()" aria-label="Open Browser" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-globe text-3xl text-white/90"></i>
                 </button>
                 
-                <button onclick="openAppStore()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                <button onclick="openAppStore()" aria-label="Open App Store" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-store text-3xl text-white/90"></i>
                 </button>
                 
                 <div class="w-px h-8 bg-white/15 mx-1"></div>
                 
-                <button onclick="openSettings()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                <button onclick="openSettings()" aria-label="Open Settings" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-cog text-3xl text-white/90"></i>
                 </button>
                 
-                <button onclick="showNotificationCenter()" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all relative">
+                <button onclick="showNotificationCenter()" aria-label="Open Notification Center" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all relative">
                     <i class="fa-solid fa-bell text-3xl text-white/90"></i>
                     <div class="absolute top-2 right-2 w-3.5 h-3.5 bg-[#3B82F6] rounded-full flex items-center justify-center">
                         <span class="text-[9px] font-bold">4</span>
@@ -3092,6 +3157,13 @@
 
             // Expose Trosmos globally for debugging / extensibility
             window.TrosmosOS = Trosmos;
+
+            // PWA Service Worker Registration (offline capable demo)
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then(() => {
+                    console.log('%c[Trosmos] Service Worker registered • Offline support enabled', 'color:#10B981; font-size:9px');
+                }).catch(err => console.warn('SW registration failed (ok for local file://)', err));
+            }
 
             console.log('%c[Trosmos OS] Production build initialized. All modules loaded. Ready for enterprise use.', 'color:#3B82F6');
         }

@@ -1,0 +1,26 @@
+{
+  "name": "Trosmos OS",
+  "short_name": "Trosmos",
+  "description": "Premium AI-native operating system with intelligent copilot. Interactive demo.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#09090B",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%233B82F6'/%3E%3Cstop offset='100%25' stop-color='%237C3AED'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='256' cy='256' r='220' fill='url(%23g)'/%3E%3Ctext x='256' y='310' font-size='220' fill='white' text-anchor='middle' font-family='Inter, system-ui' font-weight='700'%3ET%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["productivity", "utilities", "developer tools"],
+  "shortcuts": [
+    {
+      "name": "Open AI Copilot",
+      "short_name": "AI Chat",
+      "description": "Talk to your intelligent OS copilot",
+      "url": "/?action=ai"
+    }
+  ]
+}
