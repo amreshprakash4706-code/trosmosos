@@ -1,9 +1,10 @@
 {
   "name": "trosmos-os",
   "version": "1.0.0",
+  "description": "Premium AI-native operating system interactive demo",
   "type": "module",
-  "dependencies": {
-    "@ai-sdk/xai": "^1.2.0",
-    "ai": "^4.3.16"
+  "private": true,
+  "scripts": {
+    "start": "npx serve ."
   }
 }

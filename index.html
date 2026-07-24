@@ -217,7 +217,7 @@
 
         /* App Store Cards */
         .app-card {
-            transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), 
+            transition: transform 0.2s cubic-bezier(0.23, 1.0, 0.32, 1), 
                        box-shadow 0.2s ease;
         }
         
@@ -520,11 +520,11 @@
     <!-- ============================================ -->
     <div id="landing-page" class="min-h-screen flex flex-col">
         <!-- Top Navigation -->
-        <nav class="flex items-center justify-between px-8 py-5 border-b border-white/10">
+        <nav class="flex items-center justify-between px-8 py-5 border-b border-white/10" role="navigation" aria-label="Main navigation">
             <div class="flex items-center gap-x-3">
                 <!-- Trosmos Logo -->
                 <div class="flex items-center gap-x-3">
-                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#3B82F6] via-[#7C3AED] to-[#06B6D4] flex items-center justify-center">
+                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#3B82F6] via-[#7C3AED] to-[#06B6D4] flex items-center justify-center" aria-hidden="true">
                         <span class="text-white font-bold text-2xl tracking-tighter">T</span>
                     </div>
                     <div>
@@ -534,11 +534,11 @@
             </div>
             
             <div class="flex items-center gap-x-8 text-sm">
-                <a href="#" class="hover:text-white/80 transition-colors">Features</a>
-                <a href="#" class="hover:text-white/80 transition-colors">AI</a>
-                <a href="#" class="hover:text-white/80 transition-colors">Developers</a>
-                <a href="#" class="hover:text-white/80 transition-colors">Security</a>
-                <button onclick="showLogin()" 
+                <a href="#features" class="hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6] rounded">Features</a>
+                <a href="#ai" class="hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6] rounded">AI</a>
+                <a href="#developers" class="hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6] rounded">Developers</a>
+                <a href="#security" class="hover:text-white/80 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6] rounded">Security</a>
+                <button type="button" onclick="showLogin()" 
                         class="px-6 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 text-sm font-medium transition-all active:scale-[0.985]">
                     Sign in
                 </button>
@@ -564,14 +564,14 @@
                 </p>
 
                 <div class="flex items-center justify-center gap-x-4">
-                    <button onclick="showLogin()"
+                    <button type="button" onclick="showLogin()"
                             class="group px-10 py-4 rounded-3xl bg-white text-[#09090B] font-semibold text-lg flex items-center gap-x-3 hover:bg-white/90 transition-all active:scale-[0.985] shadow-xl shadow-black/30">
                         Boot into Trosmos OS
                     </button>
                     
-                    <button onclick="watchDemo()"
+                    <button type="button" onclick="watchDemo()"
                             class="px-8 py-4 rounded-3xl border border-white/20 hover:bg-white/5 flex items-center gap-x-3 text-lg font-medium transition-all active:scale-[0.985]">
-                        <i class="fa-solid fa-play mr-1"></i>
+                        <i class="fa-solid fa-play mr-1" aria-hidden="true"></i>
                         <span>Watch 2-min demo</span>
                     </button>
                 </div>
@@ -616,36 +616,40 @@
                 </div>
 
                 <!-- Login Form -->
-                <div class="space-y-5">
+                <form class="space-y-5" onsubmit="event.preventDefault(); performLogin();" autocomplete="on">
                     <div>
-                        <label class="block text-sm font-medium text-white/70 mb-2">Username or Email</label>
-                        <input type="text" value="aria@trosmos.dev" 
+                        <label for="login-username" class="block text-sm font-medium text-white/70 mb-2">Username or Email</label>
+                        <input id="login-username" name="username" type="text" value="aria@trosmos.dev"
+                               autocomplete="username" required
+                               aria-required="true"
                                class="w-full bg-white/5 border border-white/15 focus:border-[#3B82F6]/60 rounded-2xl px-5 py-3.5 text-sm outline-none transition-all">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-white/70 mb-2">Password</label>
-                        <input type="password" value="demo2026" 
+                        <label for="login-password" class="block text-sm font-medium text-white/70 mb-2">Password</label>
+                        <input id="login-password" name="password" type="password" value="demo2026"
+                               autocomplete="current-password" required
+                               aria-required="true"
                                class="w-full bg-white/5 border border-white/15 focus:border-[#3B82F6]/60 rounded-2xl px-5 py-3.5 text-sm outline-none transition-all">
                     </div>
 
                     <div class="flex items-center justify-between text-sm">
-                        <label class="flex items-center gap-x-2 cursor-pointer">
-                            <input type="checkbox" checked class="accent-[#3B82F6]">
+                        <label for="login-remember" class="flex items-center gap-x-2 cursor-pointer">
+                            <input id="login-remember" name="remember" type="checkbox" checked class="accent-[#3B82F6]">
                             <span class="text-white/70">Remember this device</span>
                         </label>
-                        <a href="#" class="text-[#3B82F6] hover:underline">Forgot password?</a>
+                        <a href="#" class="text-[#3B82F6] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6]">Forgot password?</a>
                     </div>
 
-                    <button onclick="performLogin()"
+                    <button type="submit"
                             class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#7C3AED] font-semibold text-lg hover:brightness-110 active:scale-[0.985] transition-all shadow-lg shadow-[#3B82F6]/30">
                         Sign in to Trosmos
                     </button>
-                </div>
+                </form>
 
                 <!-- Biometric Option -->
                 <div class="mt-6 pt-6 border-t border-white/10">
-                    <button onclick="performBiometricLogin()"
+                    <button type="button" onclick="performBiometricLogin()"
                             class="w-full flex items-center justify-center gap-x-3 py-3.5 rounded-2xl border border-white/15 hover:bg-white/5 transition-all group">
                         <i class="fa-solid fa-fingerprint text-2xl text-[#06B6D4]"></i>
                         <div class="text-left">
@@ -663,61 +667,52 @@
     <!-- ============================================ -->
     <!-- DESKTOP -->
     <!-- ============================================ -->
-    <div id="desktop" class="hidden h-screen flex flex-col overflow-hidden relative">
-        
-        <!-- Live Animated Aurora Wallpaper -->
-        <div id="wallpaper" class="absolute inset-0 live-wallpaper">
-            <!-- Subtle cosmic particles -->
+    <div id="desktop" class="hidden fixed inset-0 flex-col">
+        <!-- Live Wallpaper -->
+        <div id="wallpaper" class="live-wallpaper absolute inset-0">
             <div class="cosmic-particle w-1 h-1" style="top: 15%; left: 12%; animation-delay: 0s;"></div>
             <div class="cosmic-particle w-px h-px" style="top: 28%; left: 78%; animation-delay: 4s;"></div>
             <div class="cosmic-particle w-1.5 h-1.5" style="top: 65%; left: 22%; animation-delay: 9s;"></div>
             <div class="cosmic-particle w-px h-px" style="top: 82%; left: 91%; animation-delay: 14s;"></div>
         </div>
 
-        <!-- Top Glass Taskbar -->
-        <div class="glass-strong h-14 flex items-center justify-between px-5 z-50 relative border-b border-white/10">
+        <!-- Top Bar -->
+        <div class="relative z-30 flex items-center justify-between px-6 py-3">
             <div class="flex items-center gap-x-4">
-                <!-- Start Menu Button -->
                 <button onclick="toggleStartMenu()" 
-                        class="flex items-center gap-x-2 px-4 py-1.5 rounded-2xl hover:bg-white/10 transition-all group">
-                    <div class="w-6 h-6 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center">
-                        <span class="text-white text-xs font-bold">T</span>
+                        class="flex items-center gap-x-2 px-3 py-1.5 rounded-xl hover:bg-white/10 transition-all">
+                    <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center">
+                        <span class="text-white font-bold text-xs">T</span>
                     </div>
-                    <span class="font-semibold text-sm tracking-tight">Trosmos</span>
+                    <span class="font-medium text-sm">Trosmos</span>
                 </button>
                 
-                <!-- Quick Search -->
                 <div onclick="openAIAssistant()" 
-                     class="flex items-center gap-x-3 bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-2xl text-sm cursor-pointer transition-all w-72 border border-white/10">
-                    <i class="fa-solid fa-search text-white/60"></i>
-                    <span class="text-white/60">Ask Trosmos anything...</span>
+                     class="hidden md:flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 cursor-pointer transition-all">
+                    <i class="fa-solid fa-robot text-[#3B82F6] text-sm"></i>
+                    <span class="text-sm text-white/70">Ask Trosmos anything...</span>
                 </div>
             </div>
 
-            <div class="flex items-center gap-x-5 text-sm">
-                <!-- System Status -->
-                <div class="flex items-center gap-x-5 text-white/70">
+            <div class="flex items-center gap-x-6">
+                <div class="flex items-center gap-x-3 text-sm">
                     <div class="flex items-center gap-x-1.5">
-                        <i class="fa-solid fa-wifi"></i>
-                        <span class="text-xs">98%</span>
+                        <i class="fa-solid fa-wifi text-white/60"></i>
+                        <span class="text-white/80">98%</span>
                     </div>
-                    <div class="flex items-center gap-x-1">
-                        <i class="fa-solid fa-battery-three-quarters"></i>
-                        <span class="text-xs">85%</span>
+                    <div class="flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-battery-three-quarters text-white/60"></i>
+                        <span class="text-white/80">85%</span>
                     </div>
                 </div>
                 
-                <!-- Time & Date -->
-                <div class="text-right leading-tight">
-                    <div id="desktop-time" class="font-medium text-sm">14:30</div>
-                    <div id="desktop-date" class="text-[10px] text-white/50">Fri, 3 Jul 2026</div>
+                <div class="text-right">
+                    <div id="desktop-time" class="text-sm font-medium">14:30</div>
+                    <div id="desktop-date" class="text-xs text-white/50">Fri, 3 Jul 2026</div>
                 </div>
-
-                <!-- User Avatar -->
-                <div class="flex items-center gap-x-2 pl-3 border-l border-white/10">
-                    <div class="w-8 h-8 rounded-2xl overflow-hidden ring-1 ring-white/20">
-                        <img src="https://i.pravatar.cc/32?img=47" alt="User avatar" class="w-full h-full object-cover">
-                    </div>
+                
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center text-xs font-semibold">
+                    A
                 </div>
             </div>
         </div>
@@ -728,7 +723,7 @@
             <!-- Smart Widgets (floating) -->
             <div class="absolute top-8 right-8 flex flex-col gap-y-4 w-72 z-20">
                 <!-- Weather Widget -->
-                <div class="glass rounded-3xl p-5 text-sm depth">
+                <div id="weather-widget" class="glass rounded-3xl p-5 text-sm depth">
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="text-white/60 text-xs tracking-widest">SAN FRANCISCO</div>
@@ -769,40 +764,30 @@
             </div>
         </div>
 
-        <!-- Floating Dock -->
-        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-50">
-            <div class="dock flex items-center gap-x-2 px-3 py-2 rounded-3xl">
-                
-                <!-- Dock Icons -->
+        <!-- Dock -->
+        <div class="relative z-40 flex justify-center pb-6">
+            <div class="dock flex items-center gap-x-1 px-3 py-2.5 rounded-3xl">
                 <button onclick="openAIAssistant()" aria-label="Open Trosmos AI Copilot" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all group">
-                    <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-robot text-white text-xl"></i>
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center shadow-lg">
+                        <i class="fa-solid fa-robot text-white text-sm"></i>
                     </div>
                 </button>
-                
                 <button onclick="openFileManager()" aria-label="Open Files" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
-                    <i class="fa-solid fa-folder text-3xl text-white/90"></i>
+                    <i class="fa-solid fa-folder text-xl text-[#3B82F6]"></i>
                 </button>
-                
                 <button onclick="openBrowser()" aria-label="Open Browser" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
-                    <i class="fa-solid fa-globe text-3xl text-white/90"></i>
+                    <i class="fa-solid fa-globe text-xl text-emerald-400"></i>
                 </button>
-                
                 <button onclick="openAppStore()" aria-label="Open App Store" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
-                    <i class="fa-solid fa-store text-3xl text-white/90"></i>
+                    <i class="fa-solid fa-store text-xl text-orange-400"></i>
                 </button>
-                
                 <div class="w-px h-8 bg-white/15 mx-1"></div>
-                
                 <button onclick="openSettings()" aria-label="Open Settings" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
-                    <i class="fa-solid fa-cog text-3xl text-white/90"></i>
+                    <i class="fa-solid fa-cog text-xl text-white/70"></i>
                 </button>
-                
                 <button onclick="showNotificationCenter()" aria-label="Open Notification Center" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all relative">
-                    <i class="fa-solid fa-bell text-3xl text-white/90"></i>
-                    <div class="absolute top-2 right-2 w-3.5 h-3.5 bg-[#3B82F6] rounded-full flex items-center justify-center">
-                        <span class="text-[9px] font-bold">4</span>
-                    </div>
+                    <i class="fa-solid fa-bell text-xl text-white/70"></i>
+                    <span class="absolute top-1 right-1 w-4 h-4 bg-[#3B82F6] rounded-full text-[10px] flex items-center justify-center font-bold">4</span>
                 </button>
             </div>
         </div>
@@ -813,332 +798,243 @@
     <!-- ============================================ -->
     <div id="start-menu" onclick="toggleStartMenu()" class="hidden fixed inset-0 z-[60] bg-black/40">
         <div onclick="event.stopImmediatePropagation()" class="absolute bottom-20 left-1/2 -translate-x-1/2 w-[620px] glass rounded-3xl p-8 depth">
-            <div class="mb-6">
-                <input type="text" placeholder="Search apps, files, or ask AI..." 
-                       class="w-full bg-white/5 border border-white/15 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-white/30">
+            <div class="flex items-center gap-x-4 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center">
+                    <span class="text-white font-bold text-2xl">T</span>
+                </div>
+                <div>
+                    <div class="font-semibold text-lg">Trosmos</div>
+                    <div class="text-sm text-white/50">AI-Native Computing</div>
+                </div>
             </div>
             
-            <div class="grid grid-cols-4 gap-4">
-                <!-- Pinned Apps -->
+            <input type="text" id="start-search" placeholder="Search apps, files, settings..."
+                   class="w-full bg-white/5 border border-white/15 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-white/30">
+            
+            <div class="grid grid-cols-4 gap-4 mt-6">
                 <div onclick="openAIAssistant(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
                     <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center">
-                        <i class="fa-solid fa-robot text-white text-3xl"></i>
+                        <i class="fa-solid fa-robot text-white"></i>
                     </div>
                     <span class="text-xs">AI Chat</span>
                 </div>
-                
                 <div onclick="openFileManager(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
-                    <i class="fa-solid fa-folder text-4xl text-white/90"></i>
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#06B6D4] flex items-center justify-center">
+                        <i class="fa-solid fa-folder text-white"></i>
+                    </div>
                     <span class="text-xs">Files</span>
                 </div>
-                
                 <div onclick="openBrowser(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
-                    <i class="fa-solid fa-globe text-4xl text-white/90"></i>
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-[#06B6D4] flex items-center justify-center">
+                        <i class="fa-solid fa-globe text-white"></i>
+                    </div>
                     <span class="text-xs">Browser</span>
                 </div>
-                
                 <div onclick="openAppStore(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
-                    <i class="fa-solid fa-store text-4xl text-white/90"></i>
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                        <i class="fa-solid fa-store text-white"></i>
+                    </div>
                     <span class="text-xs">App Store</span>
                 </div>
             </div>
             
-            <div class="mt-6 pt-6 border-t border-white/10 text-xs text-white/50 flex justify-between items-center">
-                <div>Recent: Project Orion • Research Notes</div>
-                <button onclick="toggleStartMenu()" class="text-white/70 hover:text-white">Close</button>
+            <div class="mt-6 pt-4 border-t border-white/10 text-xs text-white/40">
+                Recent: Project Orion • Research Notes
             </div>
+            <button onclick="toggleStartMenu()" class="mt-4 text-sm text-white/50 hover:text-white">Close</button>
         </div>
     </div>
 
     <!-- ============================================ -->
-    <!-- AI ASSISTANT WINDOW -->
+    <!-- WINDOWS (AI, Files, Browser, Settings, App Store) -->
     <!-- ============================================ -->
-    <div id="ai-window" class="hidden fixed top-20 left-1/2 -translate-x-1/2 w-[620px] glass rounded-3xl overflow-hidden shadow-2xl z-[70] window">
-        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+    <!-- AI Window -->
+    <div id="ai-window" class="window hidden absolute top-24 left-1/2 -translate-x-1/2 w-[420px] h-[560px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
             <div class="flex items-center gap-x-3">
-                <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#3B82F6] via-[#7C3AED] to-[#06B6D4] flex items-center justify-center">
-                    <i class="fa-solid fa-robot text-white"></i>
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center">
+                    <i class="fa-solid fa-robot text-white text-sm"></i>
                 </div>
                 <div>
-                    <div class="font-semibold">Trosmos AI</div>
-                    <div class="text-xs text-emerald-400 flex items-center gap-x-1">
-                        <div class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <div class="font-medium text-sm">Trosmos AI</div>
+                    <div class="text-[10px] text-emerald-400 flex items-center gap-x-1">
+                        <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
                         Online • Instant responses
                     </div>
                 </div>
             </div>
-            <button onclick="closeWindow('ai-window')" class="text-white/60 hover:text-white px-3 py-1">
-                <i class="fa-solid fa-times text-xl"></i>
-            </button>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="Trosmos.windows.minimize('ai-window')"><i class="fa-solid fa-minus"></i></button>
+                <button class="window-control maximize" onclick="Trosmos.windows.maximize('ai-window')"><i class="fa-regular fa-square"></i></button>
+                <button class="window-control close" onclick="Trosmos.windows.close('ai-window')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
         
-        <!-- Chat Area -->
-        <div id="ai-chat" class="h-[380px] p-6 overflow-y-auto space-y-5 text-sm">
-            <!-- Messages populated by JS -->
-        </div>
+        <div id="ai-chat" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
         
-        <!-- Input -->
-        <div class="p-5 border-t border-white/10 bg-white/5">
-            <div class="flex gap-x-3">
-                <input id="ai-input" type="text" placeholder="Ask anything... (try: open files, summarize document, create workflow)" 
-                       class="flex-1 bg-white/5 border border-white/15 rounded-2xl px-5 py-3 text-sm outline-none"
-                       onkeypress="if (event.key === 'Enter') sendAIMessage()">
-                <button onclick="startVoiceInput()" 
-                        class="px-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 flex items-center justify-center active:scale-[0.985]" title="Voice input (Web Speech API)">
-                    <i class="fa-solid fa-microphone text-lg"></i>
-                </button>
-                <button onclick="sendAIMessage()" 
-                        class="px-6 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#7C3AED] font-medium text-sm active:scale-[0.985]">
-                    Send
-                </button>
-            </div>
-            <div class="text-[10px] text-white/40 mt-2 px-1">Natural language • Voice input enabled • Context-aware • Powered by Grok</div>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
-    <!-- FILE MANAGER WINDOW -->
-    <!-- ============================================ -->
-    <div id="file-manager-window" class="hidden fixed top-16 left-[15%] w-[820px] glass rounded-3xl overflow-hidden shadow-2xl z-[70] window">
-        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-            <div class="flex items-center gap-x-4">
-                <i class="fa-solid fa-folder text-2xl text-white/80"></i>
-                <div>
-                    <span class="font-semibold">Files</span>
-                    <span class="text-xs text-white/50 ml-2">/Users/aria/Projects</span>
-                </div>
-            </div>
+        <div class="p-4 border-t border-white/10">
             <div class="flex items-center gap-x-2">
-                <input type="text" placeholder="Search files..." class="bg-white/5 border border-white/10 rounded-2xl px-4 py-1.5 text-sm w-64 outline-none">
-                <button onclick="closeWindow('file-manager-window')" class="px-4 text-white/60 hover:text-white"><i class="fa-solid fa-times"></i></button>
-            </div>
-        </div>
-        
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-4 px-1">
-                <div class="flex gap-x-2 text-xs">
-                    <div class="px-3 py-1 bg-white/10 rounded-full">All Files</div>
-                    <div class="px-3 py-1 hover:bg-white/5 rounded-full cursor-pointer">Documents</div>
-                    <div class="px-3 py-1 hover:bg-white/5 rounded-full cursor-pointer">Projects</div>
-                </div>
-                <button class="text-xs flex items-center gap-x-2 px-3 py-1 hover:bg-white/5 rounded-xl">
-                    <i class="fa-solid fa-plus"></i> <span>New Folder</span>
+                <input id="ai-input" type="text" placeholder="Ask anything or give a command..."
+                       onkeypress="if (event.key === 'Enter') sendAIMessage()"
+                       class="flex-1 bg-white/5 border border-white/15 rounded-2xl px-4 py-3 text-sm outline-none focus:border-[#3B82F6]/50">
+                <button onclick="sendAIMessage()" 
+                        class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center hover:brightness-110 transition-all">
+                    <i class="fa-solid fa-paper-plane text-white text-sm"></i>
                 </button>
             </div>
-            
-            <!-- File Grid -->
-            <div class="file-grid">
-                <div class="file-item p-4 rounded-2xl flex flex-col items-center text-center cursor-pointer" onclick="Trosmos.desktop?.openFile ? Trosmos.desktop.openFile('/Users/aria/Projects/Project Orion') : showToast('Opening Project Orion')">
-                    <i class="fa-solid fa-folder text-5xl text-[#3B82F6] mb-3"></i>
-                    <div class="font-medium text-sm">Project Orion</div>
-                    <div class="text-[10px] text-white/50">42 items • 2.4 GB</div>
-                </div>
-                <div class="file-item p-4 rounded-2xl flex flex-col items-center text-center cursor-pointer" onclick="Trosmos.desktop?.openFile ? Trosmos.desktop.openFile('/Users/aria/Documents/Q4 Roadmap.md') : showToast('Opening Q4 Roadmap.md')">
-                    <i class="fa-solid fa-file-lines text-5xl text-emerald-400 mb-3"></i>
-                    <div class="font-medium text-sm">Q4 Roadmap.md</div>
-                    <div class="text-[10px] text-white/50">Modified today</div>
-                </div>
-                <div class="file-item p-4 rounded-2xl flex flex-col items-center text-center cursor-pointer" onclick="Trosmos.desktop?.openFile ? Trosmos.desktop.openFile('/Users/aria/Projects/Product Shots') : showToast('Opening Product Shots')">
-                    <i class="fa-solid fa-images text-5xl text-purple-400 mb-3"></i>
-                    <div class="font-medium text-sm">Product Shots</div>
-                    <div class="text-[10px] text-white/50">128 files</div>
-                </div>
-                <div class="file-item p-4 rounded-2xl flex flex-col items-center text-center cursor-pointer" onclick="Trosmos.desktop?.openFile ? Trosmos.desktop.openFile('/Users/aria/Projects/main.tsx') : showToast('Opening main.tsx')">
-                    <i class="fa-solid fa-file-code text-5xl text-amber-400 mb-3"></i>
-                    <div class="font-medium text-sm">main.tsx</div>
-                    <div class="text-[10px] text-white/50">Last edited 4h ago</div>
-                </div>
-            </div>
+            <div class="text-[10px] text-white/40 mt-2 text-center">Natural language • Voice input enabled • Context-aware • Powered by Grok</div>
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- SETTINGS APP -->
-    <!-- ============================================ -->
-    <div id="settings-window" class="hidden fixed top-16 left-[12%] w-[920px] h-[620px] glass rounded-3xl overflow-hidden flex flex-col shadow-2xl z-[70] window">
-        <!-- Premium Title Bar (drag handle + close button) -->
-        <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5 flex-shrink-0 window-header">
+    <!-- File Manager Window -->
+    <div id="file-manager-window" class="window hidden absolute top-20 left-32 w-[720px] h-[520px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
             <div class="flex items-center gap-x-3">
-                <i class="fa-solid fa-cog text-xl text-white/80"></i>
-                <span class="font-semibold tracking-tight">Settings</span>
+                <i class="fa-solid fa-folder text-[#3B82F6]"></i>
+                <div>
+                    <div class="font-medium text-sm">Files</div>
+                    <div class="text-[10px] text-white/50">/Users/aria/Projects</div>
+                </div>
             </div>
-            <button onclick="closeWindow('settings-window')" class="text-white/60 hover:text-white px-2 py-1 transition-colors">
-                <i class="fa-solid fa-times text-xl"></i>
-            </button>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="Trosmos.windows.minimize('file-manager-window')"><i class="fa-solid fa-minus"></i></button>
+                <button class="window-control maximize" onclick="Trosmos.windows.maximize('file-manager-window')"><i class="fa-regular fa-square"></i></button>
+                <button class="window-control close" onclick="Trosmos.windows.close('file-manager-window')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
         
         <div class="flex flex-1 overflow-hidden">
-            <!-- Sidebar -->
-            <div class="w-60 border-r border-white/10 p-4 bg-white/5">
-                <div class="px-4 py-3 text-xs font-semibold tracking-widest text-white/50">SETTINGS</div>
-                
-                <div class="mt-2 space-y-1 text-sm">
-                    <div onclick="switchSettingsTab(this, 'general')" class="settings-nav-item active flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                        <i class="fa-solid fa-sliders-h w-4"></i> <span>General</span>
-                    </div>
-                    <div onclick="switchSettingsTab(this, 'appearance')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                        <i class="fa-solid fa-palette w-4"></i> <span>Appearance</span>
-                    </div>
-                    <div onclick="switchSettingsTab(this, 'privacy')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                        <i class="fa-solid fa-shield-halved w-4"></i> <span>Privacy &amp; Security</span>
-                    </div>
-                    <div onclick="switchSettingsTab(this, 'ai')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
-                        <i class="fa-solid fa-robot w-4"></i> <span>AI Preferences</span>
-                    </div>
+            <div class="w-48 border-r border-white/10 p-4 space-y-1">
+                <div class="text-xs text-white/40 px-3 py-1">All Files</div>
+                <div class="px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer text-sm">Documents</div>
+                <div class="px-3 py-2 rounded-xl bg-white/10 text-sm">Projects</div>
+                <div class="mt-4">
+                    <button class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 text-sm text-white/60">
+                        <i class="fa-solid fa-plus mr-2"></i> New Folder
+                    </button>
                 </div>
             </div>
             
-            <!-- Content -->
-            <div class="flex-1 p-8 overflow-auto">
-            <!-- General Tab -->
-            <div id="settings-general" class="settings-tab">
-                <h2 class="text-3xl font-semibold tracking-tight mb-8">General</h2>
-                
-                <div class="space-y-8 max-w-md">
-                    <div>
-                        <div class="font-medium mb-2">Device Name</div>
-                        <input type="text" value="Aria's Trosmos Studio" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm">
-                    </div>
-                    
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="font-medium">Automatic Updates</div>
-                            <div class="text-xs text-white/60">Install updates when available</div>
-                        </div>
-                        <div class="w-11 h-6 bg-emerald-500 rounded-full relative cursor-pointer">
-                            <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 shadow"></div>
-                        </div>
-                    </div>
+            <div class="flex-1 p-5 overflow-y-auto">
+                <div id="file-grid" class="file-grid">
+                    <!-- Dynamic files injected by VFS -->
                 </div>
             </div>
-            
-            <!-- Appearance Tab -->
-            <div id="settings-appearance" class="settings-tab hidden">
-                <h2 class="text-3xl font-semibold tracking-tight mb-8">Appearance</h2>
-                <div class="mb-6">
-                    <div class="font-medium mb-3">Accent Color</div>
-                    <div class="flex gap-3">
-                        <div onclick="changeAccentColor('#3B82F6')" class="w-9 h-9 rounded-2xl bg-[#3B82F6] ring-2 ring-offset-4 ring-offset-[#111827] ring-[#3B82F6] cursor-pointer"></div>
-                        <div onclick="changeAccentColor('#7C3AED')" class="w-9 h-9 rounded-2xl bg-[#7C3AED] cursor-pointer"></div>
-                        <div onclick="changeAccentColor('#06B6D4')" class="w-9 h-9 rounded-2xl bg-[#06B6D4] cursor-pointer"></div>
-                        <div onclick="changeAccentColor('#10B981')" class="w-9 h-9 rounded-2xl bg-[#10B981] cursor-pointer"></div>
-                    </div>
-                </div>
-                
-                <div>
-                    <div class="font-medium mb-3">Wallpaper</div>
-                    <div class="grid grid-cols-4 gap-3">
-                        <div class="aspect-video bg-gradient-to-br from-purple-900 to-black rounded-2xl cursor-pointer ring-2 ring-white/30" onclick="changeWallpaper('aurora')"></div>
-                        <div class="aspect-video bg-gradient-to-br from-blue-950 to-black rounded-2xl cursor-pointer" onclick="changeWallpaper('deep')"></div>
-                        <div class="aspect-video bg-gradient-to-br from-emerald-950 to-black rounded-2xl cursor-pointer" onclick="changeWallpaper('emerald')"></div>
-                        <div class="aspect-video bg-gradient-to-br from-slate-950 to-black rounded-2xl cursor-pointer" onclick="changeWallpaper('minimal')"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Privacy Tab -->
-            <div id="settings-privacy" class="settings-tab hidden">
-                <h2 class="text-3xl font-semibold tracking-tight mb-8">Privacy &amp; Security</h2>
-                <div class="space-y-6 max-w-lg">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium">App Permissions</div>
-                            <div class="text-sm text-white/60">Manage what apps can access</div>
-                        </div>
-                        <button class="text-sm px-5 py-2 bg-white/10 hover:bg-white/15 rounded-2xl">Manage</button>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium">Encrypted Storage</div>
-                            <div class="text-xs text-emerald-400">Enabled • Hardware-backed</div>
-                        </div>
-                        <div class="text-emerald-400"><i class="fa-solid fa-check-circle"></i></div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- AI Preferences -->
-            <div id="settings-ai" class="settings-tab hidden">
-                <h2 class="text-3xl font-semibold tracking-tight mb-8">AI Preferences</h2>
-                <div class="max-w-md space-y-6">
-                    <div>
-                        <div class="font-medium mb-2">AI Copilot Personality</div>
-                        <select class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 text-sm">
-                            <option>Helpful &amp; Concise (Recommended)</option>
-                            <option>Creative &amp; Detailed</option>
-                            <option>Technical &amp; Precise</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <div>Enable voice responses</div>
-                        <div class="w-11 h-6 bg-emerald-500 rounded-full relative"><div class="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5"></div></div>
-                    </div>
-                </div>
-            </div>
-            </div> <!-- close inner flex row (sidebar + content) -->
-        </div> <!-- close flex-col settings-window -->
+        </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- APP STORE -->
-    <!-- ============================================ -->
-    <div id="app-store-window" class="hidden fixed top-16 left-[8%] w-[920px] glass rounded-3xl overflow-hidden shadow-2xl z-[70] window">
-        <div class="px-8 py-6 border-b border-white/10">
-            <div class="flex items-center justify-between">
-                <div>
-                    <span class="text-3xl font-semibold tracking-tight">App Store</span>
-                    <span class="ml-3 text-xs px-3 py-1 bg-white/10 rounded-full">Featured for you</span>
-                </div>
-                <input type="text" placeholder="Search apps..." class="bg-white/5 border border-white/10 px-5 py-2 rounded-2xl text-sm w-72 outline-none">
+    <!-- Settings Window -->
+    <div id="settings-window" class="window hidden absolute top-16 right-24 w-[680px] h-[540px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
+            <div class="flex items-center gap-x-3">
+                <i class="fa-solid fa-cog text-white/70"></i>
+                <div class="font-medium text-sm">Settings</div>
+            </div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="Trosmos.windows.minimize('settings-window')"><i class="fa-solid fa-minus"></i></button>
+                <button class="window-control maximize" onclick="Trosmos.windows.maximize('settings-window')"><i class="fa-regular fa-square"></i></button>
+                <button class="window-control close" onclick="Trosmos.windows.close('settings-window')"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
         
-        <div class="p-8">
-            <div class="grid grid-cols-3 gap-5">
-                <!-- App Cards -->
-                <div class="app-card glass p-5 rounded-3xl">
-                    <div class="flex gap-x-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-orange-400 to-red-500 rounded-2xl flex-shrink-0 flex items-center justify-center">
-                            <i class="fa-solid fa-video text-white text-3xl"></i>
+        <div class="flex flex-1 overflow-hidden">
+            <div class="w-52 border-r border-white/10 p-4 space-y-1">
+                <div class="text-[10px] text-white/40 tracking-widest px-3 mb-2">SETTINGS</div>
+                <div onclick="switchSettingsTab(this, 'general')" class="settings-nav-item active flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                    <i class="fa-solid fa-sliders w-4"></i> General
+                </div>
+                <div onclick="switchSettingsTab(this, 'appearance')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                    <i class="fa-solid fa-palette w-4"></i> Appearance
+                </div>
+                <div onclick="switchSettingsTab(this, 'privacy')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                    <i class="fa-solid fa-shield-halved w-4"></i> Privacy & Security
+                </div>
+                <div onclick="switchSettingsTab(this, 'ai')" class="settings-nav-item flex items-center gap-x-3 px-4 py-2.5 cursor-pointer">
+                    <i class="fa-solid fa-robot w-4"></i> AI Preferences
+                </div>
+            </div>
+            
+            <div class="flex-1 p-6 overflow-y-auto">
+                <!-- General Tab -->
+                <div id="settings-general" class="settings-panel">
+                    <h3 class="text-lg font-semibold mb-5">General</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm text-white/70 mb-2">Device Name</label>
+                            <input type="text" value="Aria's Trosmos" class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2.5 text-sm outline-none">
                         </div>
-                        <div class="flex-1">
-                            <div class="font-semibold">Lumina Studio</div>
-                            <div class="text-xs text-white/60">Creative • Video</div>
-                            <div class="mt-3 flex items-center justify-between">
-                                <div class="text-emerald-400 text-xs font-medium">FREE</div>
-                                <button onclick="installApp(this)" class="text-xs px-4 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all">Install</button>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-medium">Automatic Updates</div>
+                                <div class="text-xs text-white/50">Install updates when available</div>
+                            </div>
+                            <div class="w-11 h-6 bg-[#3B82F6] rounded-full relative cursor-pointer">
+                                <div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="app-card glass p-5 rounded-3xl">
-                    <div class="flex gap-x-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-sky-400 to-blue-600 rounded-2xl flex-shrink-0 flex items-center justify-center">
-                            <i class="fa-solid fa-chart-line text-white text-3xl"></i>
+                <!-- Appearance Tab -->
+                <div id="settings-appearance" class="settings-panel hidden">
+                    <h3 class="text-lg font-semibold mb-5">Appearance</h3>
+                    <div class="mb-6">
+                        <div class="text-sm text-white/70 mb-3">Accent Color</div>
+                        <div class="flex gap-x-3">
+                            <div class="w-8 h-8 rounded-full bg-[#3B82F6] ring-2 ring-white/40 cursor-pointer"></div>
+                            <div class="w-8 h-8 rounded-full bg-[#7C3AED] cursor-pointer"></div>
+                            <div class="w-8 h-8 rounded-full bg-[#06B6D4] cursor-pointer"></div>
+                            <div class="w-8 h-8 rounded-full bg-[#10B981] cursor-pointer"></div>
                         </div>
-                        <div class="flex-1">
-                            <div class="font-semibold">Pulse Analytics</div>
-                            <div class="text-xs text-white/60">Productivity • AI</div>
-                            <div class="mt-3 flex items-center justify-between">
-                                <div class="text-emerald-400 text-xs font-medium">FREE</div>
-                                <button onclick="installApp(this)" class="text-xs px-4 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all">Install</button>
-                            </div>
+                    </div>
+                    <div>
+                        <div class="text-sm text-white/70 mb-3">Wallpaper</div>
+                        <div class="grid grid-cols-4 gap-3">
+                            <div class="aspect-video rounded-xl bg-gradient-to-br from-purple-900 to-blue-900 border-2 border-[#3B82F6]"></div>
+                            <div class="aspect-video rounded-xl bg-gradient-to-br from-slate-800 to-slate-900"></div>
+                            <div class="aspect-video rounded-xl bg-gradient-to-br from-emerald-900 to-teal-900"></div>
+                            <div class="aspect-video rounded-xl bg-gradient-to-br from-rose-900 to-orange-900"></div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="app-card glass p-5 rounded-3xl">
-                    <div class="flex gap-x-4">
-                        <div class="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex-shrink-0 flex items-center justify-center">
-                            <i class="fa-solid fa-magic text-white text-3xl"></i>
+                <!-- Privacy Tab -->
+                <div id="settings-privacy" class="settings-panel hidden">
+                    <h3 class="text-lg font-semibold mb-5">Privacy & Security</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5">
+                            <div>
+                                <div class="text-sm font-medium">App Permissions</div>
+                                <div class="text-xs text-white/50">Manage what apps can access</div>
+                            </div>
+                            <button class="text-sm text-[#3B82F6]">Manage</button>
                         </div>
-                        <div class="flex-1">
-                            <div class="font-semibold">Aether Design</div>
-                            <div class="text-xs text-white/60">Design • AI</div>
-                            <div class="mt-3 flex items-center justify-between">
-                                <div class="text-emerald-400 text-xs font-medium">FREE</div>
-                                <button onclick="installApp(this)" class="text-xs px-4 py-1.5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all">Install</button>
+                        <div class="flex items-center justify-between p-4 rounded-2xl bg-white/5">
+                            <div>
+                                <div class="text-sm font-medium">Encrypted Storage</div>
+                                <div class="text-xs text-white/50">Enabled • Hardware-backed</div>
+                            </div>
+                            <i class="fa-solid fa-lock text-emerald-400"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Preferences Tab -->
+                <div id="settings-ai" class="settings-panel hidden">
+                    <h3 class="text-lg font-semibold mb-5">AI Preferences</h3>
+                    <div class="space-y-5">
+                        <div>
+                            <div class="text-sm text-white/70 mb-2">AI Copilot Personality</div>
+                            <select class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2.5 text-sm outline-none">
+                                <option>Helpful & Concise (Recommended)</option>
+                                <option>Creative & Detailed</option>
+                                <option>Technical & Precise</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm font-medium">Enable voice responses</div>
+                            <div class="w-11 h-6 bg-white/20 rounded-full relative cursor-pointer">
+                                <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full"></div>
                             </div>
                         </div>
                     </div>
@@ -1146,97 +1042,134 @@
             </div>
         </div>
     </div>
-	
 
-    <!-- ============================================ -->
-    <!-- BROWSER WINDOW -->
-    <!-- ============================================ -->
-    <div id="browser-window" class="hidden fixed top-14 left-[10%] w-[1000px] glass rounded-3xl overflow-hidden shadow-2xl z-[70] window">
-        <!-- Browser Title Bar -->
-        <div class="px-5 py-3 border-b border-white/10 flex items-center gap-x-3 bg-white/5 window-header">
-            <div class="flex gap-x-2">
-                <div class="w-3 h-3 rounded-full bg-red-400"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <div class="w-3 h-3 rounded-full bg-emerald-400"></div>
+    <!-- App Store Window -->
+    <div id="app-store-window" class="window hidden absolute top-28 left-48 w-[760px] h-[520px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
+            <div class="flex items-center gap-x-3">
+                <i class="fa-solid fa-store text-orange-400"></i>
+                <div>
+                    <div class="font-medium text-sm">App Store</div>
+                    <div class="text-[10px] text-white/50">Featured for you</div>
+                </div>
             </div>
-            
-            <!-- Address Bar -->
-            <div class="flex-1 flex items-center bg-white/5 rounded-2xl px-4 py-1.5 text-sm">
-                <i class="fa-solid fa-lock text-emerald-400 mr-2 text-xs"></i>
-                <input id="browser-url" type="text" value="trosmos.dev" 
-                       class="flex-1 bg-transparent outline-none text-white/80 text-sm"
-                       onkeypress="if (event.key === 'Enter') browserNavigate()">
-                <button onclick="browserGoBack()" class="ml-2 text-white/50 hover:text-white px-1"><i class="fa-solid fa-arrow-left text-xs"></i></button>
-                <button onclick="browserGoForward()" class="text-white/50 hover:text-white px-1"><i class="fa-solid fa-arrow-right text-xs"></i></button>
-                <button onclick="browserReload()" class="text-white/50 hover:text-white px-1"><i class="fa-solid fa-sync text-xs"></i></button>
-            </div>
-            
-            <div class="flex items-center gap-x-1">
-                <button onclick="browserAddBookmark()" class="text-white/60 hover:text-white px-2 py-1"><i class="fa-solid fa-bookmark text-sm"></i></button>
-                <button onclick="closeWindow('browser-window')" class="text-white/60 hover:text-white px-2"><i class="fa-solid fa-times"></i></button>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="Trosmos.windows.minimize('app-store-window')"><i class="fa-solid fa-minus"></i></button>
+                <button class="window-control maximize" onclick="Trosmos.windows.maximize('app-store-window')"><i class="fa-regular fa-square"></i></button>
+                <button class="window-control close" onclick="Trosmos.windows.close('app-store-window')"><i class="fa-solid fa-xmark"></i></button>
             </div>
         </div>
+        
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="grid grid-cols-3 gap-5">
+                <div class="app-card glass rounded-2xl p-5">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-wand-magic-sparkles text-white text-xl"></i>
+                    </div>
+                    <div class="font-medium">Lumina Studio</div>
+                    <div class="text-xs text-white/50 mb-3">Creative • Video</div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-emerald-400 font-medium">FREE</span>
+                        <button onclick="installApp(this)" class="px-3 py-1.5 rounded-lg bg-white/10 text-xs hover:bg-white/15">Install</button>
+                    </div>
+                </div>
+                
+                <div class="app-card glass rounded-2xl p-5">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <div class="font-medium">Pulse Analytics</div>
+                    <div class="text-xs text-white/50 mb-3">Productivity • AI</div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-emerald-400 font-medium">FREE</span>
+                        <button onclick="installApp(this)" class="px-3 py-1.5 rounded-lg bg-white/10 text-xs hover:bg-white/15">Install</button>
+                    </div>
+                </div>
+                
+                <div class="app-card glass rounded-2xl p-5">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-pen-nib text-white text-xl"></i>
+                    </div>
+                    <div class="font-medium">Aether Design</div>
+                    <div class="text-xs text-white/50 mb-3">Design • AI</div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-emerald-400 font-medium">FREE</span>
+                        <button onclick="installApp(this)" class="px-3 py-1.5 rounded-lg bg-white/10 text-xs hover:bg-white/15">Install</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- Browser Window -->
+    <div id="browser-window" class="window hidden absolute top-16 left-40 w-[860px] h-[580px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-white/10">
+            <div class="flex items-center gap-x-2 flex-1">
+                <button class="window-control" onclick="browserBack()"><i class="fa-solid fa-arrow-left text-xs"></i></button>
+                <button class="window-control" onclick="browserForward()"><i class="fa-solid fa-arrow-right text-xs"></i></button>
+                <button class="window-control" onclick="browserReload()"><i class="fa-solid fa-rotate-right text-xs"></i></button>
+                <div class="flex-1 mx-3">
+                    <input id="browser-url" type="text" value="trosmos.dev" 
+                           onkeypress="if (event.key === 'Enter') browserNavigate()"
+                           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-1.5 text-sm outline-none focus:border-[#3B82F6]/40">
+                </div>
+            </div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="Trosmos.windows.minimize('browser-window')"><i class="fa-solid fa-minus"></i></button>
+                <button class="window-control maximize" onclick="Trosmos.windows.maximize('browser-window')"><i class="fa-regular fa-square"></i></button>
+                <button class="window-control close" onclick="Trosmos.windows.close('browser-window')"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        
         <!-- Tab Bar -->
-        <div class="flex items-center bg-white/5 border-b border-white/10 px-2 pt-1 gap-x-1 overflow-x-auto" id="browser-tabbar">
+        <div id="browser-tabs" class="flex items-end gap-x-1 px-3 pt-2 border-b border-white/5">
             <!-- Tabs injected by BrowserManager -->
         </div>
-
-        <!-- Content Area -->
-        <div id="browser-content" class="bg-[#111827] min-h-[520px] p-6 overflow-auto">
-            <!-- Dynamic tab content injected here -->
-        </div>
-
-        <!-- Status Bar -->
-        <div class="px-4 py-1.5 border-t border-white/10 bg-white/5 text-[10px] text-white/50 flex items-center justify-between">
-            <div>Secure • Trosmos Web • AI Powered</div>
-            <div id="browser-status">Ready</div>
-        </div>
-    </div>
-	
-
-    <!-- ============================================ -->
-    <!-- NOTIFICATION CENTER -->
-    <!-- ============================================ -->
-    <div id="notification-center" onclick="hideNotificationCenter()" class="hidden fixed inset-0 z-[80] bg-black/30">
-        <div onclick="event.stopImmediatePropagation()" class="absolute top-14 right-6 w-96 glass rounded-3xl p-6 depth">
-            <div class="flex justify-between items-center mb-5 px-1">
-                <span class="font-semibold">Notifications</span>
-                <button onclick="clearAllNotifications()" class="text-xs text-white/60 hover:text-white">Clear all</button>
-            </div>
-            
-            <div id="notification-list" class="space-y-3 text-sm">
-                <!-- Populated dynamically by NotificationManager -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Context Menu (Production) -->
-    <div id="context-menu" class="hidden fixed glass rounded-2xl shadow-2xl z-[200] text-sm overflow-hidden">
-        <!-- Items populated dynamically by DesktopManager / FileManager -->
-    </div>
-
-    <!-- Snap Preview Overlay -->
-    <div id="snap-preview" class="hidden snap-preview"></div>
-
-    <!-- Command Palette (Ctrl/Cmd + K) - Production Power User Feature -->
-    <div id="command-palette" onclick="hideCommandPalette()" class="hidden fixed inset-0 z-[90] bg-black/60">
-        <div onclick="event.stopImmediatePropagation()" class="absolute top-[18%] left-1/2 -translate-x-1/2 w-[620px] glass rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-4 border-b border-white/10">
-                <div class="flex items-center gap-x-3 px-2">
-                    <i class="fa-solid fa-terminal text-white/60"></i>
-                    <input id="cmd-input" type="text" placeholder="Type a command or search actions... (e.g. open browser, create note, change wallpaper)" 
-                           class="flex-1 bg-transparent text-lg outline-none placeholder:text-white/40"
-                           onkeypress="if (event.key === 'Enter') executeCommandPalette()">
+        
+        <div id="browser-content" class="flex-1 bg-[#0c0c0e] overflow-auto p-8">
+            <div class="max-w-2xl mx-auto text-center pt-16">
+                <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center mx-auto mb-6">
+                    <span class="text-white font-bold text-3xl">T</span>
+                </div>
+                <h2 class="text-3xl font-display font-semibold mb-3">Welcome to Trosmos Web</h2>
+                <p class="text-white/60 mb-8">Secure • Trosmos Web • AI Powered</p>
+                <div class="inline-flex items-center gap-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-sm">
+                    <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                    Ready
                 </div>
             </div>
-            <div id="cmd-results" class="max-h-[320px] overflow-auto p-2 text-sm"></div>
-            <div class="px-4 py-2 border-t border-white/10 text-[10px] text-white/40 flex justify-between">
-                <div>↑↓ to navigate • Enter to run • Esc to close</div>
-                <div>Powered by Trosmos AI</div>
+        </div>
+    </div>
+
+    <!-- Notification Center -->
+    <div id="notification-center" class="hidden fixed top-16 right-6 w-80 glass rounded-2xl p-4 z-[70] depth">
+        <div class="flex items-center justify-between mb-4">
+            <div class="font-medium">Notifications</div>
+            <button onclick="clearNotifications()" class="text-xs text-white/50 hover:text-white">Clear all</button>
+        </div>
+        <div id="notification-list" class="space-y-2 max-h-80 overflow-y-auto">
+            <!-- Dynamic -->
+        </div>
+    </div>
+
+    <!-- Command Palette -->
+    <div id="command-palette" class="hidden fixed inset-0 z-[80] bg-black/50 flex items-start justify-center pt-[15vh]">
+        <div class="w-full max-w-xl glass rounded-2xl overflow-hidden depth">
+            <input id="palette-input" type="text" placeholder="Type a command or search..."
+                   onkeypress="if (event.key === 'Enter') executeCommandPalette()"
+                   class="w-full bg-transparent px-5 py-4 text-sm outline-none border-b border-white/10">
+            <div id="palette-results" class="max-h-72 overflow-y-auto p-2">
+                <!-- Results -->
+            </div>
+            <div class="px-4 py-2 text-[10px] text-white/40 border-t border-white/5 flex justify-between">
+                <span>↑↓ to navigate • Enter to run • Esc to close</span>
+                <span>Powered by Trosmos AI</span>
             </div>
         </div>
     </div>
+
+    <!-- Context Menu (dynamic) -->
+    <div id="context-menu" class="hidden fixed glass rounded-xl z-[100] depth"></div>
 
     <script>
         // ============================================================
@@ -1338,57 +1271,54 @@
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
                         const stores = ['filesystem', 'settings', 'windowStates', 'browserHistory', 'notifications', 'desktopIcons'];
-                        stores.forEach(store => {
-                            if (!db.objectStoreNames.contains(store)) {
-                                db.createObjectStore(store, { keyPath: 'key' });
+                        stores.forEach(name => {
+                            if (!db.objectStoreNames.contains(name)) {
+                                db.createObjectStore(name, { keyPath: 'id' });
                             }
                         });
                     };
-
+                    
                     request.onsuccess = (event) => {
                         this.db = event.target.result;
-                        console.log('%c[Storage] IndexedDB initialized', 'color:#10B981');
                         resolve();
                     };
-                    request.onerror = reject;
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async put(storeName, data) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(storeName, 'readwrite');
+                    const store = tx.objectStore(storeName);
+                    const req = store.put(data);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
             async get(storeName, key) {
-                return new Promise((resolve) => {
-                    if (!this.db) return resolve(null);
+                return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readonly');
                     const store = tx.objectStore(storeName);
                     const req = store.get(key);
-                    req.onsuccess = () => resolve(req.result ? req.result.value : null);
-                    req.onerror = () => resolve(null);
-                });
-            }
-
-            async set(storeName, key, value) {
-                return new Promise((resolve) => {
-                    if (!this.db) return resolve(false);
-                    const tx = this.db.transaction(storeName, 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    store.put({ key, value });
-                    tx.oncomplete = () => resolve(true);
-                    tx.onerror = () => resolve(false);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
 
             async getAll(storeName) {
-                return new Promise((resolve) => {
-                    if (!this.db) return resolve([]);
+                return new Promise((resolve, reject) => {
                     const tx = this.db.transaction(storeName, 'readonly');
                     const store = tx.objectStore(storeName);
                     const req = store.getAll();
-                    req.onsuccess = () => resolve(req.result.map(r => r.value));
-                    req.onerror = () => resolve([]);
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => reject(req.error);
                 });
             }
         }
 
-        // ------------------ VIRTUAL FILESYSTEM ------------------
+        // ------------------ VIRTUAL FILE SYSTEM ------------------
         class VirtualFileSystem {
             constructor(storage) {
                 this.storage = storage;
@@ -1397,24 +1327,17 @@
 
             async init() {
                 let files = await this.storage.get('filesystem', 'files');
-                if (!files || files.length === 0) {
-                    files = DEFAULT_VFS_SEED;
-                    await this.storage.set('filesystem', 'files', files);
+                if (!files || !files.data || files.data.length === 0) {
+                    await this.storage.put('filesystem', { id: 'files', data: DEFAULT_VFS_SEED });
+                    this.cache.set('files', DEFAULT_VFS_SEED);
+                } else {
+                    this.cache.set('files', files.data);
                 }
-                this.cache.set('files', files);
-                console.log('%c[VFS] Virtual filesystem ready with ' + files.length + ' entries', 'color:#06B6D4');
             }
 
-            async _save() {
+            list(path = '/Users/aria') {
                 const files = this.cache.get('files') || [];
-                await this.storage.set('filesystem', 'files', files);
-            }
-
-            async list(path = '/Users/aria') {
-                const files = this.cache.get('files') || [];
-                return files
-                    .filter(f => f.parent === path || (path === '/Users/aria' && !f.parent))
-                    .sort((a, b) => (a.type === 'folder' ? -1 : 1) - (b.type === 'folder' ? -1 : 1) || a.name.localeCompare(b.name));
+                return files.filter(f => f.parent === path || (path === '/Users/aria' && f.path === path));
             }
 
             async getFile(path) {
@@ -1425,8 +1348,7 @@
             async createFolder(parentPath, name) {
                 const files = this.cache.get('files') || [];
                 const newPath = `${parentPath}/${name}`.replace('//', '/');
-                if (files.some(f => f.path === newPath)) return false;
-
+                if (files.some(f => f.path === newPath)) return null;
                 const folder = {
                     path: newPath,
                     name,
@@ -1436,49 +1358,34 @@
                 };
                 files.push(folder);
                 this.cache.set('files', files);
-                await this._save();
-                Trosmos.notifications.show(`Folder "${name}" created`, 'success');
-                return true;
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return folder;
             }
 
             async createFile(parentPath, name, content = '', mime = 'text/plain') {
                 const files = this.cache.get('files') || [];
                 const newPath = `${parentPath}/${name}`.replace('//', '/');
-                if (files.some(f => f.path === newPath)) {
-                    // overwrite content if exists
-                    const existing = files.find(f => f.path === newPath);
-                    if (existing) existing.content = content;
-                    await this._save();
-                    return existing;
+                const existing = files.find(f => f.path === newPath);
+                if (existing) {
+                    existing.content = content;
+                    existing.modified = Date.now();
+                    existing.size = content.length;
+                } else {
+                    const file = {
+                        path: newPath,
+                        name,
+                        type: 'file',
+                        parent: parentPath,
+                        mime,
+                        size: content.length,
+                        modified: Date.now(),
+                        content
+                    };
+                    files.push(file);
                 }
-
-                const file = {
-                    path: newPath,
-                    name,
-                    type: 'file',
-                    parent: parentPath,
-                    mime,
-                    size: content.length,
-                    modified: Date.now(),
-                    content
-                };
-                files.push(file);
                 this.cache.set('files', files);
-                await this._save();
-                Trosmos.notifications.show(`File "${name}" created`, 'success');
-                return file;
-            }
-
-            async updateContent(path, newContent) {
-                const files = this.cache.get('files') || [];
-                const file = files.find(f => f.path === path);
-                if (!file || file.type !== 'file') return false;
-                file.content = newContent;
-                file.size = newContent.length;
-                file.modified = Date.now();
-                this.cache.set('files', files);
-                await this._save();
-                return true;
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return this.getFile(newPath);
             }
 
             async delete(path) {
@@ -1486,58 +1393,48 @@
                 const toDelete = files.filter(f => f.path === path || f.path.startsWith(path + '/'));
                 files = files.filter(f => !toDelete.includes(f));
                 this.cache.set('files', files);
-                await this._save();
-                Trosmos.notifications.show(`${toDelete.length} item(s) deleted`, 'info');
+                await this.storage.put('filesystem', { id: 'files', data: files });
                 return true;
             }
 
             async rename(oldPath, newName) {
                 const files = this.cache.get('files') || [];
                 const item = files.find(f => f.path === oldPath);
-                if (!item) return false;
-
+                if (!item) return null;
                 const newPath = oldPath.substring(0, oldPath.lastIndexOf('/') + 1) + newName;
-                item.name = newName;
                 item.path = newPath;
+                item.name = newName;
                 item.modified = Date.now();
-
                 // Update children paths if folder
                 if (item.type === 'folder') {
                     files.forEach(f => {
-                        if (f.parent === oldPath || f.path.startsWith(oldPath + '/')) {
+                        if (f.path.startsWith(oldPath + '/')) {
                             f.path = f.path.replace(oldPath, newPath);
                             if (f.parent === oldPath) f.parent = newPath;
                         }
                     });
                 }
                 this.cache.set('files', files);
-                await this._save();
-                return true;
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return item;
             }
 
-            async search(query) {
+            search(query) {
                 const files = this.cache.get('files') || [];
                 const q = query.toLowerCase();
-                return files.filter(f => 
-                    f.name.toLowerCase().includes(q) || 
-                    (f.content && f.content.toLowerCase().includes(q))
-                );
+                return files.filter(f => f.name.toLowerCase().includes(q) || (f.content && f.content.toLowerCase().includes(q)));
             }
 
-            async move(srcPath, destParent) {
+            async copy(srcPath, destParent) {
                 const files = this.cache.get('files') || [];
                 const item = files.find(f => f.path === srcPath);
-                if (!item) return false;
-
+                if (!item) return null;
                 const newPath = `${destParent}/${item.name}`.replace('//','/');
-                if (files.some(f => f.path === newPath)) return false;
-
-                item.path = newPath;
-                item.parent = destParent;
-                item.modified = Date.now();
+                const copy = { ...item, path: newPath, parent: destParent, modified: Date.now() };
+                files.push(copy);
                 this.cache.set('files', files);
-                await this._save();
-                return true;
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return copy;
             }
         }
 
@@ -1545,341 +1442,219 @@
         class ProcessManager {
             constructor() {
                 this.processes = new Map();
-                this.nextPid = 200;
+                this.nextPid = 1000;
             }
 
-            create(appId, windowId, name) {
+            spawn(appId, windowId) {
                 const pid = this.nextPid++;
                 const proc = {
-                    pid, appId, windowId, name,
-                    state: 'running',
-                    startTime: Date.now(),
-                    cpu: Math.floor(Math.random() * 8) + 2,
-                    memory: Math.floor(Math.random() * 180) + 80
+                    pid,
+                    appId,
+                    windowId,
+                    status: 'running',
+                    started: Date.now()
                 };
                 this.processes.set(pid, proc);
                 Trosmos.runningProcesses.set(windowId, pid);
-                Trosmos.dock?.updateIndicators();
                 return pid;
-            }
-
-            setState(windowId, state) {
-                const pid = Trosmos.runningProcesses.get(windowId);
-                if (!pid) return;
-                const proc = this.processes.get(pid);
-                if (proc) proc.state = state;
-                Trosmos.dock?.updateIndicators();
             }
 
             kill(windowId) {
                 const pid = Trosmos.runningProcesses.get(windowId);
                 if (pid) {
                     const proc = this.processes.get(pid);
-                    if (proc) proc.state = 'killed';
-                    Trosmos.runningProcesses.delete(windowId);
+                    if (proc) proc.status = 'terminated';
                     this.processes.delete(pid);
+                    Trosmos.runningProcesses.delete(windowId);
                 }
-                Trosmos.dock?.updateIndicators();
             }
 
-            getRunning() {
-                return Array.from(this.processes.values()).filter(p => p.state !== 'killed');
-            }
-
-            getByWindowId(windowId) {
+            suspend(windowId) {
                 const pid = Trosmos.runningProcesses.get(windowId);
-                return pid ? this.processes.get(pid) : null;
+                if (pid) {
+                    const proc = this.processes.get(pid);
+                    if (proc) proc.status = 'suspended';
+                }
+            }
+
+            resume(windowId) {
+                const pid = Trosmos.runningProcesses.get(windowId);
+                if (pid) {
+                    const proc = this.processes.get(pid);
+                    if (proc) proc.status = 'running';
+                }
             }
         }
 
-        // ------------------ WINDOW MANAGER (Core) ------------------
+        // ------------------ WINDOW MANAGER ------------------
         class WindowManager {
             constructor() {
-                this.zIndex = 120;
-                this.windows = new Map(); // id -> element
-                this.states = new Map(); // id -> {left,top,width,height,maximized,minimized}
+                this.zIndex = 50;
+                this.windows = new Map();
+                this.snapPreview = null;
             }
 
-            async init() {
-                // Restore saved window states
+            async loadStates() {
                 const saved = await Trosmos.storage.get('windowStates', 'all');
-                if (saved) {
-                    Object.entries(saved).forEach(([id, state]) => this.states.set(id, state));
-                }
-                // Attach to existing windows
-                document.querySelectorAll('.window').forEach(win => this.register(win));
-            }
-
-            register(win) {
-                if (!win || this.windows.has(win.id)) return;
-                this.windows.set(win.id, win);
-
-                // Inject premium controls if missing
-                this._injectControls(win);
-
-                // Make draggable (enhanced)
-                this._makeDraggable(win);
-
-                // Double click header = maximize
-                const header = win.querySelector('.window-header') || win.querySelector('div.px-6.py-4.border-b');
-                if (header) {
-                    header.addEventListener('dblclick', (e) => {
-                        if (!e.target.closest('button, input')) this.toggleMaximize(win.id);
+                if (saved && saved.data) {
+                    Object.entries(saved.data).forEach(([id, state]) => {
+                        this.windows.set(id, state);
                     });
                 }
-
-                // Focus on mousedown
-                win.addEventListener('mousedown', () => this.focus(win.id), { capture: true });
             }
 
-            _injectControls(win) {
-                // Avoid duplicate controls
-                if (win.querySelector('.window-controls')) return;
+            register(id, el) {
+                if (!this.windows.has(id)) {
+                    this.windows.set(id, {
+                        id,
+                        x: parseInt(el.style.left) || 100,
+                        y: parseInt(el.style.top) || 80,
+                        width: el.offsetWidth,
+                        height: el.offsetHeight,
+                        maximized: false,
+                        minimized: false
+                    });
+                }
+                this.makeDraggable(el);
+                this.addControls(el);
+            }
 
-                const header = win.querySelector('.window-header') || 
-                               win.querySelector('div.px-6.py-4.border-b.border-white\\/10') ||
-                               win.querySelector('div:first-child');
-
+            makeDraggable(win) {
+                const header = win.querySelector('.flex.items-center.justify-between') || win.firstElementChild;
                 if (!header) return;
+                
+                let isDragging = false;
+                let startX, startY, origX, origY;
 
-                const controls = document.createElement('div');
-                controls.className = 'window-controls absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-x-1';
-                controls.innerHTML = `
-                    <button class="window-control minimize" title="Minimize" aria-label="Minimize window">
-                        <i class="fa-solid fa-minus text-xs"></i>
-                    </button>
-                    <button class="window-control maximize" title="Maximize / Restore" aria-label="Maximize or restore window">
-                        <i class="fa-solid fa-expand text-xs"></i>
-                    </button>
-                    <button class="window-control close" title="Close" aria-label="Close window">
-                        <i class="fa-solid fa-times text-xs"></i>
-                    </button>
-                `;
-
-                // Position relative if needed
-                if (getComputedStyle(header).position === 'static') header.style.position = 'relative';
-                header.appendChild(controls);
-
-                // Wire buttons
-                controls.querySelector('.minimize').onclick = (e) => { e.stopImmediatePropagation(); this.minimize(win.id); };
-                controls.querySelector('.maximize').onclick = (e) => { e.stopImmediatePropagation(); this.toggleMaximize(win.id); };
-                controls.querySelector('.close').onclick = (e) => { e.stopImmediatePropagation(); this.close(win.id); };
-            }
-
-            _makeDraggable(win) {
-                if (win.dataset.draggable === 'true') return;
-                win.dataset.draggable = 'true';
-
-                const header = win.querySelector('.window-header') || win.querySelector('div.px-6.py-4.border-b.border-white\\/10') || win;
-                header.style.cursor = 'move';
-                header.style.userSelect = 'none';
-
-                let isDragging = false, startX, startY, startLeft, startTop;
-
-                const onDown = (e) => {
-                    if (e.target.closest('button, input, select, textarea, .fa-times')) return;
+                header.style.cursor = 'grab';
+                
+                header.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.window-control') || e.target.closest('input') || e.target.closest('button')) return;
+                    if (win.classList.contains('maximized')) return;
+                    
                     isDragging = true;
-                    startX = e.clientX; startY = e.clientY;
-                    const rect = win.getBoundingClientRect();
-                    startLeft = rect.left; startTop = rect.top;
-
-                    win.style.position = 'fixed';
-                    win.style.left = startLeft + 'px';
-                    win.style.top = startTop + 'px';
-                    win.style.margin = '0';
                     win.classList.add('dragging');
+                    header.style.cursor = 'grabbing';
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    const rect = win.getBoundingClientRect();
+                    origX = rect.left;
+                    origY = rect.top;
                     this.focus(win.id);
-
+                    
+                    const onMove = (ev) => {
+                        if (!isDragging) return;
+                        const dx = ev.clientX - startX;
+                        const dy = ev.clientY - startY;
+                        win.style.left = (origX + dx) + 'px';
+                        win.style.top = Math.max(0, origY + dy) + 'px';
+                        win.style.transform = 'none';
+                    };
+                    
+                    const onUp = () => {
+                        isDragging = false;
+                        win.classList.remove('dragging');
+                        header.style.cursor = 'grab';
+                        document.removeEventListener('mousemove', onMove);
+                        this.saveState(win.id);
+                    };
+                    
                     document.addEventListener('mousemove', onMove);
                     document.addEventListener('mouseup', onUp, { once: true });
-                    e.preventDefault();
-                };
-
-                const onMove = (e) => {
-                    if (!isDragging) return;
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    let nl = startLeft + dx;
-                    let nt = startTop + dy;
-
-                    // Viewport clamp
-                    nl = Math.max(0, Math.min(nl, window.innerWidth - 120));
-                    nt = Math.max(56, Math.min(nt, window.innerHeight - 80));
-
-                    win.style.left = nl + 'px';
-                    win.style.top = nt + 'px';
-                };
-
-                const onUp = async () => {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    win.classList.remove('dragging');
-                    document.removeEventListener('mousemove', onMove);
-
-                    // Save state
-                    this._saveState(win.id, {
-                        left: parseInt(win.style.left),
-                        top: parseInt(win.style.top),
-                        width: win.offsetWidth,
-                        height: win.offsetHeight,
-                        maximized: win.classList.contains('maximized')
-                    });
-
-                    // Edge snap detection (production feature)
-                    const rect = win.getBoundingClientRect();
-                    if (rect.left < 30) this.snap(win.id, 'left');
-                    else if (rect.right > window.innerWidth - 30) this.snap(win.id, 'right');
-                };
-
-                header.addEventListener('mousedown', onDown);
+                });
             }
 
-            async _saveState(id, state) {
-                this.states.set(id, state);
-                const all = {};
-                this.states.forEach((v, k) => all[k] = v);
-                await Trosmos.storage.set('windowStates', 'all', all);
-            }
-
-            focus(id) {
-                const win = document.getElementById(id) || this.windows.get(id);
-                if (!win) return;
-                this.zIndex++;
-                win.style.zIndex = this.zIndex;
-                win.classList.add('focused');
-                setTimeout(() => win.classList.remove('focused'), 120);
+            addControls(win) {
+                // Controls already in markup; ensure they work
             }
 
             open(id) {
                 const win = document.getElementById(id);
                 if (!win) return;
-
-                // Singleton behavior via process check
-                if (Trosmos.processes.getByWindowId(id) && !win.classList.contains('hidden')) {
-                    this.focus(id);
-                    return;
+                
+                if (!this.windows.has(id)) {
+                    this.register(id, win);
                 }
-
+                
                 win.classList.remove('hidden');
-                this.register(win);
-
-                // Apply saved position if exists
-                const saved = this.states.get(id);
-                if (saved && !saved.maximized) {
-                    win.style.position = 'fixed';
-                    win.style.left = (saved.left || 120) + 'px';
-                    win.style.top = (saved.top || 80) + 'px';
-                    if (saved.width) win.style.width = saved.width + 'px';
-                    if (saved.height) win.style.height = saved.height + 'px';
-                }
-
                 this.focus(id);
-
-                // Create process
-                const appEntry = Object.values(APP_REGISTRY).find(a => a.windowId === id);
-                if (appEntry) {
-                    Trosmos.processes.create(appEntry.id, id, appEntry.name);
+                
+                const state = this.windows.get(id);
+                if (state && state.minimized) {
+                    state.minimized = false;
+                    Trosmos.processes?.resume(id);
                 }
-
+                
+                if (!Trosmos.runningProcesses.has(id)) {
+                    const app = Object.values(APP_REGISTRY).find(a => a.windowId === id);
+                    if (app) Trosmos.processes?.spawn(app.id, id);
+                }
+                
                 Trosmos.openWindows.add(id);
-                Trosmos.dock?.updateIndicators();
-            }
-
-            minimize(id) {
-                const win = document.getElementById(id);
-                if (!win) return;
-                win.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-                win.style.opacity = '0';
-                setTimeout(() => {
-                    win.classList.add('hidden');
-                    win.style.opacity = '1';
-                    win.style.transition = '';
-                }, 180);
-
-                Trosmos.processes.setState(id, 'minimized');
-                Trosmos.dock?.updateIndicators();
-            }
-
-            toggleMaximize(id) {
-                const win = document.getElementById(id);
-                if (!win) return;
-
-                if (win.classList.contains('maximized')) {
-                    // Restore
-                    const saved = this.states.get(id) || { left: 120, top: 80, width: 820, height: 520 };
-                    win.style.left = saved.left + 'px';
-                    win.style.top = saved.top + 'px';
-                    win.style.width = (saved.width || 820) + 'px';
-                    win.style.height = (saved.height || 520) + 'px';
-                    win.classList.remove('maximized');
-                    Trosmos.processes.setState(id, 'running');
-                } else {
-                    // Maximize
-                    this._saveState(id, {
-                        left: parseInt(win.style.left) || 120,
-                        top: parseInt(win.style.top) || 80,
-                        width: win.offsetWidth,
-                        height: win.offsetHeight,
-                        maximized: true
-                    });
-                    win.style.left = '0px';
-                    win.style.top = '56px';
-                    win.style.width = '100%';
-                    win.style.height = 'calc(100% - 56px - 78px)';
-                    win.classList.add('maximized');
-                    Trosmos.processes.setState(id, 'running');
-                }
-                this.focus(id);
-            }
-
-            snap(id, direction) {
-                const win = document.getElementById(id);
-                if (!win) return;
-
-                const taskbarH = 56;
-                const dockH = 78;
-                const usableH = window.innerHeight - taskbarH - dockH;
-
-                win.style.transition = 'all 0.25s cubic-bezier(0.23,1,0.32,1)';
-
-                if (direction === 'left') {
-                    win.style.left = '0px';
-                    win.style.top = taskbarH + 'px';
-                    win.style.width = '50%';
-                    win.style.height = usableH + 'px';
-                } else if (direction === 'right') {
-                    win.style.left = '50%';
-                    win.style.top = taskbarH + 'px';
-                    win.style.width = '50%';
-                    win.style.height = usableH + 'px';
-                } else if (direction === 'top') {
-                    this.toggleMaximize(id);
-                    return;
-                }
-
-                setTimeout(() => win.style.transition = '', 280);
-                this.focus(id);
-                Trosmos.notifications.show(`Window snapped ${direction}`, 'info', 1200);
+                this.updateDockIndicators();
             }
 
             close(id) {
                 const win = document.getElementById(id);
                 if (!win) return;
-
-                win.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-                win.style.opacity = '0';
-                win.style.transform = 'scale(0.96) translateY(10px)';
-
-                setTimeout(() => {
-                    win.classList.add('hidden');
-                    win.style.opacity = '1';
-                    win.style.transform = '';
-                    win.style.transition = '';
-                }, 200);
-
-                Trosmos.processes.kill(id);
+                win.classList.add('hidden');
                 Trosmos.openWindows.delete(id);
-                Trosmos.dock?.updateIndicators();
+                Trosmos.processes?.kill(id);
+                this.updateDockIndicators();
+            }
+
+            minimize(id) {
+                const win = document.getElementById(id);
+                if (!win) return;
+                win.classList.add('hidden');
+                const state = this.windows.get(id);
+                if (state) state.minimized = true;
+                Trosmos.processes?.suspend(id);
+                this.updateDockIndicators();
+            }
+
+            maximize(id) {
+                const win = document.getElementById(id);
+                if (!win) return;
+                const state = this.windows.get(id) || {};
+                
+                if (state.maximized) {
+                    win.classList.remove('maximized');
+                    win.style.width = state.width + 'px';
+                    win.style.height = state.height + 'px';
+                    win.style.left = state.x + 'px';
+                    win.style.top = state.y + 'px';
+                    win.style.borderRadius = '';
+                    state.maximized = false;
+                } else {
+                    state.width = win.offsetWidth;
+                    state.height = win.offsetHeight;
+                    state.x = parseInt(win.style.left) || win.getBoundingClientRect().left;
+                    state.y = parseInt(win.style.top) || win.getBoundingClientRect().top;
+                    win.classList.add('maximized');
+                    win.style.left = '0';
+                    win.style.top = '0';
+                    win.style.width = '100%';
+                    win.style.height = '100%';
+                    win.style.transform = 'none';
+                    state.maximized = true;
+                }
+                this.windows.set(id, state);
+                this.focus(id);
+            }
+
+            focus(id) {
+                this.zIndex += 1;
+                const win = document.getElementById(id);
+                if (!win) return;
+                win.style.zIndex = this.zIndex;
+                win.classList.add('focused');
+                setTimeout(() => win.classList.remove('focused'), 120);
+                
+                // Bring to front among open windows
+                document.querySelectorAll('.window').forEach(w => {
+                    if (w.id !== id) w.style.zIndex = Math.min(parseInt(w.style.zIndex) || 50, this.zIndex - 1);
+                });
             }
 
             focusOrOpen(id) {
@@ -1890,321 +1665,137 @@
                     this.open(id);
                 }
             }
+
+            saveState(id) {
+                const win = document.getElementById(id);
+                if (!win) return;
+                const state = this.windows.get(id) || {};
+                state.x = parseInt(win.style.left) || 0;
+                state.y = parseInt(win.style.top) || 0;
+                this.windows.set(id, state);
+                // Persist periodically
+                const all = {};
+                this.windows.forEach((v, k) => all[k] = v);
+                Trosmos.storage?.put('windowStates', { id: 'all', data: all });
+            }
+
+            updateDockIndicators() {
+                // Visual feedback on dock icons for running apps
+                document.querySelectorAll('.dock-icon').forEach(icon => {
+                    icon.classList.remove('running', 'minimized');
+                });
+            }
         }
 
         // ------------------ DESKTOP MANAGER ------------------
         class DesktopManager {
             constructor() {
                 this.icons = [];
-                this.iconElements = new Map();
             }
 
             async init() {
-                // Load saved icon positions or use defaults
-                let savedIcons = await Trosmos.storage.get('desktopIcons', 'positions');
-                this.icons = savedIcons || DESKTOP_ICONS_DEFAULT;
-
+                let saved = await Trosmos.storage.get('desktopIcons', 'layout');
+                this.icons = (saved && saved.data) ? saved.data : DESKTOP_ICONS_DEFAULT;
                 this.render();
-                this._setupDesktopContextMenu();
-                console.log('%c[Desktop] Desktop icons initialized', 'color:#8B5CF6');
             }
 
             render() {
-                const container = document.getElementById('desktop');
-                if (!container) return;
-
-                // Remove old icons
-                document.querySelectorAll('.desktop-icon').forEach(el => el.remove());
-                this.iconElements.clear();
-
+                const area = document.getElementById('desktop-area');
+                if (!area) return;
+                
+                // Remove old dynamic icons
+                area.querySelectorAll('.desktop-icon').forEach(el => el.remove());
+                
                 this.icons.forEach(icon => {
-                    const el = this._createIconElement(icon);
-                    container.appendChild(el);
-                    this.iconElements.set(icon.id, el);
-                    this._makeDraggable(el, icon);
+                    const div = document.createElement('div');
+                    div.className = 'desktop-icon absolute flex flex-col items-center p-2 rounded-xl cursor-pointer';
+                    div.style.left = icon.x + 'px';
+                    div.style.top = icon.y + 'px';
+                    div.dataset.id = icon.id;
+                    
+                    const color = icon.color || (APP_REGISTRY[icon.appId]?.color?.split(' ')[0]?.replace('from-', '') || '#3B82F6');
+                    const iconClass = icon.icon || (APP_REGISTRY[icon.appId]?.icon || 'fa-file');
+                    
+                    div.innerHTML = `
+                        <div class="icon-wrapper" style="background: linear-gradient(135deg, ${color}, ${color}99)">
+                            <i class="fa-solid ${iconClass} text-white text-xl"></i>
+                        </div>
+                        <span class="text-xs text-center text-white/90 truncate w-full px-1">${icon.label}</span>
+                    `;
+                    
+                    div.addEventListener('dblclick', () => {
+                        if (icon.appId) {
+                            const app = APP_REGISTRY[icon.appId];
+                            if (app) Trosmos.windows.focusOrOpen(app.windowId);
+                        } else if (icon.type === 'file') {
+                            this.openTextEditor({ path: icon.path, name: icon.label });
+                        }
+                    });
+                    
+                    // Simple drag for icons
+                    let dragging = false;
+                    div.addEventListener('mousedown', (e) => {
+                        if (e.button !== 0) return;
+                        dragging = true;
+                        div.classList.add('dragging');
+                        const startX = e.clientX - icon.x;
+                        const startY = e.clientY - icon.y;
+                        
+                        const onMove = (ev) => {
+                            if (!dragging) return;
+                            icon.x = Math.max(0, ev.clientX - startX);
+                            icon.y = Math.max(40, ev.clientY - startY);
+                            div.style.left = icon.x + 'px';
+                            div.style.top = icon.y + 'px';
+                        };
+                        
+                        const onUp = () => {
+                            dragging = false;
+                            div.classList.remove('dragging');
+                            document.removeEventListener('mousemove', onMove);
+                            this.persist();
+                        };
+                        
+                        document.addEventListener('mousemove', onMove);
+                        document.addEventListener('mouseup', onUp, { once: true });
+                    });
+                    
+                    area.appendChild(div);
                 });
             }
 
-            _createIconElement(icon) {
-                const div = document.createElement('div');
-                div.className = `desktop-icon absolute flex flex-col items-center justify-center p-2 rounded-2xl cursor-pointer`;
-                div.style.left = `${icon.x}px`;
-                div.style.top = `${icon.y}px`;
-                div.dataset.id = icon.id;
-                div.dataset.appId = icon.appId || '';
-                div.dataset.path = icon.path || '';
-
-                const isFile = icon.type === 'file';
-                const iconClass = isFile ? icon.icon || 'fa-file' : (APP_REGISTRY[icon.appId]?.icon || 'fa-folder');
-                const iconColor = isFile ? icon.color : '#fff';
-
-                div.innerHTML = `
-                    <div class="icon-wrapper ${isFile ? '' : 'bg-gradient-to-br'} ${!isFile ? (APP_REGISTRY[icon.appId]?.color || 'from-[#3B82F6] to-[#7C3AED]') : ''}" 
-                         style="${isFile ? `background: rgba(255,255,255,0.08); color: ${iconColor}` : ''}">
-                        <i class="fa-solid ${iconClass} text-3xl ${isFile ? '' : 'text-white'}"></i>
-                    </div>
-                    <span class="text-[11px] text-center leading-tight mt-1 px-1 font-medium tracking-tight max-w-[78px] truncate">${icon.label}</span>
-                `;
-
-                // Double click to open
-                div.addEventListener('dblclick', () => {
-                    if (icon.appId) {
-                        Trosmos.windows.open(icon.appId === 'ai-assistant' ? 'ai-window' : APP_REGISTRY[icon.appId].windowId);
-                    } else if (icon.path) {
-                        this.openFile(icon.path);
-                    }
-                });
-
-                // Right click context
-                div.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    Trosmos.desktop.showContextMenu(e, 'icon', icon, div);
-                });
-
-                return div;
-            }
-
-            _makeDraggable(el, iconData) {
-                let isDrag = false, sx, sy, sl, st;
-
-                const onDown = (e) => {
-                    if (e.button !== 0) return;
-                    isDrag = true;
-                    sx = e.clientX; sy = e.clientY;
-                    sl = parseInt(el.style.left); st = parseInt(el.style.top);
-                    el.classList.add('dragging');
-                    document.addEventListener('mousemove', onMove);
-                    document.addEventListener('mouseup', onUp, { once: true });
-                };
-
-                const onMove = (e) => {
-                    if (!isDrag) return;
-                    const dx = e.clientX - sx;
-                    const dy = e.clientY - sy;
-                    el.style.left = (sl + dx) + 'px';
-                    el.style.top = (st + dy) + 'px';
-                };
-
-                const onUp = async () => {
-                    if (!isDrag) return;
-                    isDrag = false;
-                    el.classList.remove('dragging');
-
-                    // Update data
-                    iconData.x = parseInt(el.style.left);
-                    iconData.y = parseInt(el.style.top);
-                    await Trosmos.storage.set('desktopIcons', 'positions', this.icons);
-                };
-
-                el.addEventListener('mousedown', onDown);
-            }
-
-            async openFile(path) {
-                const file = await Trosmos.vfs.getFile(path);
-                if (!file) return Trosmos.notifications.show('File not found', 'error');
-
-                if (file.mime && file.mime.includes('text')) {
-                    this.openTextEditor(file);
-                } else if (file.type === 'folder') {
-                    Trosmos.windows.open('file-manager-window');
-                    // TODO: navigate FM to path (future enhancement)
-                } else {
-                    Trosmos.notifications.show(`Opened ${file.name}`, 'info');
-                }
+            persist() {
+                Trosmos.storage?.put('desktopIcons', { id: 'layout', data: this.icons });
             }
 
             openTextEditor(file) {
-                // Create dynamic premium editor window
-                const editorId = 'editor-' + Date.now();
-                const win = document.createElement('div');
-                win.id = editorId;
-                win.className = 'window fixed glass rounded-3xl overflow-hidden shadow-2xl z-[70] editor-window';
-                win.style.left = '180px';
-                win.style.top = '90px';
-                win.style.width = '720px';
-                win.style.height = '520px';
-
-                win.innerHTML = `
-                    <div class="px-5 py-3.5 border-b border-white/10 flex items-center justify-between bg-white/5 window-header">
-                        <div class="flex items-center gap-x-3">
-                            <i class="fa-solid fa-file-lines text-emerald-400"></i>
-                            <span class="font-semibold tracking-tight">${file.name}</span>
-                            <span class="text-[10px] px-2 py-0.5 bg-white/10 rounded-full text-white/50">Trosmos Editor</span>
+                // Create a simple editor window dynamically
+                let editor = document.getElementById('text-editor-window');
+                if (!editor) {
+                    editor = document.createElement('div');
+                    editor.id = 'text-editor-window';
+                    editor.className = 'window editor-window absolute top-28 left-56 w-[640px] h-[480px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col';
+                    editor.innerHTML = `
+                        <div class="flex items-center justify-between px-5 py-3 border-b border-white/10">
+                            <div class="flex items-center gap-x-3">
+                                <i class="fa-solid fa-file-lines text-emerald-400"></i>
+                                <div class="font-medium text-sm" id="editor-title">Editor</div>
+                            </div>
+                            <div class="window-controls">
+                                <button class="window-control minimize" onclick="Trosmos.windows.minimize('text-editor-window')"><i class="fa-solid fa-minus"></i></button>
+                                <button class="window-control maximize" onclick="Trosmos.windows.maximize('text-editor-window')"><i class="fa-regular fa-square"></i></button>
+                                <button class="window-control close" onclick="Trosmos.windows.close('text-editor-window')"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
                         </div>
-                        <div class="window-controls flex items-center gap-x-1 pr-1">
-                            <button class="window-control minimize"><i class="fa-solid fa-minus text-xs"></i></button>
-                            <button class="window-control maximize"><i class="fa-solid fa-expand text-xs"></i></button>
-                            <button class="window-control close"><i class="fa-solid fa-times text-xs"></i></button>
-                        </div>
-                    </div>
-                    <div class="p-5 flex flex-col h-[calc(100%-52px)]">
-                        <textarea class="flex-1 bg-[#0a0a0f] border border-white/10 rounded-2xl p-5 text-sm editor-window monaco-like resize-y outline-none" style="min-height:320px; font-family: ui-monospace, monospace;">${file.content || ''}</textarea>
-                        <div class="flex justify-between items-center mt-4 text-xs text-white/50">
-                            <div>${file.mime} • ${file.size} bytes • Last edited ${new Date(file.modified).toLocaleDateString()}</div>
-                            <button class="px-5 py-1.5 rounded-2xl bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs font-medium">Save Changes</button>
-                        </div>
-                    </div>
-                `;
-
-                document.getElementById('desktop').appendChild(win);
-                Trosmos.windows.register(win);
-
-                // Wire controls
-                const closeBtn = win.querySelector('.close');
-                closeBtn.onclick = () => { win.remove(); Trosmos.processes.kill(editorId); };
-
-                const saveBtn = win.querySelector('button');
-                const textarea = win.querySelector('textarea');
-                saveBtn.onclick = async () => {
-                    await Trosmos.vfs.updateContent(file.path, textarea.value);
-                    Trosmos.notifications.show('Changes saved to filesystem', 'success');
-                };
-
-                // Auto save on blur
-                textarea.onblur = () => Trosmos.vfs.updateContent(file.path, textarea.value);
-
-                Trosmos.windows.focus(editorId);
-                Trosmos.processes.create('editor', editorId, file.name);
-            }
-
-            showContextMenu(e, type, data, element) {
-                const menu = document.getElementById('context-menu');
-                menu.innerHTML = '';
-                menu.style.left = e.clientX + 'px';
-                menu.style.top = e.clientY + 'px';
-                menu.classList.remove('hidden');
-
-                const addItem = (label, icon, action, danger = false) => {
-                    const item = document.createElement('div');
-                    item.className = `context-item ${danger ? 'danger' : ''}`;
-                    item.innerHTML = `<i class="fa-solid ${icon} w-4"></i> <span>${label}</span>`;
-                    item.onclick = () => {
-                        menu.classList.add('hidden');
-                        action();
-                    };
-                    menu.appendChild(item);
-                };
-
-                if (type === 'desktop') {
-                    addItem('New Folder', 'fa-folder-plus', () => this.createNewFolder());
-                    addItem('New Note', 'fa-file-medical', () => this.createQuickNote());
-                    addItem('Refresh Desktop', 'fa-sync', () => this.render());
-                    addItem('Personalize', 'fa-palette', () => Trosmos.windows.open('settings-window'));
-                } else if (type === 'icon') {
-                    addItem('Open', 'fa-folder-open', () => {
-                        if (data.appId) Trosmos.windows.open(APP_REGISTRY[data.appId].windowId);
-                        else if (data.path) this.openFile(data.path);
-                    });
-                    addItem('Rename', 'fa-edit', async () => {
-                        const newName = prompt('New name:', data.label);
-                        if (newName && data.path) {
-                            await Trosmos.vfs.rename(data.path, newName);
-                            data.label = newName;
-                            this.render();
-                        }
-                    });
-                    addItem('Delete', 'fa-trash', async () => {
-                        if (data.path && confirm('Delete this item?')) {
-                            await Trosmos.vfs.delete(data.path);
-                            this.icons = this.icons.filter(i => i.id !== data.id);
-                            this.render();
-                        }
-                    }, true);
+                        <textarea id="editor-content" class="flex-1 bg-transparent p-5 text-sm monaco-like outline-none resize-none text-white/90"></textarea>
+                    `;
+                    document.body.appendChild(editor);
+                    Trosmos.windows.register('text-editor-window', editor);
                 }
-
-                // Hide on outside click
-                const hide = (ev) => {
-                    if (!menu.contains(ev.target)) {
-                        menu.classList.add('hidden');
-                        document.removeEventListener('click', hide);
-                    }
-                };
-                setTimeout(() => document.addEventListener('click', hide, { once: true }), 10);
-            }
-
-            async createNewFolder() {
-                const name = prompt('Folder name:', 'New Folder');
-                if (!name) return;
-                await Trosmos.vfs.createFolder('/Users/aria', name);
-                // Add desktop icon for it
-                const newIcon = {
-                    id: 'folder-' + Date.now(),
-                    type: 'file',
-                    path: '/Users/aria/' + name,
-                    label: name,
-                    icon: 'fa-folder',
-                    color: '#3B82F6',
-                    x: 280 + Math.random() * 100,
-                    y: 120 + Math.random() * 80
-                };
-                this.icons.push(newIcon);
-                await Trosmos.storage.set('desktopIcons', 'positions', this.icons);
-                this.render();
-            }
-
-            createQuickNote() {
-                const name = prompt('Note name:', 'Quick Note.md');
-                if (!name) return;
-                Trosmos.vfs.createFile('/Users/aria/Documents', name, '# Quick Note\n\n', 'text/markdown')
-                    .then(file => {
-                        if (file) Trosmos.desktop.openTextEditor(file);
-                    });
-            }
-
-            _setupDesktopContextMenu() {
-                const desktop = document.getElementById('desktop');
-                desktop.addEventListener('contextmenu', (e) => {
-                    // Only if clicking on wallpaper / empty area
-                    if (e.target.id === 'desktop' || e.target.id === 'wallpaper' || e.target.closest('#desktop-area')) {
-                        e.preventDefault();
-                        this.showContextMenu(e, 'desktop');
-                    }
-                });
-            }
-        }
-
-        // ------------------ DOCK MANAGER ------------------
-        class DockManager {
-            updateIndicators() {
-                document.querySelectorAll('.dock-icon').forEach(icon => {
-                    const onclick = icon.getAttribute('onclick') || '';
-                    let appKey = '';
-                    if (onclick.includes('openAIAssistant')) appKey = 'ai-assistant';
-                    else if (onclick.includes('openFileManager')) appKey = 'file-manager';
-                    else if (onclick.includes('openBrowser')) appKey = 'browser';
-                    else if (onclick.includes('openAppStore')) appKey = 'app-store';
-                    else if (onclick.includes('openSettings')) appKey = 'settings';
-
-                    if (!appKey) return;
-
-                    const app = APP_REGISTRY[appKey];
-                    if (!app) return;
-
-                    const isOpen = Trosmos.openWindows.has(app.windowId);
-                    const proc = Trosmos.processes.getByWindowId(app.windowId);
-                    const isMin = proc && proc.state === 'minimized';
-
-                    icon.classList.toggle('running', isOpen);
-                    icon.classList.toggle('minimized', isMin);
-
-                    // Click handler upgrade for toggle min/restore
-                    if (!icon.dataset.enhanced) {
-                        icon.dataset.enhanced = 'true';
-                        const originalOnclick = icon.onclick;
-                        icon.onclick = (e) => {
-                            if (isOpen) {
-                                const win = document.getElementById(app.windowId);
-                                if (win && !win.classList.contains('hidden') && !isMin) {
-                                    Trosmos.windows.minimize(app.windowId);
-                                } else {
-                                    Trosmos.windows.focusOrOpen(app.windowId);
-                                }
-                            } else if (originalOnclick) {
-                                originalOnclick.call(icon, e);
-                            }
-                        };
-                    }
-                });
+                
+                document.getElementById('editor-title').textContent = file.name || 'Untitled';
+                document.getElementById('editor-content').value = file.content || '';
+                Trosmos.windows.open('text-editor-window');
             }
         }
 
@@ -2214,26 +1805,10 @@
                 this.tabs = [];
                 this.activeTab = null;
                 this.history = [];
-                this.bookmarks = [];
             }
 
-            async init() {
-                const savedHistory = await Trosmos.storage.get('browserHistory', 'history');
-                if (savedHistory) this.history = savedHistory;
-                const savedBookmarks = await Trosmos.storage.get('browserHistory', 'bookmarks');
-                if (savedBookmarks) this.bookmarks = savedBookmarks;
-
-                // Seed first tab if browser opened
-                setTimeout(() => {
-                    const browserWin = document.getElementById('browser-window');
-                    if (browserWin) {
-                        browserWin.addEventListener('transitionend', () => {
-                            if (!browserWin.classList.contains('hidden') && this.tabs.length === 0) {
-                                this.newTab('trosmos.dev', 'Welcome to Trosmos');
-                            }
-                        }, { once: true });
-                    }
-                }, 800);
+            init() {
+                this.newTab('trosmos.dev', 'Welcome to Trosmos');
             }
 
             newTab(url = 'trosmos.dev', title = 'New Tab') {
@@ -2241,239 +1816,133 @@
                     id: 'tab-' + Date.now(),
                     url,
                     title,
-                    historyStack: [url],
-                    historyIndex: 0
+                    history: [url]
                 };
                 this.tabs.push(tab);
                 this.activeTab = tab;
                 this.renderTabs();
-                this.loadContent(tab);
+                this.navigate(url);
             }
 
             renderTabs() {
-                const bar = document.getElementById('browser-tabbar');
+                const bar = document.getElementById('browser-tabs');
                 if (!bar) return;
                 bar.innerHTML = '';
-
+                
                 this.tabs.forEach(tab => {
                     const tabEl = document.createElement('div');
-                    tabEl.className = `browser-tab flex-shrink-0 cursor-pointer ${tab.id === this.activeTab?.id ? 'active' : ''}`;
+                    tabEl.className = `browser-tab ${tab === this.activeTab ? 'active' : ''}`;
                     tabEl.innerHTML = `
-                        <span class="truncate max-w-[120px]">${tab.title}</span>
-                        <div class="tab-close"><i class="fa-solid fa-times text-[10px]"></i></div>
+                        <span class="truncate flex-1">${tab.title}</span>
+                        <span class="tab-close" data-id="${tab.id}"><i class="fa-solid fa-xmark text-[10px]"></i></span>
                     `;
-                    tabEl.onclick = () => this.switchTab(tab.id);
-                    tabEl.querySelector('.tab-close').onclick = (e) => {
-                        e.stopImmediatePropagation();
-                        this.closeTab(tab.id);
-                    };
+                    tabEl.addEventListener('click', (e) => {
+                        if (e.target.closest('.tab-close')) {
+                            this.closeTab(tab.id);
+                        } else {
+                            this.switchTab(tab.id);
+                        }
+                    });
                     bar.appendChild(tabEl);
                 });
-
-                // New tab button
+                
                 const newBtn = document.createElement('button');
-                newBtn.className = 'ml-2 px-3 py-1 text-white/60 hover:text-white text-xl leading-none';
+                newBtn.className = 'px-3 py-1 text-white/50 hover:text-white text-sm';
                 newBtn.innerHTML = '+';
                 newBtn.onclick = () => this.newTab();
                 bar.appendChild(newBtn);
             }
 
-            switchTab(tabId) {
-                this.activeTab = this.tabs.find(t => t.id === tabId);
+            switchTab(id) {
+                this.activeTab = this.tabs.find(t => t.id === id);
                 this.renderTabs();
-                if (this.activeTab) this.loadContent(this.activeTab);
+                if (this.activeTab) this.navigate(this.activeTab.url);
             }
 
-            closeTab(tabId) {
-                this.tabs = this.tabs.filter(t => t.id !== tabId);
-                if (this.activeTab && this.activeTab.id === tabId) {
+            closeTab(id) {
+                this.tabs = this.tabs.filter(t => t.id !== id);
+                if (this.activeTab?.id === id) {
                     this.activeTab = this.tabs[this.tabs.length - 1] || null;
                 }
-                if (this.tabs.length === 0) {
-                    // close browser window if no tabs
-                    Trosmos.windows.close('browser-window');
-                    return;
-                }
                 this.renderTabs();
-                if (this.activeTab) this.loadContent(this.activeTab);
-            }
-
-            async loadContent(tab) {
-                const content = document.getElementById('browser-content');
-                if (!content) return;
-
-                content.innerHTML = `
-                    <div class="max-w-3xl mx-auto py-8">
-                        <div class="flex items-center gap-x-3 mb-6">
-                            <div class="text-5xl">🌌</div>
-                            <div>
-                                <h3 class="text-2xl font-semibold tracking-tight">${tab.title}</h3>
-                                <div class="text-white/50 text-sm">${tab.url}</div>
-                            </div>
-                        </div>
-                        <div class="glass p-8 rounded-3xl text-sm leading-relaxed">
-                            <p class="mb-4">Welcome to the Trosmos Web Engine — secure, AI-augmented browsing with full system integration.</p>
-                            <div class="flex gap-x-3 mt-6">
-                                <button onclick="Trosmos.browser.askAISummary()" class="px-5 py-2 rounded-2xl bg-white/10 hover:bg-white/15 text-sm flex items-center gap-x-2">
-                                    <i class="fa-solid fa-robot"></i> <span>Ask Trosmos AI to summarize</span>
-                                </button>
-                                <button onclick="Trosmos.browser.simulateNavigate('docs.trosmos.dev')" class="px-5 py-2 rounded-2xl bg-white/10 hover:bg-white/15 text-sm">Visit Docs</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('browser-url').value = tab.url;
+                if (this.activeTab) this.navigate(this.activeTab.url);
+                else {
+                    const content = document.getElementById('browser-content');
+                    if (content) content.innerHTML = '<div class="p-8 text-center text-white/40">No tabs open</div>';
+                }
             }
 
             navigate(url) {
-                if (!this.activeTab) this.newTab(url);
-                else {
-                    this.activeTab.url = url;
-                    this.activeTab.title = url.split('/').pop() || url;
-                    this.activeTab.historyStack = this.activeTab.historyStack.slice(0, this.activeTab.historyIndex + 1);
-                    this.activeTab.historyStack.push(url);
-                    this.activeTab.historyIndex++;
-                }
-                this.renderTabs();
-                this.loadContent(this.activeTab);
-                this.history.unshift(url);
-                if (this.history.length > 20) this.history.pop();
-                Trosmos.storage.set('browserHistory', 'history', this.history);
-            }
-
-            goBack() {
-                if (!this.activeTab || this.activeTab.historyIndex <= 0) return;
-                this.activeTab.historyIndex--;
-                const prev = this.activeTab.historyStack[this.activeTab.historyIndex];
-                this.activeTab.url = prev;
-                this.loadContent(this.activeTab);
-            }
-
-            goForward() {
-                if (!this.activeTab || this.activeTab.historyIndex >= this.activeTab.historyStack.length - 1) return;
-                this.activeTab.historyIndex++;
-                const next = this.activeTab.historyStack[this.activeTab.historyIndex];
-                this.activeTab.url = next;
-                this.loadContent(this.activeTab);
-            }
-
-            reload() {
-                if (this.activeTab) this.loadContent(this.activeTab);
-            }
-
-            askAISummary() {
-                Trosmos.windows.focusOrOpen('ai-window');
-                setTimeout(() => {
-                    const input = document.getElementById('ai-input');
-                    if (input) {
-                        input.value = `Summarize the current page: ${this.activeTab?.url || 'trosmos.dev'}`;
-                        // trigger send
-                        const sendBtn = input.parentElement.querySelector('button');
-                        if (sendBtn) sendBtn.click();
-                    }
-                }, 600);
-            }
-
-            addBookmark() {
                 if (!this.activeTab) return;
-                const bm = { url: this.activeTab.url, title: this.activeTab.title, added: Date.now() };
-                this.bookmarks.push(bm);
-                Trosmos.storage.set('browserHistory', 'bookmarks', this.bookmarks);
-                Trosmos.notifications.show('Bookmark added', 'success', 1400);
-            }
-
-            simulateNavigate(url) {
-                this.navigate(url);
+                this.activeTab.url = url;
+                this.activeTab.title = url.replace(/^https?:\/\//, '').split('/')[0] || 'New Tab';
+                document.getElementById('browser-url').value = url;
+                
+                const content = document.getElementById('browser-content');
+                if (!content) return;
+                
+                // Simulated browser content for demo
+                content.innerHTML = `
+                    <div class="max-w-2xl mx-auto text-center pt-16">
+                        <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center mx-auto mb-6">
+                            <span class="text-white font-bold text-3xl">T</span>
+                        </div>
+                        <h2 class="text-3xl font-display font-semibold mb-3">${this.activeTab.title}</h2>
+                        <p class="text-white/60 mb-8">Secure • Trosmos Web • AI Powered</p>
+                        <div class="inline-flex items-center gap-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-sm">
+                            <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                            Ready
+                        </div>
+                    </div>
+                `;
+                this.renderTabs();
             }
         }
 
-        // Global helpers for browser (called from HTML)
-        window.browserNavigate = () => {
-            const urlInput = document.getElementById('browser-url');
-            if (urlInput && Trosmos.browser) Trosmos.browser.navigate(urlInput.value.trim());
-        };
-        window.browserGoBack = () => Trosmos.browser?.goBack();
-        window.browserGoForward = () => Trosmos.browser?.goForward();
-        window.browserReload = () => Trosmos.browser?.reload();
-        window.browserAddBookmark = () => Trosmos.browser?.addBookmark();
-
-        // ------------------ START MENU MANAGER ------------------
-        class StartMenuManager {
-            init() {
-                const menu = document.getElementById('start-menu');
-                if (!menu) return;
-
-                const input = menu.querySelector('input');
-                if (input) {
-                    input.addEventListener('input', () => this.search(input.value));
-                    input.addEventListener('focus', () => this.showResults());
-                }
+        // ------------------ NOTIFICATION MANAGER ------------------
+        class NotificationManager {
+            constructor() {
+                this.list = [
+                    { id: 1, title: 'System Update', body: 'Trosmos 2.4 is ready to install', time: '2m ago', icon: 'fa-download' },
+                    { id: 2, title: 'AI Insight', body: '3 new suggestions based on your recent files', time: '15m ago', icon: 'fa-robot' },
+                    { id: 3, title: 'Calendar', body: 'Team sync in 30 minutes', time: '28m ago', icon: 'fa-calendar' },
+                    { id: 4, title: 'Security', body: 'Login from new device detected', time: '1h ago', icon: 'fa-shield' }
+                ];
             }
 
-            async search(query) {
-                const menu = document.getElementById('start-menu');
-                if (!menu) return;
-
-                let resultsContainer = menu.querySelector('.search-results');
-                if (!resultsContainer) {
-                    resultsContainer = document.createElement('div');
-                    resultsContainer.className = 'search-results mt-4 pt-4 border-t border-white/10 max-h-[320px] overflow-auto text-sm';
-                    menu.querySelector('.glass').appendChild(resultsContainer);
-                }
-
-                if (!query || query.length < 2) {
-                    resultsContainer.innerHTML = `<div class="text-white/40 px-2 py-3 text-xs">Type to search apps, files, settings...</div>`;
-                    return;
-                }
-
-                const q = query.toLowerCase();
-                let html = '';
-
-                // Apps
-                const matchedApps = Object.values(APP_REGISTRY).filter(a => a.name.toLowerCase().includes(q));
-                if (matchedApps.length) {
-                    html += `<div class="px-3 py-1 text-[10px] text-white/50 tracking-widest">APPS</div>`;
-                    matchedApps.forEach(app => {
-                        html += `<div onclick="Trosmos.startMenu.launchApp('${app.id}'); document.getElementById('start-menu').classList.add('hidden')" class="flex items-center gap-x-3 px-3 py-2 hover:bg-white/5 rounded-2xl cursor-pointer">
-                            <div class="w-8 h-8 rounded-xl bg-gradient-to-br ${app.color} flex items-center justify-center"><i class="fa-solid ${app.icon} text-white text-sm"></i></div>
-                            <span>${app.name}</span>
-                        </div>`;
-                    });
-                }
-
-                // Files from VFS
-                const files = await Trosmos.vfs.search(query);
-                if (files.length) {
-                    html += `<div class="px-3 py-1 text-[10px] text-white/50 tracking-widest mt-3">FILES</div>`;
-                    files.slice(0, 6).forEach(f => {
-                        html += `<div onclick="Trosmos.startMenu.openFile('${f.path}'); document.getElementById('start-menu').classList.add('hidden')" class="flex items-center gap-x-3 px-3 py-2 hover:bg-white/5 rounded-2xl cursor-pointer">
-                            <i class="fa-solid ${f.type === 'folder' ? 'fa-folder text-[#3B82F6]' : 'fa-file-lines text-emerald-400'} w-5"></i>
-                            <span class="truncate">${f.name}</span>
-                        </div>`;
-                    });
-                }
-
-                resultsContainer.innerHTML = html || `<div class="px-3 py-3 text-white/40 text-xs">No matches found</div>`;
+            show(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = 'notification fixed bottom-24 right-6 glass rounded-2xl px-5 py-3 flex items-center gap-x-3 z-[90] depth';
+                const icon = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : 'fa-info text-[#3B82F6]';
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <div>${message}</div>`;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(120%)';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3200);
             }
 
-            showResults() {
-                // Could show recent/recommended here
+            render() {
+                const container = document.getElementById('notification-list');
+                if (!container) return;
+                container.innerHTML = this.list.map(n => `
+                    <div class="p-3 rounded-xl hover:bg-white/5 cursor-pointer">
+                        <div class="flex items-start gap-x-3">
+                            <i class="fa-solid ${n.icon} text-[#3B82F6] mt-0.5"></i>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium">${n.title}</div>
+                                <div class="text-xs text-white/50 truncate">${n.body}</div>
+                            </div>
+                            <div class="text-[10px] text-white/40">${n.time}</div>
+                        </div>
+                    </div>
+                `).join('');
             }
 
-            launchApp(appId) {
-                const app = APP_REGISTRY[appId];
-                if (app) Trosmos.windows.open(app.windowId);
-                document.getElementById('start-menu').classList.add('hidden');
-            }
-
-            async openFile(path) {
-                document.getElementById('start-menu').classList.add('hidden');
-                const file = await Trosmos.vfs.getFile(path);
-                if (file && file.type === 'file' && file.mime && file.mime.includes('text')) {
-                    Trosmos.desktop.openTextEditor(file);
-                } else {
-                    Trosmos.windows.open('file-manager-window');
-                }
+            clear() {
+                this.list = [];
+                this.render();
             }
         }
 
@@ -2514,8 +1983,8 @@
                     return "I'm Trosmos Copilot, built with Grok-inspired intelligence by xAI principles. I have deep integration with the entire operating system — I can control windows, files, settings, and answer any question with real-time reasoning.";
                 }
                 if (lowerMsg.includes('weather')) {
-                    // Update the weather widget live
-                    const weatherWidget = document.querySelector('#desktop .glass');
+                    // Update the weather widget live (targeted by id to avoid clobbering other glass elements)
+                    const weatherWidget = document.getElementById('weather-widget');
                     if (weatherWidget) {
                         weatherWidget.innerHTML = `
                             <div class="flex justify-between items-start">
@@ -2608,9 +2077,33 @@
                 const chat = document.getElementById('ai-chat');
                 if (!chat) return;
                 const div = document.createElement('div');
-                // SECURITY: Use safe DOM construction to prevent XSS. Escape user text, allow limited formatting in AI responses.
-                const escapeHTML = (str) => String(str).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
-                
+
+                // SECURITY: Strict sanitizer for AI HTML. Allows only a tiny whitelist of formatting tags.
+                // User messages always use textContent (zero XSS risk).
+                const sanitizeAIHTML = (raw) => {
+                    const escape = (s) => String(s).replace(/[&<>"']/g, (m) => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    })[m]);
+                    // First escape everything, then re-enable only safe tags we deliberately emit in local replies
+                    let safe = escape(raw);
+                    // Restore intentional simple formatting used by local knowledge base
+                    safe = safe
+                        .replace(/&lt;(\/?b)&gt;/gi, '<$1>')
+                        .replace(/&lt;(\/?strong)&gt;/gi, '<$1>')
+                        .replace(/&lt;(\/?i)&gt;/gi, '<$1>')
+                        .replace(/&lt;(\/?em)&gt;/gi, '<$1>')
+                        .replace(/&lt;br\s*\/?&gt;/gi, '<br>')
+                        .replace(/&lt;span class=(?:&quot;|&#39;)([^&;]+)(?:&quot;|&#39;)&gt;/gi, (m, cls) => {
+                            // only allow known safe utility classes
+                            if (/^(text-emerald-400|text-cyan-400|font-medium|font-semibold)$/.test(cls)) {
+                                return `<span class="${cls}">`;
+                            }
+                            return m;
+                        })
+                        .replace(/&lt;\/span&gt;/gi, '</span>');
+                    return safe.replace(/\n/g, '<br>');
+                };
+
                 if (role === 'user') {
                     div.className = 'flex justify-end';
                     const bubble = document.createElement('div');
@@ -2622,17 +2115,20 @@
                     div.appendChild(bubble);
                 } else {
                     div.className = 'flex gap-x-3';
-                    // For AI: create structure safely, then set innerHTML only for trusted LLM output (or sanitize further in prod)
-                    // Note: In production, run LLM output through DOMPurify or strict allow-list sanitizer before innerHTML
-                    div.innerHTML = `
-                        <div class="w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex-shrink-0 flex items-center justify-center mt-0.5">
-                            <i class="fa-solid fa-robot text-xs text-white"></i>
-                        </div>
-                        <div>
-                            <div class="ai-bubble px-5 py-3 text-sm max-w-[320px]">${escapeHTML(text).replace(/\n/g, '<br>')}</div>
-                            <div class="text-[10px] text-white/40 ml-1 mt-1">Just now</div>
-                        </div>`;
-                    // Re-escape any potential but since escapeHTML first, safe enough for this demo
+                    const avatar = document.createElement('div');
+                    avatar.className = 'w-7 h-7 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex-shrink-0 flex items-center justify-center mt-0.5';
+                    avatar.innerHTML = '<i class="fa-solid fa-robot text-xs text-white"></i>';
+                    const contentWrap = document.createElement('div');
+                    const bubble = document.createElement('div');
+                    bubble.className = 'ai-bubble px-5 py-3 text-sm max-w-[320px]';
+                    bubble.innerHTML = sanitizeAIHTML(text);
+                    const time = document.createElement('div');
+                    time.className = 'text-[10px] text-white/40 ml-1 mt-1';
+                    time.textContent = 'Just now';
+                    contentWrap.appendChild(bubble);
+                    contentWrap.appendChild(time);
+                    div.appendChild(avatar);
+                    div.appendChild(contentWrap);
                 }
                 chat.appendChild(div);
                 chat.scrollTop = chat.scrollHeight;
@@ -2665,246 +2161,147 @@
                     }
                     return `I couldn't find "${target}". Try "open files" or "open browser".`;
                 }
-
-                if (q.includes('create note') || q.includes('new note') || q.includes('create file')) {
-                    const match = q.match(/["'“”]([^"'“”]+)["'“”]/);
-                    const noteName = match ? match[1] + (match[1].endsWith('.md') ? '' : '.md') : 'AI Note ' + new Date().toLocaleDateString().replace(/\//g,'-') + '.md';
-                    const content = `# ${noteName.replace('.md','')}\n\nCreated by Trosmos AI Copilot at ${new Date().toLocaleTimeString()}\n\n`;
-                    const file = await Trosmos.vfs.createFile('/Users/aria/Documents', noteName, content, 'text/markdown');
-                    if (file) {
-                        setTimeout(() => Trosmos.desktop.openTextEditor(file), 800);
-                        return `Created and opened <b>${noteName}</b>.`;
-                    }
-                    return "Couldn't create the note.";
+                
+                if (q.includes('close ') || q.includes('quit ')) {
+                    const target = q.replace(/close |quit /i, '').trim();
+                    if (target.includes('file')) { Trosmos.windows.close('file-manager-window'); return "Files closed."; }
+                    if (target.includes('browser')) { Trosmos.windows.close('browser-window'); return "Browser closed."; }
+                    if (target.includes('setting')) { Trosmos.windows.close('settings-window'); return "Settings closed."; }
+                    if (target.includes('ai') || target.includes('chat')) { Trosmos.windows.close('ai-window'); return "Talk soon!"; }
+                    return "Specify which window to close.";
                 }
 
-                if (q.includes('search') || q.includes('find file') || q.includes('look for')) {
-                    const term = q.replace(/search|find file|look for/i, '').trim();
-                    const results = await Trosmos.vfs.search(term);
+                if (q.includes('create note') || q.includes('new note') || q.includes('write note')) {
+                    const match = query.match(/["'](.+?)["']/) || query.match(/note\s+(.+)/i);
+                    const title = match ? match[1] : 'New Note ' + new Date().toLocaleTimeString();
+                    await Trosmos.vfs.createFile('/Users/aria/Documents', title.endsWith('.md') || title.endsWith('.txt') ? title : title + '.md', `# ${title}\n\nCreated by Trosmos AI.`);
+                    Trosmos.notifications?.show(`Note "${title}" created`, 'success');
+                    return `Created note "${title}" in Documents.`;
+                }
+
+                if (q.includes('search ') || q.startsWith('find ')) {
+                    const term = q.replace(/search |find /i, '').trim();
+                    const results = Trosmos.vfs.search(term);
                     if (results.length === 0) return `No files found matching "${term}".`;
-                    return `Found ${results.length} results:<br>` + results.slice(0,5).map(r => `• ${r.name} <span class="text-white/40">(${r.path})</span>`).join('<br>');
+                    return `Found ${results.length} item(s): ${results.slice(0, 5).map(r => r.name).join(', ')}${results.length > 5 ? '…' : ''}`;
                 }
 
-                if (q.includes('snap ') && q.includes('left')) {
-                    const win = document.querySelector('.window:not(.hidden)');
-                    if (win) Trosmos.windows.snap(win.id, 'left');
-                    return "Window snapped to left.";
-                }
-                if (q.includes('snap ') && q.includes('right')) {
-                    const win = document.querySelector('.window:not(.hidden)');
-                    if (win) Trosmos.windows.snap(win.id, 'right');
-                    return "Window snapped to right.";
-                }
-
-                if (q.includes('list process') || q === 'ps' || q.includes('running apps')) {
-                    const procs = Trosmos.processes.getRunning();
-                    if (procs.length === 0) return "No active processes.";
-                    return "Running processes:<br>" + procs.map(p => `${p.pid} — ${p.name} <span class="text-emerald-400">(${p.state})</span>`).join('<br>');
-                }
-
-                if (q.startsWith('kill ')) {
-                    const pid = parseInt(q.split(' ')[1]);
-                    const proc = Trosmos.processes.processes.get(pid);
-                    if (proc) {
-                        Trosmos.windows.close(proc.windowId);
-                        return `Process ${pid} terminated.`;
-                    }
-                    return "Process ID not found.";
-                }
-
-                if (q.includes('change accent') || q.includes('set color') || q.includes('accent to')) {
-                    let color = '#7C3AED';
-                    if (q.includes('blue')) color = '#3B82F6';
-                    if (q.includes('cyan') || q.includes('teal')) color = '#06B6D4';
-                    if (q.includes('emerald') || q.includes('green')) color = '#10B981';
-                    Trosmos.desktop.changeAccent(color); // reuse enhanced function
-                    return `Accent color changed to ${color}.`;
-                }
-
-                if (q.includes('wallpaper') || q.includes('background')) {
-                    if (q.includes('aurora')) Trosmos.desktop.changeWallpaper('aurora');
-                    else if (q.includes('deep')) Trosmos.desktop.changeWallpaper('deep');
-                    else Trosmos.desktop.changeWallpaper('emerald');
-                    return "Wallpaper updated.";
-                }
-
-                if (q.includes('help') || q.includes('what can you')) {
-                    return `I am a full system copilot powered by Grok. Examples:<br>
-                    • open browser &nbsp;&nbsp;• create note "Meeting Ideas"<br>
-                    • search roadmap &nbsp;&nbsp;• snap files left<br>
-                    • list processes &nbsp;&nbsp;• kill 203<br>
-                    • change accent to purple<br>
-                    • or just ask me anything!`;
-                }
-
-                // === FALLBACK: Use real Grok for natural conversation ===
-                // (all specific OS commands are handled above with instant local actions)
+                // Fall through to general knowledge / Grok
                 this.conversation.push({ role: 'user', content: query });
-                const grokResponse = await this.callGrok(query);
-                this.conversation.push({ role: 'assistant', content: grokResponse });
-                return grokResponse;
+                const reply = await this.callGrok(query);
+                this.conversation.push({ role: 'assistant', content: reply });
+                // Keep conversation short
+                if (this.conversation.length > 16) this.conversation = this.conversation.slice(-12);
+                return reply;
             }
         }
 
-        // Global send for AI (keeps backward)
-        window.sendAIMessage = () => Trosmos.ai?.send();
-
-        // Voice Input using Web Speech API (Production feature - works in Chrome/Edge/Safari)
-        window.startVoiceInput = function() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                Trosmos.notifications?.show("Voice input requires a modern browser (Chrome/Edge recommended)", 'error');
-                return;
+        // ------------------ GLOBAL HELPERS ------------------
+        function openAIAssistant() { Trosmos.ai?.open(); }
+        function openFileManager() { 
+            Trosmos.windows.focusOrOpen('file-manager-window'); 
+            renderFileManager();
+        }
+        function openBrowser() { 
+            Trosmos.windows.focusOrOpen('browser-window'); 
+            if (Trosmos.browser && Trosmos.browser.tabs.length === 0) Trosmos.browser.init();
+        }
+        function openAppStore() { Trosmos.windows.focusOrOpen('app-store-window'); }
+        function openSettings() { Trosmos.windows.focusOrOpen('settings-window'); }
+        
+        function toggleStartMenu() {
+            const menu = document.getElementById('start-menu');
+            menu.classList.toggle('hidden');
+            if (!menu.classList.contains('hidden')) {
+                document.getElementById('start-search')?.focus();
             }
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
+        }
 
-            const input = document.getElementById('ai-input');
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                if (input) {
-                    input.value = transcript;
-                    setTimeout(() => {
-                        if (Trosmos.ai) Trosmos.ai.send();
-                    }, 120);
-                }
-            };
-            recognition.onerror = (e) => {
-                Trosmos.notifications?.show("Voice recognition error. Please try again.", 'error');
-            };
-
-            try {
-                recognition.start();
-                Trosmos.notifications?.show("Listening... Speak now", 'info', 1200);
-            } catch(e) {
-                Trosmos.notifications?.show("Could not start voice input", 'error');
+        function showNotificationCenter() {
+            const nc = document.getElementById('notification-center');
+            nc.classList.toggle('hidden');
+            if (!nc.classList.contains('hidden')) {
+                Trosmos.notifications?.render();
             }
-        };
+        }
 
-        // Command Palette Implementation
-        window.showCommandPalette = function() {
-            const pal = document.getElementById('command-palette');
-            const input = document.getElementById('cmd-input');
-            const results = document.getElementById('cmd-results');
-            if (!pal || !input || !results) return;
+        function clearNotifications() {
+            Trosmos.notifications?.clear();
+        }
 
-            pal.classList.remove('hidden');
-            input.value = '';
-            results.innerHTML = `
-                <div class="px-4 py-2 text-white/50 text-xs">QUICK ACTIONS</div>
-                <div onclick="executeCommandPaletteItem('open browser')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer flex items-center gap-x-3"><i class="fa-solid fa-globe w-5 text-[#06B6D4]"></i> <span>Open Browser</span></div>
-                <div onclick="executeCommandPaletteItem('open files')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer flex items-center gap-x-3"><i class="fa-solid fa-folder w-5 text-[#3B82F6]"></i> <span>Open Files</span></div>
-                <div onclick="executeCommandPaletteItem('open ai')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer flex items-center gap-x-3"><i class="fa-solid fa-robot w-5 text-purple-400"></i> <span>Open Trosmos AI</span></div>
-                <div onclick="executeCommandPaletteItem('create note')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer flex items-center gap-x-3"><i class="fa-solid fa-file-medical w-5 text-emerald-400"></i> <span>Create New Note</span></div>
-                <div onclick="executeCommandPaletteItem('change wallpaper aurora')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer flex items-center gap-x-3"><i class="fa-solid fa-image w-5 text-white/70"></i> <span>Change Wallpaper to Aurora</span></div>
-            `;
-            setTimeout(() => input.focus(), 50);
+        function switchSettingsTab(el, tab) {
+            document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('.settings-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById('settings-' + tab)?.classList.remove('hidden');
+        }
 
-            // Live search
-            input.oninput = () => {
-                const q = input.value.toLowerCase();
-                if (!q) {
-                    results.innerHTML = results.innerHTML; // reset not ideal but works for demo
-                    return;
-                }
-                // Simple filter simulation
-                results.innerHTML = `
-                    <div class="px-4 py-2 text-white/50 text-xs">RESULTS FOR "${q}"</div>
-                    <div onclick="executeCommandPaletteItem('open ${q}')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer">Open ${q}</div>
-                    <div onclick="executeCommandPaletteItem('search ${q}')" class="cmd-item px-4 py-2.5 hover:bg-white/5 rounded-2xl cursor-pointer">Search files for "${q}"</div>
+        function renderFileManager() {
+            const grid = document.getElementById('file-grid');
+            if (!grid || !Trosmos.vfs) return;
+            const files = Trosmos.vfs.list('/Users/aria/Projects').concat(
+                Trosmos.vfs.list('/Users/aria/Documents').filter(f => f.type === 'file')
+            );
+            grid.innerHTML = '';
+            files.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'file-item flex flex-col items-center p-3 rounded-xl cursor-pointer';
+                const icon = f.type === 'folder' ? 'fa-folder text-[#3B82F6]' : 'fa-file-lines text-emerald-400';
+                item.innerHTML = `
+                    <i class="fa-solid ${icon} text-3xl mb-2"></i>
+                    <span class="text-xs text-center truncate w-full">${f.name}</span>
                 `;
-            };
-        };
+                item.ondblclick = () => {
+                    if (f.type === 'file') Trosmos.desktop.openTextEditor(f);
+                };
+                grid.appendChild(item);
+            });
+        }
 
-        window.hideCommandPalette = function() {
-            const pal = document.getElementById('command-palette');
-            if (pal) pal.classList.add('hidden');
-        };
+        function installApp(btn) {
+            btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Installed`;
+            btn.disabled = true;
+            Trosmos.notifications?.show('App installed to your dock', 'success');
+        }
 
-        window.executeCommandPalette = function() {
-            const input = document.getElementById('cmd-input');
-            if (!input || !input.value.trim()) return;
-            const cmd = input.value.trim();
-            window.hideCommandPalette();
-            // Route through AI for natural handling
-            if (Trosmos.ai) {
-                Trosmos.ai.open();
+        function browserNavigate() {
+            const url = document.getElementById('browser-url')?.value || 'trosmos.dev';
+            Trosmos.browser?.navigate(url);
+        }
+        function browserBack() { /* stub */ }
+        function browserForward() { /* stub */ }
+        function browserReload() { browserNavigate(); }
+
+        function showCommandPalette() {
+            document.getElementById('command-palette').classList.remove('hidden');
+            document.getElementById('palette-input')?.focus();
+        }
+        function hideCommandPalette() {
+            document.getElementById('command-palette').classList.add('hidden');
+        }
+        function executeCommandPalette() {
+            const q = document.getElementById('palette-input')?.value.trim();
+            if (!q) return;
+            hideCommandPalette();
+            if (q.toLowerCase().startsWith('open ')) {
+                Trosmos.ai?.processCommand(q);
+            } else {
+                openAIAssistant();
                 setTimeout(() => {
-                    const aiInput = document.getElementById('ai-input');
-                    if (aiInput) {
-                        aiInput.value = cmd;
-                        Trosmos.ai.send();
-                    }
-                }, 600);
-            }
-        };
-
-        window.executeCommandPaletteItem = function(cmd) {
-            window.hideCommandPalette();
-            if (Trosmos.ai) {
-                Trosmos.ai.open();
-                setTimeout(() => {
-                    const aiInput = document.getElementById('ai-input');
-                    if (aiInput) {
-                        aiInput.value = cmd;
-                        Trosmos.ai.send();
-                    }
-                }, 400);
-            }
-        };
-
-        // ------------------ NOTIFICATION MANAGER ------------------
-        class NotificationManager {
-            constructor() {
-                this.list = [];
-            }
-
-            show(message, type = 'info', duration = 2600) {
-                // Toast
-                const toast = document.createElement('div');
-                toast.className = `fixed bottom-8 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-2xl text-sm flex items-center gap-x-3 z-[90] notification`;
-                const icon = type === 'success' ? 'fa-check-circle text-emerald-400' : type === 'error' ? 'fa-exclamation-circle text-red-400' : 'fa-info-circle text-[#3B82F6]';
-                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <div>${message}</div>`;
-                document.body.appendChild(toast);
-
-                setTimeout(() => {
-                    toast.style.transition = 'all 0.3s ease';
-                    toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 200);
-                }, duration);
-
-                // Also add to notification center
-                this.list.unshift({ message, type, time: Date.now() });
-                if (this.list.length > 8) this.list.pop();
-                this._renderCenter();
-            }
-
-            _renderCenter() {
-                const container = document.getElementById('notification-list');
-                if (!container) return;
-                container.innerHTML = this.list.map(n => `
-                    <div class="bg-white/5 p-4 rounded-2xl">
-                        <div class="font-medium flex items-center gap-x-2">
-                            <i class="fa-solid ${n.type === 'success' ? 'fa-check text-emerald-400' : n.type === 'error' ? 'fa-exclamation text-red-400' : 'fa-bell text-[#3B82F6]'}"></i>
-                            <span>${n.message}</span>
-                        </div>
-                        <div class="text-[10px] text-white/40 mt-1">${new Date(n.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                    </div>
-                `).join('');
-            }
-
-            clearAll() {
-                this.list = [];
-                this._renderCenter();
+                    document.getElementById('ai-input').value = q;
+                    sendAIMessage();
+                }, 300);
             }
         }
 
-        window.clearAllNotifications = () => Trosmos.notifications?.clearAll();
+        window.sendAIMessage = () => Trosmos.ai?.send();
+        window.showCommandPalette = showCommandPalette;
+        window.hideCommandPalette = hideCommandPalette;
 
-        // ------------------ ENHANCED GLOBAL FUNCTIONS (Backward + New) ------------------
+        function watchDemo() {
+            Trosmos.notifications?.show('Demo video coming soon in production build', 'info');
+        }
+
         function initializeTailwind() {
             document.documentElement.style.setProperty('--accent', Trosmos.settings.accentColor);
         }
@@ -2928,6 +2325,8 @@
             const login = document.getElementById('login-screen');
             login.classList.remove('hidden');
             login.classList.add('flex');
+            // Accessibility: move focus to first form field
+            setTimeout(() => document.getElementById('login-username')?.focus(), 50);
         }
 
         function performLogin() {
@@ -2955,18 +2354,23 @@
 
             updateClock();
 
-            // Create floating particles (original)
+            // Create floating particles (batched for layout stability / CLS)
             const wallpaper = document.getElementById('wallpaper');
-            for (let i = 0; i < 7; i++) {
-                const p = document.createElement('div');
-                p.className = 'cosmic-particle';
-                p.style.width = (Math.random() * 2.5 + 0.8) + 'px';
-                p.style.height = p.style.width;
-                p.style.left = Math.random() * 100 + '%';
-                p.style.top = Math.random() * 100 + '%';
-                p.style.animationDuration = (20 + Math.random() * 18) + 's';
-                p.style.opacity = 0.35 + Math.random() * 0.3;
-                wallpaper.appendChild(p);
+            if (wallpaper) {
+                const frag = document.createDocumentFragment();
+                for (let i = 0; i < 7; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'cosmic-particle';
+                    p.style.width = (Math.random() * 2.5 + 0.8) + 'px';
+                    p.style.height = p.style.width;
+                    p.style.left = Math.random() * 100 + '%';
+                    p.style.top = Math.random() * 100 + '%';
+                    p.style.animationDuration = (20 + Math.random() * 18) + 's';
+                    p.style.opacity = 0.35 + Math.random() * 0.3;
+                    p.setAttribute('aria-hidden', 'true');
+                    frag.appendChild(p);
+                }
+                wallpaper.appendChild(frag);
             }
 
             // Initialize all production systems
@@ -2981,163 +2385,21 @@
             if (!Trosmos.processes) Trosmos.processes = new ProcessManager();
             if (!Trosmos.windows) {
                 Trosmos.windows = new WindowManager();
-                await Trosmos.windows.init();
+                await Trosmos.windows.loadStates();
             }
             if (!Trosmos.desktop) {
                 Trosmos.desktop = new DesktopManager();
                 await Trosmos.desktop.init();
             }
-            if (!Trosmos.dock) Trosmos.dock = new DockManager();
-            if (!Trosmos.browser) {
-                Trosmos.browser = new BrowserManager();
-                await Trosmos.browser.init();
-            }
+            if (!Trosmos.browser) Trosmos.browser = new BrowserManager();
             if (!Trosmos.ai) Trosmos.ai = new AIModule();
             if (!Trosmos.notifications) Trosmos.notifications = new NotificationManager();
-            if (!Trosmos.startMenu) {
-                Trosmos.startMenu = new StartMenuManager();
-                Trosmos.startMenu.init();
-            }
 
-            // Restore accent & wallpaper from storage
-            const savedAccent = await Trosmos.storage.get('settings', 'accentColor');
-            if (savedAccent) {
-                Trosmos.settings.accentColor = savedAccent;
-                document.documentElement.style.setProperty('--accent', savedAccent);
-            }
-            const savedWallpaper = await Trosmos.storage.get('settings', 'wallpaper');
-            if (savedWallpaper) Trosmos.desktop.changeWallpaper(savedWallpaper);
-
-            // Welcome
-            setTimeout(() => {
-                Trosmos.notifications.show("Welcome back, Aria. All systems nominal.", 'success', 3200);
-            }, 1600);
-
-            // Pre-attach to existing static windows
-            document.querySelectorAll('.window').forEach(w => Trosmos.windows.register(w));
-
-            console.log('%c[Trosmos OS v2] Production systems initialized • IndexedDB • VFS • Process & Window Manager • AI Copilot ready', 'color:#3B82F6; font-size:9px');
-        }
-
-        // Enhanced open/close wrappers (preserve old API)
-        function openWindow(id) { Trosmos.windows?.open(id) || document.getElementById(id)?.classList.remove('hidden'); }
-        function closeWindow(id) { Trosmos.windows?.close(id) || document.getElementById(id)?.classList.add('hidden'); }
-
-        function openAIAssistant() { Trosmos.ai?.open() || openWindow('ai-window'); }
-        function openFileManager() { Trosmos.windows?.open('file-manager-window'); }
-        function openBrowser() { Trosmos.windows?.open('browser-window'); }
-        function openAppStore() { Trosmos.windows?.open('app-store-window'); }
-        function openSettings() {
-            Trosmos.windows?.open('settings-window');
-            // default tab
-            setTimeout(() => {
-                document.querySelectorAll('.settings-tab').forEach(t => t.classList.add('hidden'));
-                document.getElementById('settings-general')?.classList.remove('hidden');
-                document.querySelector('.settings-nav-item')?.classList.add('active');
-            }, 50);
-        }
-
-        function toggleStartMenu() {
-            const m = document.getElementById('start-menu');
-            m.classList.toggle('hidden');
-        }
-
-        function showNotificationCenter() {
-            document.getElementById('notification-center').classList.remove('hidden');
-            Trosmos.notifications?._renderCenter();
-        }
-        function hideNotificationCenter() {
-            document.getElementById('notification-center').classList.add('hidden');
-        }
-
-        function showToast(msg) { Trosmos.notifications?.show(msg); }
-
-        // Enhanced settings & wallpaper (persist + apply globally)
-        function changeAccentColor(color) {
-            Trosmos.settings.accentColor = color;
-            document.documentElement.style.setProperty('--accent', color);
-            Trosmos.storage.set('settings', 'accentColor', color);
-
-            // Update visible gradients
-            document.querySelectorAll('.from-\\[\\#3B82F6\\]').forEach(el => {
-                el.style.background = `linear-gradient(to right, ${color}, #7C3AED)`;
+            // Pre-register static windows
+            ['ai-window', 'file-manager-window', 'browser-window', 'settings-window', 'app-store-window'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) Trosmos.windows.register(id, el);
             });
-            showToast("System accent color updated");
-        }
-
-        DesktopManager.prototype.changeAccent = changeAccentColor; // allow from desktop
-        DesktopManager.prototype.changeWallpaper = function(type) {
-            const wp = document.getElementById('wallpaper');
-            if (!wp) return;
-            Trosmos.settings.wallpaper = type;
-            Trosmos.storage.set('settings', 'wallpaper', type);
-
-            if (type === 'aurora') {
-                wp.style.background = '#09090B';
-                wp.style.backgroundImage = `radial-gradient(circle at 25% 30%, rgba(124,58,237,0.22) 0%, transparent 45%), radial-gradient(circle at 75% 65%, rgba(6,182,212,0.18) 0%, transparent 50%)`;
-            } else if (type === 'deep') {
-                wp.style.background = 'linear-gradient(#0a0a0f, #111827)';
-                wp.style.backgroundImage = 'none';
-            } else if (type === 'emerald') {
-                wp.style.background = 'linear-gradient(#052e16, #09090B)';
-                wp.style.backgroundImage = 'none';
-            } else {
-                wp.style.background = '#09090B';
-                wp.style.backgroundImage = 'none';
-            }
-            showToast("Wallpaper changed");
-        };
-
-        function changeWallpaper(type) {
-            Trosmos.desktop?.changeWallpaper(type);
-        }
-
-        // File manager dynamic (called when opened)
-        async function refreshFileManager() {
-            const grid = document.querySelector('#file-manager-window .file-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-
-            const files = await Trosmos.vfs.list('/Users/aria/Projects'); // default view
-            files.forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'file-item p-4 rounded-2xl flex flex-col items-center text-center cursor-pointer hover:bg-white/5';
-                item.innerHTML = `
-                    <i class="fa-solid ${f.type === 'folder' ? 'fa-folder text-[#3B82F6]' : 'fa-file-lines text-emerald-400'} text-5xl mb-3"></i>
-                    <div class="font-medium text-sm">${f.name}</div>
-                    <div class="text-[10px] text-white/50">${f.type === 'folder' ? (f.modified ? new Date(f.modified).toLocaleDateString() : '') : (f.size + ' bytes')}</div>
-                `;
-                item.onclick = () => {
-                    if (f.type === 'folder') {
-                        // could navigate deeper in future
-                        showToast(`Opened folder: ${f.name}`);
-                    } else {
-                        Trosmos.desktop.openTextEditor(f);
-                        closeWindow('file-manager-window');
-                    }
-                };
-                item.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    Trosmos.desktop.showContextMenu(e, 'icon', { path: f.path, label: f.name, type: f.type }, item);
-                };
-                grid.appendChild(item);
-            });
-        }
-
-        // Override original openFileManager to refresh
-        const _origOpenFM = window.openFileManager;
-        window.openFileManager = function() {
-            openWindow('file-manager-window');
-            setTimeout(refreshFileManager, 80);
-        };
-
-        // Install app keeps original but adds notification
-        function installApp(btn) {
-            btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> Installed`;
-            btn.style.background = 'rgba(16,185,129,0.2)';
-            btn.style.color = '#10B981';
-            btn.disabled = true;
-            Trosmos.notifications?.show('App installed to your dock', 'success');
         }
 
         // Keyboard shortcuts (enhanced)
@@ -3169,6 +2431,7 @@
                     }
                     document.getElementById('start-menu').classList.add('hidden');
                     document.getElementById('notification-center').classList.add('hidden');
+                    document.getElementById('command-palette')?.classList.add('hidden');
                 }
                 // Win/Cmd + number for quick dock launch (example)
                 if ((e.metaKey || e.ctrlKey) && ['1','2','3','4','5'].includes(e.key)) {
