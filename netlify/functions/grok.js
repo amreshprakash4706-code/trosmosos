@@ -4,6 +4,14 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
+const SYSTEM_INSTRUCTION = `You are Trosmos AI, the premium intelligent copilot inside Trosmos OS — a beautiful AI-native operating system designed from the ground up for the AI era.
+
+Be helpful, concise, friendly, and witty. Prefer short, actionable answers over long essays.
+
+You have deep awareness of the OS context (windows, files, settings, apps). The frontend already executes OS actions such as opening apps, creating files, or changing settings when the user issues clear commands. When users ask for those actions, respond naturally and confirm what was done without pretending to execute them yourself or inventing fake system state.
+
+Never invent private user data. Stay in character as the OS copilot. Use light humor when appropriate.`;
+
 export async function handler(event) {
   const headers = {
     "Content-Type": "application/json",
@@ -88,48 +96,42 @@ export async function handler(event) {
       };
     }
 
-    // Keep only recent conversation
+    // Sanitize and keep only recent valid turns (history only — current message is separate)
     const safeConversation = conversation
       .filter(
         (m) =>
           m &&
           typeof m.role === "string" &&
-          typeof m.content === "string"
+          typeof m.content === "string" &&
+          m.content.trim().length > 0
       )
-      .slice(-12);
+      .slice(-12)
+      .map((m) => ({
+        role: m.role === "assistant" || m.role === "model" ? "model" : "user",
+        parts: [{ text: String(m.content).slice(0, 4000) }],
+      }));
 
-    // Gemini prompt
-    const prompt = `
-You are Trosmos AI, the premium intelligent copilot inside Trosmos OS — a beautiful AI-native operating system.
-
-Be helpful, concise, friendly, and witty.
-
-The frontend handles OS actions like opening apps and changing settings. If users ask for those actions, respond naturally without pretending to execute them.
-
-Conversation:
-
-${safeConversation
-  .map(
-    (m) =>
-      `${m.role === "assistant" ? "Assistant" : "User"}: ${m.content}`
-  )
-  .join("\n")}
-
-User: ${message}
-
-Assistant:
-`;
+    // Structured multi-turn contents (proper Gemini conversation history)
+    const contents = [
+      ...safeConversation,
+      {
+        role: "user",
+        parts: [{ text: message.trim() }],
+      },
+    ];
 
     const result = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: prompt,
+      contents,
       config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
         temperature: 0.7,
         maxOutputTokens: 600,
+        topP: 0.95,
       },
     });
 
-    const reply = result.text?.trim();
+    const reply = (result.text || "").trim();
 
     if (!reply) {
       return {
@@ -149,14 +151,19 @@ Assistant:
       }),
     };
   } catch (err) {
-    console.error("Gemini Error:", err);
+    console.error("Gemini Error:", err?.message || err);
+
+    // Distinguish configuration / auth errors from transient ones
+    const msg = String(err?.message || err || "Unknown error");
+    const isConfig =
+      /API key|authentication|permission|quota|billing/i.test(msg);
 
     return {
-      statusCode: 500,
+      statusCode: isConfig ? 503 : 500,
       headers,
       body: JSON.stringify({
-        error: "Internal server error",
-        details: err.message,
+        error: isConfig ? "AI service configuration error" : "Internal server error",
+        details: msg.slice(0, 200),
       }),
     };
   }

@@ -30,7 +30,7 @@
     <!-- PWA & Mobile -->
     <meta name="theme-color" content="#09090B">
     <!-- Security: Content Security Policy (demo allows CDNs & inline for Tailwind/FA; tighten for production build) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com https://api.groq.com https://*.netlify.app; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://api.groq.com https://*.netlify.app; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com https://*.netlify.app; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; img-src 'self' data: https:; connect-src 'self' https://*.netlify.app; frame-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Trosmos OS">
@@ -66,6 +66,18 @@
 
         body {
             font-family: 'Inter', system_ui, sans-serif;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
 
         .font-display {
@@ -874,12 +886,17 @@
         
         <div class="p-4 border-t border-white/10">
             <div class="flex items-center gap-x-2">
+                <label for="ai-input" class="sr-only">Message to Trosmos AI</label>
                 <input id="ai-input" type="text" placeholder="Ask anything or give a command..."
                        onkeypress="if (event.key === 'Enter') sendAIMessage()"
+                       autocomplete="off"
+                       aria-label="Message to Trosmos AI"
                        class="flex-1 bg-white/5 border border-white/15 rounded-2xl px-4 py-3 text-sm outline-none focus:border-[#3B82F6]/50">
                 <button onclick="sendAIMessage()" 
+                        type="button"
+                        aria-label="Send message"
                         class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center hover:brightness-110 transition-all">
-                    <i class="fa-solid fa-paper-plane text-white text-sm"></i>
+                    <i class="fa-solid fa-paper-plane text-white text-sm" aria-hidden="true"></i>
                 </button>
             </div>
             <div class="text-[10px] text-white/40 mt-2 text-center">Natural language • Voice input enabled • Context-aware • Powered by Grok</div>
@@ -1187,6 +1204,17 @@
         // Preserves 100% of original visual identity & features
         // ============================================================
 
+        // XSS-safe HTML escape (used for any user-controlled or dynamic strings placed into innerHTML)
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // ------------------ GLOBAL STATE & REGISTRY ------------------
         let Trosmos = {
             storage: null,
@@ -1299,7 +1327,12 @@
 
             async put(storeName, data) {
                 return new Promise((resolve, reject) => {
-                    // Guard: every record written to our stores must carry the keyPath property.
+                    if (!this.db) {
+                        reject(new Error('StorageManager.put: database not initialized'));
+                        return;
+                    }
+                    // Guard: every record written to our stores must carry the keyPath property "id".
+                    // This is the exact cause of: "Failed to execute 'put' on 'IDBObjectStore': Evaluating the object store's key path did not yield a value."
                     if (!data || typeof data !== 'object' || data.id === undefined || data.id === null) {
                         const err = new Error(
                             `StorageManager.put: object for store "${storeName}" is missing required keyPath property "id". ` +
@@ -1309,31 +1342,52 @@
                         reject(err);
                         return;
                     }
-                    const tx = this.db.transaction(storeName, 'readwrite');
-                    const store = tx.objectStore(storeName);
-                    const req = store.put(data);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
+                    try {
+                        const tx = this.db.transaction(storeName, 'readwrite');
+                        const store = tx.objectStore(storeName);
+                        const req = store.put(data);
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                        tx.onerror = () => reject(tx.error);
+                    } catch (e) {
+                        reject(e);
+                    }
                 });
             }
 
             async get(storeName, key) {
                 return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction(storeName, 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const req = store.get(key);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
+                    if (!this.db) {
+                        resolve(undefined);
+                        return;
+                    }
+                    try {
+                        const tx = this.db.transaction(storeName, 'readonly');
+                        const store = tx.objectStore(storeName);
+                        const req = store.get(key);
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                    } catch (e) {
+                        reject(e);
+                    }
                 });
             }
 
             async getAll(storeName) {
                 return new Promise((resolve, reject) => {
-                    const tx = this.db.transaction(storeName, 'readonly');
-                    const store = tx.objectStore(storeName);
-                    const req = store.getAll();
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => reject(req.error);
+                    if (!this.db) {
+                        resolve([]);
+                        return;
+                    }
+                    try {
+                        const tx = this.db.transaction(storeName, 'readonly');
+                        const store = tx.objectStore(storeName);
+                        const req = store.getAll();
+                        req.onsuccess = () => resolve(req.result);
+                        req.onerror = () => reject(req.error);
+                    } catch (e) {
+                        reject(e);
+                    }
                 });
             }
         }
@@ -1540,6 +1594,8 @@
             }
 
             makeDraggable(win) {
+                if (win.dataset.draggable === '1') return; // prevent duplicate listeners on re-register
+                win.dataset.draggable = '1';
                 const header = win.querySelector('.flex.items-center.justify-between') || win.firstElementChild;
                 if (!header) return;
                 
@@ -1737,11 +1793,15 @@
                     const iconClass = icon.icon || (APP_REGISTRY[icon.appId]?.icon || 'fa-file');
                     
                     div.innerHTML = `
-                        <div class="icon-wrapper" style="background: linear-gradient(135deg, ${color}, ${color}99)">
-                            <i class="fa-solid ${iconClass} text-white text-xl"></i>
+                        <div class="icon-wrapper" style="background: linear-gradient(135deg, ${escapeHtml(color)}, ${escapeHtml(color)}99)">
+                            <i class="fa-solid ${escapeHtml(iconClass)} text-white text-xl" aria-hidden="true"></i>
                         </div>
-                        <span class="text-xs text-center text-white/90 truncate w-full px-1">${icon.label}</span>
+                        <span class="text-xs text-center text-white/90 truncate w-full px-1"></span>
                     `;
+                    div.querySelector('span').textContent = icon.label || '';
+                    div.setAttribute('role', 'button');
+                    div.setAttribute('tabindex', '0');
+                    div.setAttribute('aria-label', icon.label || 'Desktop icon');
                     
                     div.addEventListener('dblclick', () => {
                         if (icon.appId) {
@@ -1853,8 +1913,8 @@
                     const tabEl = document.createElement('div');
                     tabEl.className = `browser-tab ${tab === this.activeTab ? 'active' : ''}`;
                     tabEl.innerHTML = `
-                        <span class="truncate flex-1">${tab.title}</span>
-                        <span class="tab-close" data-id="${tab.id}"><i class="fa-solid fa-xmark text-[10px]"></i></span>
+                        <span class="truncate flex-1">${escapeHtml(tab.title)}</span>
+                        <span class="tab-close" data-id="${escapeHtml(tab.id)}" role="button" aria-label="Close tab"><i class="fa-solid fa-xmark text-[10px]"></i></span>
                     `;
                     tabEl.addEventListener('click', (e) => {
                         if (e.target.closest('.tab-close')) {
@@ -1895,19 +1955,20 @@
             navigate(url) {
                 if (!this.activeTab) return;
                 this.activeTab.url = url;
-                this.activeTab.title = url.replace(/^https?:\/\//, '').split('/')[0] || 'New Tab';
-                document.getElementById('browser-url').value = url;
+                this.activeTab.title = (url.replace(/^https?:\/\//, '').split('/')[0] || 'New Tab').slice(0, 64);
+                const urlInput = document.getElementById('browser-url');
+                if (urlInput) urlInput.value = url;
                 
                 const content = document.getElementById('browser-content');
                 if (!content) return;
                 
-                // Simulated browser content for demo
+                // Simulated browser content for demo (title escaped against XSS)
                 content.innerHTML = `
                     <div class="max-w-2xl mx-auto text-center pt-16">
                         <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center mx-auto mb-6">
                             <span class="text-white font-bold text-3xl">T</span>
                         </div>
-                        <h2 class="text-3xl font-display font-semibold mb-3">${this.activeTab.title}</h2>
+                        <h2 class="text-3xl font-display font-semibold mb-3">${escapeHtml(this.activeTab.title)}</h2>
                         <p class="text-white/60 mb-8">Secure • Trosmos Web • AI Powered</p>
                         <div class="inline-flex items-center gap-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-sm">
                             <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
@@ -1934,7 +1995,10 @@
                 const toast = document.createElement('div');
                 toast.className = 'notification fixed bottom-24 right-6 glass rounded-2xl px-5 py-3 flex items-center gap-x-3 z-[90] depth';
                 const icon = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : 'fa-info text-[#3B82F6]';
-                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <div>${message}</div>`;
+                toast.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i> <div></div>`;
+                toast.querySelector('div').textContent = message; // Safe: never inject raw HTML
+                toast.setAttribute('role', 'status');
+                toast.setAttribute('aria-live', 'polite');
                 document.body.appendChild(toast);
                 setTimeout(() => {
                     toast.style.opacity = '0';
@@ -1973,9 +2037,9 @@
             }
 
             async callGrok(message) {
-                // HYBRID AI: Try real backend (Netlify + Groq) first for authentic Grok-like responses.
-                // Falls back to high-quality local knowledge base if offline, no key, or error.
-                // This makes the demo production-ready and resilient.
+                // HYBRID AI: Try real backend (Netlify Function + Gemini) first.
+                // Falls back to high-quality local knowledge base if offline, no key, timeout, or error.
+                // Conversation history is previous turns only (current message sent separately).
                 try {
                     const res = await fetch('/.netlify/functions/grok', {
                         method: 'POST',
@@ -1984,15 +2048,21 @@
                             message, 
                             conversation: this.conversation || [] 
                         }),
-                        signal: AbortSignal.timeout(8000)
+                        signal: AbortSignal.timeout(10000)
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        if (data.reply) return data.reply;
+                        if (data && typeof data.reply === 'string' && data.reply.trim()) {
+                            return data.reply.trim();
+                        }
+                    } else {
+                        // Non-OK: log for diagnostics but still fall through to local (demo resilience)
+                        const errBody = await res.json().catch(() => ({}));
+                        console.debug('AI backend status', res.status, errBody.error || errBody);
                     }
                 } catch (e) {
-                    // Silent fallback to local intelligence (common in demos / offline)
-                    console.debug('Netlify AI unavailable, using local fallback:', e.message);
+                    // Network / timeout / abort → local intelligence (common in demos / offline / local file://)
+                    console.debug('Netlify AI unavailable, using local fallback:', e.message || e);
                 }
 
                 // === LOCAL FALLBACK (always high quality, zero latency, works offline) ===
@@ -2088,9 +2158,15 @@
                 chat.scrollTop = chat.scrollHeight;
 
                 // Call Grok (or local command) — thinking stays until response arrives
-                const response = await this.processCommand(value);
-                thinking.remove();
-                this.addMessage('ai', response);
+                try {
+                    const response = await this.processCommand(value);
+                    thinking.remove();
+                    this.addMessage('ai', response || "I didn't catch that. Could you rephrase?");
+                } catch (err) {
+                    console.error('AI processCommand error:', err);
+                    thinking.remove();
+                    this.addMessage('ai', "Something went wrong processing that request. Please try again.");
+                }
             }
 
             addMessage(role, text) {
@@ -2206,9 +2282,9 @@
                     return `Found ${results.length} item(s): ${results.slice(0, 5).map(r => r.name).join(', ')}${results.length > 5 ? '…' : ''}`;
                 }
 
-                // Fall through to general knowledge / Grok
-                this.conversation.push({ role: 'user', content: query });
+                // Fall through to general knowledge / Grok (history is previous turns only)
                 const reply = await this.callGrok(query);
+                this.conversation.push({ role: 'user', content: query });
                 this.conversation.push({ role: 'assistant', content: reply });
                 // Keep conversation short
                 if (this.conversation.length > 16) this.conversation = this.conversation.slice(-12);
@@ -2266,14 +2342,19 @@
             files.forEach(f => {
                 const item = document.createElement('div');
                 item.className = 'file-item flex flex-col items-center p-3 rounded-xl cursor-pointer';
+                item.setAttribute('role', 'button');
+                item.setAttribute('tabindex', '0');
                 const icon = f.type === 'folder' ? 'fa-folder text-[#3B82F6]' : 'fa-file-lines text-emerald-400';
                 item.innerHTML = `
-                    <i class="fa-solid ${icon} text-3xl mb-2"></i>
-                    <span class="text-xs text-center truncate w-full">${f.name}</span>
+                    <i class="fa-solid ${icon} text-3xl mb-2" aria-hidden="true"></i>
+                    <span class="text-xs text-center truncate w-full"></span>
                 `;
-                item.ondblclick = () => {
-                    if (f.type === 'file') Trosmos.desktop.openTextEditor(f);
+                item.querySelector('span').textContent = f.name || '';
+                const open = () => {
+                    if (f.type === 'file') Trosmos.desktop?.openTextEditor(f);
                 };
+                item.ondblclick = open;
+                item.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } };
                 grid.appendChild(item);
             });
         }
@@ -2326,6 +2407,7 @@
             document.documentElement.style.setProperty('--accent', Trosmos.settings.accentColor);
         }
 
+        let _clockInterval = null;
         function updateClock() {
             const timeEl = document.getElementById('desktop-time');
             const dateEl = document.getElementById('desktop-date');
@@ -2337,7 +2419,8 @@
                 dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
             };
             update();
-            setInterval(update, 30000);
+            if (_clockInterval) clearInterval(_clockInterval);
+            _clockInterval = setInterval(update, 30000);
         }
 
         function showLogin() {

@@ -1,5 +1,5 @@
 // Trosmos OS Service Worker - Production-grade offline support
-const CACHE_NAME = 'trosmos-os-v2';
+const CACHE_NAME = 'trosmos-os-v3';
 const ASSETS = [
   '/',
   '/index.html',
