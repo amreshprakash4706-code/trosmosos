@@ -1,44 +1,59 @@
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
 export async function handler(event) {
-  // CORS for browser clients (Netlify Functions)
   const headers = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS"
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers, body: "" };
+    return {
+      statusCode: 204,
+      headers,
+      body: "",
+    };
   }
 
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ error: "Method not allowed" })
+      body: JSON.stringify({
+        error: "Method not allowed",
+      }),
     };
   }
 
   try {
     let body;
+
     try {
       body = JSON.parse(event.body || "{}");
     } catch {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Invalid JSON body" })
+        body: JSON.stringify({
+          error: "Invalid JSON body",
+        }),
       };
     }
 
     const { message, conversation = [] } = body;
 
-    // Input validation
     if (typeof message !== "string" || !message.trim()) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Message is required and must be a non-empty string" })
+        body: JSON.stringify({
+          error: "Message is required and must be a non-empty string",
+        }),
       };
     }
 
@@ -46,7 +61,9 @@ export async function handler(event) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Message too long (max 2000 characters)" })
+        body: JSON.stringify({
+          error: "Message too long (max 2000 characters)",
+        }),
       };
     }
 
@@ -54,91 +71,93 @@ export async function handler(event) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Conversation must be an array" })
+        body: JSON.stringify({
+          error: "Conversation must be an array",
+        }),
       };
     }
 
-    // Limit conversation history for safety / cost
-    const safeConversation = conversation
-      .filter((m) => m && typeof m.role === "string" && typeof m.content === "string")
-      .slice(-12)
-      .map((m) => ({
-        role: m.role === "assistant" || m.role === "user" ? m.role : "user",
-        content: String(m.content).slice(0, 1500)
-      }));
-
-    const messages = [
-      {
-        role: "system",
-        content: "You are Trosmos AI, the premium intelligent copilot inside Trosmos OS — a beautiful AI-native operating system. Be helpful, concise, friendly, and witty. Answer questions naturally. The frontend handles direct OS actions (like opening apps or changing settings), so if the user asks for those you can playfully confirm or just respond helpfully."
-      },
-      ...safeConversation,
-      { role: "user", content: message.trim() }
-    ];
-
-    if (!process.env.GROQ_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       return {
         statusCode: 503,
         headers,
         body: JSON.stringify({
           error: "AI service not configured",
-          details: "GROQ_API_KEY environment variable is missing"
-        })
+          details: "GEMINI_API_KEY environment variable is missing",
+        }),
       };
     }
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: messages,
-        stream: false,
+    // Keep only recent conversation
+    const safeConversation = conversation
+      .filter(
+        (m) =>
+          m &&
+          typeof m.role === "string" &&
+          typeof m.content === "string"
+      )
+      .slice(-12);
+
+    // Gemini prompt
+    const prompt = `
+You are Trosmos AI, the premium intelligent copilot inside Trosmos OS — a beautiful AI-native operating system.
+
+Be helpful, concise, friendly, and witty.
+
+The frontend handles OS actions like opening apps and changing settings. If users ask for those actions, respond naturally without pretending to execute them.
+
+Conversation:
+
+${safeConversation
+  .map(
+    (m) =>
+      `${m.role === "assistant" ? "Assistant" : "User"}: ${m.content}`
+  )
+  .join("\n")}
+
+User: ${message}
+
+Assistant:
+`;
+
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
         temperature: 0.7,
-        max_tokens: 600
-      })
+        maxOutputTokens: 600,
+      },
     });
 
-    const data = await response.json();
+    const reply = result.text?.trim();
 
-    if (!response.ok) {
-      return {
-        statusCode: response.status,
-        headers,
-        body: JSON.stringify({
-          error: data.error?.message || "Upstream AI error",
-          details: data
-        })
-      };
-    }
-
-    const reply = data.choices?.[0]?.message?.content;
     if (!reply) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({ error: "Empty response from AI provider" })
+        body: JSON.stringify({
+          error: "Empty response from Gemini",
+        }),
       };
     }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ reply })
+      body: JSON.stringify({
+        reply,
+      }),
     };
-
   } catch (err) {
-    console.error("AI function error:", err);
+    console.error("Gemini Error:", err);
+
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: "Internal server error",
-        details: "Check that GROQ_API_KEY is set correctly in Netlify"
-      })
+        details: err.message,
+      }),
     };
   }
 }

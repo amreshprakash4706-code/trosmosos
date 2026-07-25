@@ -6,5 +6,8 @@
   "private": true,
   "scripts": {
     "start": "npx serve ."
+  },
+  "dependencies": {
+    "@google/genai": "^2.13.0"
   }
 }
