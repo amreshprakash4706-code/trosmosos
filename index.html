@@ -1260,7 +1260,11 @@
         class StorageManager {
             constructor() {
                 this.dbName = 'TrosmosOS_v2';
-                this.version = 2;
+                // Bumped to 3 to force schema migration for any prior installs that
+                // created object stores with a different (or missing) keyPath.
+                // Previous upgrade handlers only created missing stores and never
+                // recreated existing ones when the keyPath contract changed.
+                this.version = 3;
                 this.db = null;
             }
 
@@ -1271,10 +1275,16 @@
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
                         const stores = ['filesystem', 'settings', 'windowStates', 'browserHistory', 'notifications', 'desktopIcons'];
+                        // Always delete + recreate so that keyPath is guaranteed to be 'id'.
+                        // This safely migrates away from any previous incompatible schema
+                        // (e.g. missing keyPath, different keyPath, or autoIncrement-only).
+                        // Demo data is reseeded by VirtualFileSystem / DesktopManager, so
+                        // losing prior persisted records is acceptable and intentional.
                         stores.forEach(name => {
-                            if (!db.objectStoreNames.contains(name)) {
-                                db.createObjectStore(name, { keyPath: 'id' });
+                            if (db.objectStoreNames.contains(name)) {
+                                db.deleteObjectStore(name);
                             }
+                            db.createObjectStore(name, { keyPath: 'id' });
                         });
                     };
                     
@@ -1289,6 +1299,16 @@
 
             async put(storeName, data) {
                 return new Promise((resolve, reject) => {
+                    // Guard: every record written to our stores must carry the keyPath property.
+                    if (!data || typeof data !== 'object' || data.id === undefined || data.id === null) {
+                        const err = new Error(
+                            `StorageManager.put: object for store "${storeName}" is missing required keyPath property "id". ` +
+                            `Received: ${JSON.stringify(data && typeof data === 'object' ? Object.keys(data) : data)}`
+                        );
+                        console.error(err.message, data);
+                        reject(err);
+                        return;
+                    }
                     const tx = this.db.transaction(storeName, 'readwrite');
                     const store = tx.objectStore(storeName);
                     const req = store.put(data);
