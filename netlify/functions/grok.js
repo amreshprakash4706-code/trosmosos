@@ -85,6 +85,16 @@ export async function handler(event) {
       };
     }
 
+    if (conversation.length > 40) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "Conversation history too long",
+        }),
+      };
+    }
+
     if (!process.env.GEMINI_API_KEY) {
       return {
         statusCode: 503,
@@ -121,7 +131,7 @@ export async function handler(event) {
     ];
 
     const result = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
+      model: "gemini-3.5-flash",
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
