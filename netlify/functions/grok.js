@@ -131,7 +131,7 @@ export async function handler(event) {
     ];
 
     const result = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.5-flash-lite",
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
