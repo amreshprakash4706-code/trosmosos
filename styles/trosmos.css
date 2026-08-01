@@ -1,0 +1,576 @@
+        /* Fonts loaded via preload link above for better performance. Fallback in noscript. */
+        
+        :root {
+            --deep-space: #09090B;
+            --midnight: #111827;
+            --electric: #3B82F6;
+            --cyan: #06B6D4;
+            --purple: #7C3AED;
+            --emerald: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Premium Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Aurora Gradients & Dynamic Lighting */
+        .aurora-bg {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+            animation: aurora-shift 25s ease infinite;
+        }
+
+        @keyframes aurora-shift {
+            0%, 100% { background-position: 20% 30%, 80% 70%, 50% 50%; }
+            50% { background-position: 30% 40%, 70% 60%, 40% 60%; }
+        }
+
+        .aurora-glow {
+            box-shadow: 
+                0 0 20px rgba(124, 58, 237, 0.3),
+                0 0 40px rgba(6, 182, 212, 0.15);
+        }
+
+        /* Smooth Animations - 120fps feel */
+        .smooth {
+            transition: all 0.2s cubic-bezier(0.23, 1.0, 0.32, 1);
+        }
+
+        .smooth-slow {
+            transition: all 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
+        }
+
+        .window {
+            animation: window-enter 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
+            box-shadow: 0 25px 60px -15px rgb(0 0 0 / 0.5), 
+                       0 10px 20px -5px rgb(0 0 0 / 0.3);
+            will-change: left, top; /* Performance hint for smooth dragging */
+        }
+
+        .window.dragging {
+            box-shadow: 0 35px 80px -15px rgb(0 0 0 / 0.65), 
+                       0 20px 30px -8px rgb(0 0 0 / 0.45);
+            transition: box-shadow 0.08s ease;
+        }
+
+        @keyframes window-enter {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Rounded corners - premium 20px */
+        .rounded-premium {
+            border-radius: 20px;
+        }
+
+        .rounded-xl {
+            border-radius: 16px;
+        }
+
+        /* Modern Typography */
+        .text-premium {
+            font-feature-settings: "ss02", "ss03";
+            letter-spacing: -0.02em;
+        }
+
+        /* Dynamic Micro-interactions */
+        .icon-btn {
+            transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1), 
+                       background-color 0.15s ease;
+        }
+        
+        .icon-btn:hover {
+            transform: scale(1.08);
+        }
+        
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Taskbar & Dock */
+        .dock {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .dock-icon {
+            position: relative;
+            transition: transform 0.2s cubic-bezier(0.23, 1.0, 0.32, 1), 
+                       filter 0.2s ease;
+        }
+        
+        .dock-icon:hover {
+            transform: translateY(-8px) scale(1.1);
+            filter: brightness(1.1);
+        }
+
+        @media (hover: none) {
+            .dock-icon:hover {
+                transform: none;
+                filter: none;
+            }
+            .dock-icon:active {
+                transform: scale(0.94);
+            }
+        }
+
+        /* File Manager Grid */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px;
+        }
+
+        .file-item {
+            transition: all 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .file-item:hover {
+            transform: translateY(-2px);
+            background-color: rgba(255,255,255,0.06);
+        }
+
+        /* Settings Sidebar */
+        .settings-nav-item {
+            transition: all 0.1s ease;
+        }
+        
+        .settings-nav-item.active {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: white;
+            border-radius: 12px;
+        }
+
+        /* App Store Cards */
+        .app-card {
+            transition: transform 0.2s cubic-bezier(0.23, 1.0, 0.32, 1), 
+                       box-shadow 0.2s ease;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        /* AI Chat Bubbles */
+        .ai-bubble {
+            background: linear-gradient(135deg, #3B82F6 0%, #7C3AED 100%);
+            color: white;
+            border-radius: 20px 20px 4px 20px;
+        }
+
+        .user-bubble {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px 20px 20px 4px;
+        }
+
+        /* Notification */
+        .notification {
+            animation: slide-in-right 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
+        }
+
+        @keyframes slide-in-right {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Premium Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        /* Live Wallpaper Aurora */
+        .live-wallpaper {
+            background: #09090B;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .live-wallpaper::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 25% 30%, rgba(124, 58, 237, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 75% 65%, rgba(6, 182, 212, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 60%);
+            animation: aurora-move 30s ease infinite;
+            z-index: 1;
+        }
+
+        @keyframes aurora-move {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(3%, 2%) scale(1.03); }
+        }
+
+        .cosmic-particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: particle-float 25s linear infinite;
+            opacity: 0.6;
+            z-index: 2;
+            will-change: transform, opacity;
+            pointer-events: none;
+        }
+
+        @keyframes particle-float {
+            0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+            25%  { transform: translate3d(12px, -18px, 0) scale(1.05); opacity: 0.7; }
+            50%  { transform: translate3d(-8px, -36px, 0) scale(0.95); opacity: 0.4; }
+            75%  { transform: translate3d(16px, -22px, 0) scale(1.02); opacity: 0.65; }
+            100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+        }
+
+        /* Subtle depth */
+        .depth {
+            box-shadow: 
+                0 10px 15px -3px rgb(0 0 0 / 0.2),
+                0 4px 6px -4px rgb(0 0 0 / 0.2),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* ============================================
+           PRODUCTION ENHANCEMENTS - New UI Components
+           (Preserves all original glassmorphism & aesthetics)
+           ============================================ */
+
+        /* Desktop Icons */
+        .desktop-icon {
+            transition: transform 0.15s cubic-bezier(0.23, 1.0, 0.32, 1), 
+                       background-color 0.1s ease;
+            pointer-events: auto;
+            user-select: none;
+            width: 88px;
+        }
+        .desktop-icon:hover {
+            background-color: rgba(255,255,255,0.06);
+            transform: translateY(-1px);
+        }
+        .desktop-icon:active {
+            transform: scale(0.96);
+        }
+        .desktop-icon .icon-wrapper {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            margin-bottom: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .desktop-icon.dragging {
+            opacity: 0.7;
+            z-index: 50;
+        }
+
+        /* Context Menu */
+        #context-menu {
+            min-width: 200px;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        .context-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background-color 0.1s ease;
+        }
+        .context-item:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .context-item.danger {
+            color: #f87171;
+        }
+        .context-item.danger:hover {
+            background-color: rgba(248, 113, 113, 0.1);
+        }
+        .context-separator {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 6px 0;
+        }
+
+        /* Premium Window Controls */
+        .window-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .window-control {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: rgba(255,255,255,0.6);
+            transition: all 0.15s cubic-bezier(0.23, 1.0, 0.32, 1);
+            font-size: 13px;
+        }
+        .window-control:hover {
+            background-color: rgba(255,255,255,0.12);
+            color: white;
+        }
+        .window-control.close:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+        .window-control.minimize:hover { background-color: rgba(255,255,255,0.15); }
+        .window-control.maximize:hover { background-color: rgba(255,255,255,0.15); }
+
+        .window.maximized {
+            border-radius: 0 !important;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        /* Browser Tabs */
+        .browser-tab {
+            padding: 6px 14px 6px 16px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .browser-tab.active {
+            background: rgba(255,255,255,0.1);
+            border-bottom-color: #3B82F6;
+        }
+        .browser-tab .tab-close {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            opacity: 0.6;
+        }
+        .browser-tab .tab-close:hover {
+            background: rgba(255,255,255,0.2);
+            opacity: 1;
+        }
+
+        /* Snap Layout Preview */
+        .snap-preview {
+            position: fixed;
+            background: rgba(59, 130, 246, 0.15);
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+            z-index: 90;
+            pointer-events: none;
+            transition: all 0.1s ease;
+        }
+
+        /* File Item Enhancements (for dynamic FM) */
+        .file-item {
+            position: relative;
+        }
+        .file-item .file-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .file-item:hover .file-actions {
+            opacity: 1;
+        }
+
+        /* Editor Window */
+        .editor-window .monaco-like {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        /* Dock Running Indicator */
+        .dock-icon.running::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: #3B82F6;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #3B82F6;
+        }
+        .dock-icon.minimized::after {
+            background: #64748b;
+        }
+
+        /* Accessibility & Focus */
+        .focus-visible:focus-visible {
+            outline: 2px solid #3B82F6;
+            outline-offset: 2px;
+        }
+
+        /* Toast improvements */
+        .notification {
+            animation: slide-in-right 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
+        }
+
+        /* Accessibility: Respect reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            .smooth, .smooth-slow, .window, .aurora-bg, .live-wallpaper::before,
+            .cosmic-particle, .dock-icon, .file-item, .app-card, .icon-btn,
+            .notification, .window-enter {
+                animation: none !important;
+                transition: none !important;
+                transform: none !important;
+            }
+        }
+
+        /* Enhanced focus for keyboard users */
+        button:focus-visible, 
+        [role="button"]:focus-visible,
+        input:focus-visible,
+        .desktop-icon:focus-visible,
+        .window-control:focus-visible {
+            outline: 2px solid var(--electric, #3B82F6);
+            outline-offset: 3px;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Window dialog semantics */
+        .window[role="dialog"] {
+            outline: none;
+        }
+
+        /* Mobile / narrow viewport adaptations — preserve desktop metaphor on large screens */
+        @media (max-width: 768px) {
+            .window:not(.hidden) {
+                left: 0 !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100vw !important;
+                max-height: 100dvh !important;
+                border-radius: 0 !important;
+                transform: none !important;
+            }
+            .window.maximized {
+                border-radius: 0 !important;
+            }
+            #weather-widget,
+            #desktop-area > .absolute.top-8.right-8 {
+                display: none;
+            }
+            #desktop-area {
+                padding: 1rem !important;
+            }
+            .desktop-icon {
+                width: 72px;
+            }
+            #start-menu > div {
+                width: calc(100vw - 1.5rem) !important;
+                max-width: 420px;
+                left: 50% !important;
+                bottom: 5.5rem !important;
+                padding: 1.25rem !important;
+            }
+            #start-menu .grid-cols-4 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .dock {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .dock-icon {
+                width: 2.75rem;
+                height: 2.75rem;
+            }
+            #ai-window {
+                width: 100% !important;
+                height: 100% !important;
+            }
+            nav.flex.items-center.justify-between {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            nav .flex.items-center.gap-x-8 {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+            }
+            #file-manager-window .w-48 {
+                width: 7rem;
+            }
+        }
+
+        /* Prevent overscroll bounce from breaking OS feel */
+        html, body {
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+
+        /* Ensure windows stay above wallpaper but below overlays */
+        .window {
+            touch-action: none;
+        }

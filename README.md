@@ -1,21 +1,31 @@
-# Web App with Netlify & Grok AI
+# Trosmos OS
 
-A lightweight web application equipped with Progressive Web App (PWA) features and integrated with xAI's Grok API via Netlify Serverless Functions. 
+Premium AI-native web operating system.
 
-⚡ **Live site deployed automatically via GitHub integration.**
+## Quick start
 
----
+```bash
+npm install
+npm run dev
+```
 
-## 📁 Project Structure
+Open the URL shown by Vite. For full AI (Gemini tools), deploy to Netlify and set `GEMINI_API_KEY`.
 
-```text
-├── index.html                # Main entry HTML page
-├── manifest.json             # Web App Manifest for PWA support
-├── sw.js                     # Service Worker for offline capabilities
-├── netlify.toml              # Netlify build & deployment configuration
-├── netlify/
-│   └── functions/
-│       └── grok.js           # Serverless endpoint for xAI/Grok integration
-├── CHANGELOG.md              # Project history and release notes
-├── package.json              # Node dependencies & scripts
-└── .gitignore                # Git ignore configuration
+## Production build
+
+```bash
+npm run build
+npm run start   # serves dist/
+```
+
+## Architecture highlights
+
+- Modular core under `src/` (EventBus, Storage, VFS, AI tools, Permissions)
+- Real AI agent with controlled tools + permission prompts
+- Persistent virtual filesystem (non-destructive IndexedDB migrations)
+- Window / Process / Desktop managers
+- Command palette (Ctrl+K)
+- Task Manager
+- PWA + offline shell
+
+Preserves the original Trosmos visual identity (glassmorphism, aurora, dock, window chrome).

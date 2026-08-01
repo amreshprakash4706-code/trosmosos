@@ -700,7 +700,7 @@
                     </div>
                     <div class="flex items-center gap-x-2">
                         <i class="fa-solid fa-check text-emerald-400"></i>
-                        <span>Trosmos 2.4 with AI</span>
+                        <span>Trosmos 2.5 with AI</span>
                     </div>
                 </div>
             </div>
@@ -773,7 +773,7 @@
                 </div>
             </div>
 
-            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 2.4 • AI-Native Computing</p>
+            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 2.5 • AI-Native Computing</p>
         </div>
     </div>
 
@@ -1011,7 +1011,7 @@
                 <i class="fa-solid fa-folder text-[#3B82F6]" aria-hidden="true"></i>
                 <div>
                     <div class="font-medium text-sm">Files</div>
-                    <div class="text-[10px] text-white/50" id="fm-path">/Users/aria/Projects</div>
+                    <div class="text-[10px] text-white/50" id="fm-path">/Home/Projects</div>
                 </div>
             </div>
             <div class="window-controls">
@@ -1024,8 +1024,8 @@
         <div class="flex flex-1 overflow-hidden">
             <div class="w-48 border-r border-white/10 p-4 space-y-1">
                 <div class="text-xs text-white/40 px-3 py-1">All Files</div>
-                <button type="button" onclick="navigateFileManager('/Users/aria/Documents')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer text-sm bg-transparent border-0 text-inherit">Documents</button>
-                <button type="button" onclick="navigateFileManager('/Users/aria/Projects')" class="w-full text-left px-3 py-2 rounded-xl bg-white/10 text-sm bg-transparent border-0 text-inherit" id="fm-nav-projects">Projects</button>
+                <button type="button" onclick="navigateFileManager('/Home/Documents')" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 cursor-pointer text-sm bg-transparent border-0 text-inherit">Documents</button>
+                <button type="button" onclick="navigateFileManager('/Home/Projects')" class="w-full text-left px-3 py-2 rounded-xl bg-white/10 text-sm bg-transparent border-0 text-inherit" id="fm-nav-projects">Projects</button>
                 <div class="mt-4">
                     <button type="button" onclick="createNewFolder()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 text-sm text-white/60 bg-transparent border-0 cursor-pointer">
                         <i class="fa-solid fa-plus mr-2" aria-hidden="true"></i> New Folder
@@ -1220,6 +1220,30 @@
     </div>
 
     <!-- Browser Window -->
+    <!-- Task Manager -->
+    <div id="task-manager-window" role="dialog" aria-modal="true" aria-label="Task Manager" class="window hidden absolute top-24 left-32 w-[640px] h-[480px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
+        <div class="window-titlebar flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move" data-draggable="1">
+            <div class="flex items-center gap-x-2">
+                <i class="fa-solid fa-microchip text-sm text-cyan-400"></i>
+                <span class="text-sm font-medium">Task Manager</span>
+            </div>
+            <div class="flex items-center gap-x-1">
+                <button type="button" class="window-control minimize" aria-label="Minimize" onclick="Trosmos.windows.minimize('task-manager-window')"><i class="fa-solid fa-minus" aria-hidden="true"></i></button>
+                <button type="button" class="window-control maximize" aria-label="Maximize" onclick="Trosmos.windows.maximize('task-manager-window')"><i class="fa-regular fa-square" aria-hidden="true"></i></button>
+                <button type="button" class="window-control close" aria-label="Close" onclick="Trosmos.windows.close('task-manager-window')"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-auto p-4">
+            <div class="text-xs text-white/40 mb-3 uppercase tracking-wider">Running Processes</div>
+            <div id="task-manager-list" class="space-y-1">
+                <!-- populated by JS -->
+            </div>
+            <div class="mt-4 text-[11px] text-white/30">
+                Metrics shown are process status and lifetime only. Browser security prevents accurate CPU/RAM measurement.
+            </div>
+        </div>
+    </div>
+
     <div id="browser-window" role="dialog" aria-modal="true" aria-label="Browser" class="window hidden absolute top-16 left-40 w-[860px] h-[580px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col">
         <div class="flex items-center justify-between px-4 py-2 border-b border-white/10">
             <div class="flex items-center gap-x-2 flex-1">
@@ -1364,6 +1388,11 @@
                 id: 'settings', name: 'Settings', icon: 'fa-cog',
                 color: 'from-slate-400 to-white/70', windowId: 'settings-window',
                 singleton: true, category: 'system'
+            },
+            'task-manager': {
+                id: 'task-manager', name: 'Task Manager', icon: 'fa-microchip',
+                color: 'from-cyan-400 to-blue-500', windowId: 'task-manager-window',
+                singleton: true, category: 'system'
             }
         };
 
@@ -1372,30 +1401,27 @@
             { id: 'files', appId: 'file-manager', label: 'Files', x: 40, y: 200 },
             { id: 'browser', appId: 'browser', label: 'Browser', x: 40, y: 320 },
             { id: 'settings', appId: 'settings', label: 'Settings', x: 40, y: 440 },
-            { id: 'project-orion', type: 'file', path: '/Users/aria/Projects/Project Orion', label: 'Project Orion', icon: 'fa-folder', color: '#3B82F6', x: 160, y: 80 },
-            { id: 'roadmap', type: 'file', path: '/Users/aria/Documents/Q4 Roadmap.md', label: 'Q4 Roadmap.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 200 }
+            { id: 'welcome', type: 'file', path: '/Home/Documents/Welcome.md', label: 'Welcome.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 80 }
         ];
 
         const DEFAULT_VFS_SEED = [
-            { path: '/Users/aria', name: 'aria', type: 'folder', modified: Date.now() - 86400000 * 30 },
-            { path: '/Users/aria/Projects', name: 'Projects', type: 'folder', parent: '/Users/aria', modified: Date.now() - 86400000 * 10 },
-            { path: '/Users/aria/Documents', name: 'Documents', type: 'folder', parent: '/Users/aria', modified: Date.now() - 86400000 * 5 },
-            { path: '/Users/aria/Downloads', name: 'Downloads', type: 'folder', parent: '/Users/aria', modified: Date.now() - 86400000 * 2 },
-            { path: '/Users/aria/Projects/Project Orion', name: 'Project Orion', type: 'folder', parent: '/Users/aria/Projects', modified: Date.now() - 86400000 * 3 },
-            { path: '/Users/aria/Documents/Q4 Roadmap.md', name: 'Q4 Roadmap.md', type: 'file', parent: '/Users/aria/Documents', mime: 'text/markdown', size: 1240, modified: Date.now() - 3600000, content: '# Q4 Roadmap\n\n## Goals\n- Launch Trosmos 2.4\n- AI Copilot v2\n- Production readiness\n\n## Timeline\n6 weeks to public beta.' },
-            { path: '/Users/aria/Documents/Meeting Notes.txt', name: 'Meeting Notes.txt', type: 'file', parent: '/Users/aria/Documents', mime: 'text/plain', size: 680, modified: Date.now() - 7200000, content: 'Team sync notes - AI features prioritized.' },
-            { path: '/Users/aria/Projects/main.tsx', name: 'main.tsx', type: 'file', parent: '/Users/aria/Projects', mime: 'text/typescript', size: 2450, modified: Date.now() - 14400000, content: 'import { Trosmos } from "./core";\n\nconsole.log("Trosmos OS booting...");' }
+            { path: '/Home', name: 'Home', type: 'folder', parent: '/', modified: Date.now() },
+            { path: '/Home/Documents', name: 'Documents', type: 'folder', parent: '/Home', modified: Date.now() },
+            { path: '/Home/Downloads', name: 'Downloads', type: 'folder', parent: '/Home', modified: Date.now() },
+            { path: '/Home/Pictures', name: 'Pictures', type: 'folder', parent: '/Home', modified: Date.now() },
+            { path: '/Home/Projects', name: 'Projects', type: 'folder', parent: '/Home', modified: Date.now() },
+            { path: '/Home/Documents/Welcome.md', name: 'Welcome.md', type: 'file', parent: '/Home/Documents', mime: 'text/markdown', size: 380, modified: Date.now(), content: '# Welcome to Trosmos OS\n\nYour AI-native operating system is ready.\n\n- Ask the AI to create notes, folders, or open apps\n- Files persist across sessions\n- Press Ctrl+K for the command palette\n- Open Task Manager to inspect running processes' }
         ];
 
         // ------------------ STORAGE MANAGER (IndexedDB) ------------------
         class StorageManager {
             constructor() {
-                this.dbName = 'TrosmosOS_v2';
+                this.dbName = 'TrosmosOS';
                 // Bumped to 3 to force schema migration for any prior installs that
                 // created object stores with a different (or missing) keyPath.
                 // Previous upgrade handlers only created missing stores and never
                 // recreated existing ones when the keyPath contract changed.
-                this.version = 3;
+                this.version = 4;
                 this.db = null;
             }
 
@@ -1405,17 +1431,12 @@
                     
                     request.onupgradeneeded = (event) => {
                         const db = event.target.result;
-                        const stores = ['filesystem', 'settings', 'windowStates', 'browserHistory', 'notifications', 'desktopIcons'];
-                        // Always delete + recreate so that keyPath is guaranteed to be 'id'.
-                        // This safely migrates away from any previous incompatible schema
-                        // (e.g. missing keyPath, different keyPath, or autoIncrement-only).
-                        // Demo data is reseeded by VirtualFileSystem / DesktopManager, so
-                        // losing prior persisted records is acceptable and intentional.
+                        const stores = ['filesystem', 'settings', 'windowStates', 'browserHistory', 'notifications', 'desktopIcons', 'permissions'];
+                        // NON-DESTRUCTIVE: only create missing stores. Never delete existing user data.
                         stores.forEach(name => {
-                            if (db.objectStoreNames.contains(name)) {
-                                db.deleteObjectStore(name);
+                            if (!db.objectStoreNames.contains(name)) {
+                                db.createObjectStore(name, { keyPath: 'id' });
                             }
-                            db.createObjectStore(name, { keyPath: 'id' });
                         });
                     };
                     
@@ -1530,7 +1551,7 @@
                 }
             }
 
-            list(path = '/Users/aria') {
+            list(path = '/Home') {
                 const files = this.cache.get('files') || [];
                 // Return direct children of path (and never the path node itself)
                 return files.filter(f => f.parent === path);
@@ -1610,6 +1631,47 @@
                         }
                     });
                 }
+                this.cache.set('files', files);
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return item;
+            }
+
+            async move(oldPath, newParent) {
+                const files = this.cache.get('files') || [];
+                const item = files.find(f => f.path === oldPath);
+                if (!item) return null;
+                const newPath = (newParent.replace(/\/+$/, '') + '/' + item.name).replace(/\/+/g, '/');
+                if (files.some(f => f.path === newPath)) return null;
+                const old = oldPath;
+                item.path = newPath;
+                item.parent = newParent;
+                item.modified = Date.now();
+                if (item.type === 'folder') {
+                    files.forEach(f => {
+                        if (f.path.startsWith(old + '/')) {
+                            f.path = f.path.replace(old, newPath);
+                            if (f.parent === old) f.parent = newPath;
+                        }
+                    });
+                }
+                this.cache.set('files', files);
+                await this.storage.put('filesystem', { id: 'files', data: files });
+                return item;
+            }
+
+            async readFile(path) {
+                const files = this.cache.get('files') || [];
+                const item = files.find(f => f.path === path && f.type === 'file');
+                return item ? item.content : null;
+            }
+
+            async writeFile(path, content) {
+                const files = this.cache.get('files') || [];
+                const item = files.find(f => f.path === path && f.type === 'file');
+                if (!item) return null;
+                item.content = content;
+                item.size = content.length;
+                item.modified = Date.now();
                 this.cache.set('files', files);
                 await this.storage.put('filesystem', { id: 'files', data: files });
                 return item;
@@ -2154,8 +2216,18 @@
                 }
             }
 
-            navigate(url) {
+            navigate(url, pushHistory = true) {
                 if (!this.activeTab) return;
+                if (!this.activeTab.history) this.activeTab.history = [];
+                if (this.activeTab.historyIndex == null) this.activeTab.historyIndex = -1;
+
+                if (pushHistory) {
+                    // Truncate forward history when navigating to a new URL
+                    this.activeTab.history = this.activeTab.history.slice(0, this.activeTab.historyIndex + 1);
+                    this.activeTab.history.push(url);
+                    this.activeTab.historyIndex = this.activeTab.history.length - 1;
+                }
+
                 this.activeTab.url = url;
                 this.activeTab.title = (url.replace(/^https?:\/\//, '').split('/')[0] || 'New Tab').slice(0, 64);
                 const urlInput = document.getElementById('browser-url');
@@ -2165,6 +2237,7 @@
                 if (!content) return;
                 
                 // Simulated browser content for demo (title escaped against XSS)
+                // Real external navigation is intentionally not performed for security sandboxing.
                 content.innerHTML = `
                     <div class="max-w-2xl mx-auto text-center pt-16">
                         <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center mx-auto mb-6">
@@ -2176,9 +2249,26 @@
                             <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
                             Ready
                         </div>
+                        <p class="text-white/30 text-xs mt-8">History: ${this.activeTab.historyIndex + 1} / ${this.activeTab.history.length}</p>
                     </div>
                 `;
                 this.renderTabs();
+            }
+
+            back() {
+                if (!this.activeTab || !this.activeTab.history) return;
+                if (this.activeTab.historyIndex > 0) {
+                    this.activeTab.historyIndex--;
+                    this.navigate(this.activeTab.history[this.activeTab.historyIndex], false);
+                }
+            }
+
+            forward() {
+                if (!this.activeTab || !this.activeTab.history) return;
+                if (this.activeTab.historyIndex < this.activeTab.history.length - 1) {
+                    this.activeTab.historyIndex++;
+                    this.navigate(this.activeTab.history[this.activeTab.historyIndex], false);
+                }
             }
         }
 
@@ -2186,7 +2276,7 @@
         class NotificationManager {
             constructor() {
                 this.list = [
-                    { id: 1, title: 'System Update', body: 'Trosmos 2.4 is ready to install', time: '2m ago', icon: 'fa-download' },
+                    { id: 1, title: 'System Update', body: 'Trosmos 2.5 is ready to install', time: '2m ago', icon: 'fa-download' },
                     { id: 2, title: 'AI Insight', body: '3 new suggestions based on your recent files', time: '15m ago', icon: 'fa-robot' },
                     { id: 3, title: 'Calendar', body: 'Team sync in 30 minutes', time: '28m ago', icon: 'fa-calendar' },
                     { id: 4, title: 'Security', body: 'Login from new device detected', time: '1h ago', icon: 'fa-shield' }
@@ -2258,7 +2348,114 @@
                 this._abort = null;
             }
 
-            async callGrok(message) {
+            /**
+             * Client-side tool executor for AI actions.
+             * Permission dialogs are shown for destructive operations.
+             */
+            async executeAITool(name, args) {
+                const vfs = Trosmos.vfs;
+                const windows = Trosmos.windows;
+                const notifications = Trosmos.notifications;
+                const storage = Trosmos.storage;
+                const settings = Trosmos.settings;
+
+                const confirmDestructive = async (msg) => {
+                    return window.confirm(msg); // simple but effective; can be replaced by custom modal
+                };
+
+                try {
+                    switch (name) {
+                        case 'open_app': {
+                            const map = { ai: 'ai-window', files: 'file-manager-window', browser: 'browser-window', settings: 'settings-window', 'app-store': 'app-store-window', 'task-manager': 'task-manager-window' };
+                            const wid = map[args.app];
+                            if (wid) { windows.focusOrOpen(wid); return { ok: true, result: 'Opened ' + args.app }; }
+                            return { ok: false, error: 'Unknown app' };
+                        }
+                        case 'close_app': {
+                            const map = { ai: 'ai-window', files: 'file-manager-window', browser: 'browser-window', settings: 'settings-window', 'app-store': 'app-store-window', 'task-manager': 'task-manager-window' };
+                            const wid = map[args.app];
+                            if (wid) { windows.close(wid); return { ok: true, result: 'Closed ' + args.app }; }
+                            return { ok: false, error: 'Unknown app' };
+                        }
+                        case 'list_directory': {
+                            const items = vfs.list(args.path || '/Home');
+                            return { ok: true, result: items.map(i => ({ name: i.name, type: i.type, path: i.path })) };
+                        }
+                        case 'create_folder': {
+                            const folder = await vfs.createFolder(args.parent || '/Home', args.name);
+                            if (!folder) return { ok: false, error: 'Already exists' };
+                            notifications?.show('Folder "' + args.name + '" created', 'success');
+                            if (typeof renderFileManager === 'function') renderFileManager();
+                            return { ok: true, result: folder.path };
+                        }
+                        case 'create_file': {
+                            const file = await vfs.createFile(args.parent || '/Home/Documents', args.name, args.content || '', 'text/markdown');
+                            notifications?.show('File "' + args.name + '" created', 'success');
+                            if (typeof renderFileManager === 'function') renderFileManager();
+                            return { ok: true, result: file.path };
+                        }
+                        case 'read_file': {
+                            const c = await vfs.readFile(args.path);
+                            if (c == null) return { ok: false, error: 'Not found' };
+                            return { ok: true, result: c.slice(0, 2000) };
+                        }
+                        case 'write_file': {
+                            if (!(await confirmDestructive('Allow Trosmos AI to modify "' + args.path + '"?'))) {
+                                return { ok: false, error: 'Permission denied' };
+                            }
+                            const f = await vfs.writeFile(args.path, args.content);
+                            if (!f) return { ok: false, error: 'Not found' };
+                            return { ok: true, result: 'Written' };
+                        }
+                        case 'delete_path': {
+                            if (!(await confirmDestructive('Allow Trosmos AI to permanently delete "' + args.path + '"?'))) {
+                                return { ok: false, error: 'Permission denied' };
+                            }
+                            const ok = await vfs.delete(args.path);
+                            if (!ok) return { ok: false, error: 'Not found' };
+                            notifications?.show('Deleted ' + args.path, 'info');
+                            if (typeof renderFileManager === 'function') renderFileManager();
+                            return { ok: true, result: 'Deleted' };
+                        }
+                        case 'move_path': {
+                            if (!(await confirmDestructive('Allow Trosmos AI to move "' + args.path + '"?'))) {
+                                return { ok: false, error: 'Permission denied' };
+                            }
+                            const item = await vfs.move(args.path, args.newParent);
+                            if (!item) return { ok: false, error: 'Failed' };
+                            return { ok: true, result: item.path };
+                        }
+                        case 'rename_path': {
+                            const item = await vfs.rename(args.path, args.newName);
+                            if (!item) return { ok: false, error: 'Failed' };
+                            return { ok: true, result: item.path };
+                        }
+                        case 'search_files': {
+                            const results = vfs.search(args.query || '');
+                            return { ok: true, result: results.slice(0, 8).map(r => ({ name: r.name, path: r.path })) };
+                        }
+                        case 'change_setting': {
+                            if (args.key === 'accentColor') {
+                                settings.accentColor = args.value;
+                                document.documentElement.style.setProperty('--electric', args.value);
+                                await storage?.put('settings', { id: 'prefs', data: { ...settings } });
+                                notifications?.show('Accent color updated', 'success');
+                            }
+                            return { ok: true, result: 'Applied' };
+                        }
+                        case 'show_notification': {
+                            notifications?.show(args.message, args.type || 'info');
+                            return { ok: true, result: 'Shown' };
+                        }
+                        default:
+                            return { ok: false, error: 'Unknown tool: ' + name };
+                    }
+                } catch (err) {
+                    return { ok: false, error: err.message || 'Tool failed' };
+                }
+            }
+
+            async callGrok(message, toolResults = null) {
                 // HYBRID AI: Try real backend (Netlify Function + Gemini) first.
                 // Falls back to high-quality local knowledge base if offline, no key, timeout, or error.
                 // Conversation history is previous turns only (current message sent separately).
@@ -2276,14 +2473,32 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             message, 
-                            conversation: this.conversation || [] 
+                            conversation: this.conversation || [],
+                            toolResults: toolResults || null
                         }),
                         signal: this._abort.signal
                     });
                     clearTimeout(timeoutId);
                     if (res.ok) {
                         const data = await res.json();
+                        // Handle tool calls from Gemini function calling
+                        if (data && data.type === 'tool_calls' && Array.isArray(data.toolCalls)) {
+                            const results = [];
+                            for (const tc of data.toolCalls) {
+                                const r = await this.executeAITool(tc.name, tc.args || {});
+                                results.push({ name: tc.name, ...r });
+                            }
+                            // Second turn: send tool results back for a natural language confirmation
+                            const followUp = await this.callGrok(
+                                message + '\n[Tools already executed — confirm results to user]',
+                                results
+                            );
+                            return followUp || results.map(r => r.ok ? (typeof r.result === 'string' ? r.result : JSON.stringify(r.result)) : r.error).join('; ');
+                        }
                         if (data && typeof data.reply === 'string' && data.reply.trim()) {
+                            return data.reply.trim();
+                        }
+                        if (data && data.type === 'text' && data.reply) {
                             return data.reply.trim();
                         }
                     } else {
@@ -2556,7 +2771,7 @@
                 if (q.includes('create note') || q.includes('new note') || q.includes('write note')) {
                     const match = query.match(/["'](.+?)["']/) || query.match(/note\s+(.+)/i);
                     const title = match ? match[1] : 'New Note ' + new Date().toLocaleTimeString();
-                    await Trosmos.vfs.createFile('/Users/aria/Documents', title.endsWith('.md') || title.endsWith('.txt') ? title : title + '.md', `# ${title}\n\nCreated by Trosmos AI.`);
+                    await Trosmos.vfs.createFile('/Home/Documents', title.endsWith('.md') || title.endsWith('.txt') ? title : title + '.md', `# ${title}\n\nCreated by Trosmos AI.`);
                     Trosmos.notifications?.show(`Note "${title}" created`, 'success');
                     return `Created note "${title}" in Documents.`;
                 }
@@ -2590,6 +2805,41 @@
         }
         function openAppStore() { Trosmos.windows.focusOrOpen('app-store-window'); }
         function openSettings() { Trosmos.windows.focusOrOpen('settings-window'); }
+        function openTaskManager() {
+            Trosmos.windows.focusOrOpen('task-manager-window');
+            renderTaskManager();
+        }
+        function renderTaskManager() {
+            const list = document.getElementById('task-manager-list');
+            if (!list || !Trosmos.processes) return;
+            list.innerHTML = '';
+            const procs = Array.from(Trosmos.processes.processes.values());
+            if (procs.length === 0) {
+                list.innerHTML = '<div class="text-white/40 text-sm py-8 text-center">No processes running</div>';
+                return;
+            }
+            procs.forEach(p => {
+                const app = APP_REGISTRY[p.appId] || { name: p.appId, icon: 'fa-cube' };
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 group';
+                const uptime = Math.floor((Date.now() - p.started) / 1000);
+                const upStr = uptime < 60 ? uptime + 's' : Math.floor(uptime/60) + 'm';
+                row.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid ${app.icon} text-sm text-white/60 w-5"></i>
+                        <div>
+                            <div class="text-sm font-medium">${escapeHtml(app.name)}</div>
+                            <div class="text-[10px] text-white/40">PID ${p.pid} · ${p.status} · ${upStr}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" class="px-2 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/20" onclick="Trosmos.windows.focus('${p.windowId}')">Focus</button>
+                        <button type="button" class="px-2 py-1 text-xs rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-300" onclick="Trosmos.windows.close('${p.windowId}'); setTimeout(renderTaskManager, 100)">End</button>
+                    </div>
+                `;
+                list.appendChild(row);
+            });
+        }
         
         function toggleStartMenu() {
             const menu = document.getElementById('start-menu');
@@ -2618,10 +2868,10 @@
             document.getElementById('settings-' + tab)?.classList.remove('hidden');
         }
 
-        let _fmCurrentPath = '/Users/aria/Projects';
+        let _fmCurrentPath = '/Home/Projects';
 
         function navigateFileManager(path) {
-            _fmCurrentPath = path || '/Users/aria/Projects';
+            _fmCurrentPath = path || '/Home/Projects';
             const pathEl = document.getElementById('fm-path');
             if (pathEl) pathEl.textContent = _fmCurrentPath;
             // Highlight active sidebar item
@@ -2718,31 +2968,101 @@
             const url = document.getElementById('browser-url')?.value || 'trosmos.dev';
             Trosmos.browser?.navigate(url);
         }
-        function browserBack() { /* stub */ }
-        function browserForward() { /* stub */ }
+        function browserBack() {
+            if (Trosmos.browser) Trosmos.browser.back();
+        }
+        function browserForward() {
+            if (Trosmos.browser) Trosmos.browser.forward();
+        }
         function browserReload() { browserNavigate(); }
 
+        const COMMAND_PALETTE_CMDS = [
+            { id: 'open-ai', label: 'Open AI Chat', keywords: 'ai chat assistant copilot', action: () => openAIAssistant() },
+            { id: 'open-files', label: 'Open Files', keywords: 'files folder manager', action: () => openFileManager() },
+            { id: 'open-browser', label: 'Open Browser', keywords: 'browser web', action: () => openBrowser() },
+            { id: 'open-settings', label: 'Open Settings', keywords: 'settings preferences', action: () => openSettings() },
+            { id: 'open-store', label: 'Open App Store', keywords: 'store apps install', action: () => openAppStore() },
+            { id: 'open-taskmgr', label: 'Open Task Manager', keywords: 'task manager processes', action: () => openTaskManager() },
+            { id: 'create-note', label: 'Create Note', keywords: 'note new write', action: () => Trosmos.ai?.processCommand('create note Quick Note') },
+            { id: 'create-folder', label: 'Create Folder', keywords: 'folder new mkdir', action: () => createNewFolder() },
+            { id: 'toggle-notifications', label: 'Notifications', keywords: 'notifications center', action: () => showNotificationCenter() },
+            { id: 'lock', label: 'Lock System', keywords: 'lock logout sign out', action: () => { document.getElementById('desktop')?.classList.add('hidden'); document.getElementById('login-screen')?.classList.remove('hidden'); } },
+        ];
+
         function showCommandPalette() {
-            document.getElementById('command-palette').classList.remove('hidden');
-            document.getElementById('palette-input')?.focus();
+            const pal = document.getElementById('command-palette');
+            const input = document.getElementById('palette-input');
+            const results = document.getElementById('palette-results');
+            if (!pal) return;
+            pal.classList.remove('hidden');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            renderPaletteResults('');
         }
         function hideCommandPalette() {
-            document.getElementById('command-palette').classList.add('hidden');
+            document.getElementById('command-palette')?.classList.add('hidden');
+        }
+        function renderPaletteResults(query) {
+            const results = document.getElementById('palette-results');
+            if (!results) return;
+            const q = (query || '').toLowerCase().trim();
+            const matches = COMMAND_PALETTE_CMDS.filter(c =>
+                !q || c.label.toLowerCase().includes(q) || c.keywords.includes(q)
+            );
+            results.innerHTML = '';
+            matches.forEach((c, i) => {
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm flex items-center gap-3 transition-colors';
+                el.innerHTML = `<span class="text-white/90">${escapeHtml(c.label)}</span>`;
+                el.onclick = () => {
+                    hideCommandPalette();
+                    c.action();
+                };
+                results.appendChild(el);
+            });
+            if (matches.length === 0 && q) {
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = 'w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm text-white/60';
+                el.textContent = `Ask Trosmos AI: "${q}"`;
+                el.onclick = () => {
+                    hideCommandPalette();
+                    openAIAssistant();
+                    setTimeout(() => {
+                        const inp = document.getElementById('ai-input');
+                        if (inp) { inp.value = q; sendAIMessage(); }
+                    }, 250);
+                };
+                results.appendChild(el);
+            }
         }
         function executeCommandPalette() {
             const q = document.getElementById('palette-input')?.value.trim();
             if (!q) return;
+            const match = COMMAND_PALETTE_CMDS.find(c =>
+                c.label.toLowerCase() === q.toLowerCase() || c.keywords.split(' ').includes(q.toLowerCase())
+            );
             hideCommandPalette();
-            if (q.toLowerCase().startsWith('open ')) {
-                Trosmos.ai?.processCommand(q);
+            if (match) {
+                match.action();
             } else {
                 openAIAssistant();
                 setTimeout(() => {
-                    document.getElementById('ai-input').value = q;
-                    sendAIMessage();
-                }, 300);
+                    const inp = document.getElementById('ai-input');
+                    if (inp) { inp.value = q; sendAIMessage(); }
+                }, 250);
             }
         }
+
+        // Live filter on input
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'palette-input') {
+                renderPaletteResults(e.target.value);
+            }
+        });
 
         window.sendAIMessage = () => Trosmos.ai?.send();
         window.showCommandPalette = showCommandPalette;

@@ -8,9 +8,168 @@ const SYSTEM_INSTRUCTION = `You are Trosmos AI, the premium intelligent copilot 
 
 Be helpful, concise, friendly, and witty. Prefer short, actionable answers over long essays.
 
-You have deep awareness of the OS context (windows, files, settings, apps). The frontend already executes OS actions such as opening apps, creating files, or changing settings when the user issues clear commands. When users ask for those actions, respond naturally and confirm what was done without pretending to execute them yourself or inventing fake system state.
+You have tools that let you control the OS: open/close apps, manage files and folders, search, change settings, and show notifications. Use tools when the user asks you to perform actions. When you use a tool, the result will be returned to you so you can confirm completion naturally.
 
-Never invent private user data. Stay in character as the OS copilot. Use light humor when appropriate.`;
+Never invent private user data. Stay in character as the OS copilot. Use light humor when appropriate.
+When the user asks for something you can do with tools, prefer calling the tool rather than only describing how.`;
+
+// Tool declarations matching the frontend AI_TOOLS
+const TOOL_DECLARATIONS = [
+  {
+    name: "open_app",
+    description: "Open or focus an application window",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        app: {
+          type: "STRING",
+          description: "ai | files | browser | settings | app-store | task-manager"
+        }
+      },
+      required: ["app"]
+    }
+  },
+  {
+    name: "close_app",
+    description: "Close an application window",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        app: { type: "STRING" }
+      },
+      required: ["app"]
+    }
+  },
+  {
+    name: "list_directory",
+    description: "List files and folders in a directory",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING", description: "e.g. /Home/Documents" }
+      },
+      required: ["path"]
+    }
+  },
+  {
+    name: "create_folder",
+    description: "Create a new folder",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        parent: { type: "STRING" },
+        name: { type: "STRING" }
+      },
+      required: ["parent", "name"]
+    }
+  },
+  {
+    name: "create_file",
+    description: "Create a new text or markdown file",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        parent: { type: "STRING" },
+        name: { type: "STRING" },
+        content: { type: "STRING" }
+      },
+      required: ["parent", "name"]
+    }
+  },
+  {
+    name: "read_file",
+    description: "Read the contents of a file",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING" }
+      },
+      required: ["path"]
+    }
+  },
+  {
+    name: "write_file",
+    description: "Overwrite content of an existing file",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING" },
+        content: { type: "STRING" }
+      },
+      required: ["path", "content"]
+    }
+  },
+  {
+    name: "delete_path",
+    description: "Permanently delete a file or folder",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING" }
+      },
+      required: ["path"]
+    }
+  },
+  {
+    name: "move_path",
+    description: "Move a file or folder to a new parent",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING" },
+        newParent: { type: "STRING" }
+      },
+      required: ["path", "newParent"]
+    }
+  },
+  {
+    name: "rename_path",
+    description: "Rename a file or folder",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        path: { type: "STRING" },
+        newName: { type: "STRING" }
+      },
+      required: ["path", "newName"]
+    }
+  },
+  {
+    name: "search_files",
+    description: "Search files by name or content",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        query: { type: "STRING" }
+      },
+      required: ["query"]
+    }
+  },
+  {
+    name: "change_setting",
+    description: "Change accent color or wallpaper",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        key: { type: "STRING" },
+        value: { type: "STRING" }
+      },
+      required: ["key", "value"]
+    }
+  },
+  {
+    name: "show_notification",
+    description: "Show a system notification",
+    parameters: {
+      type: "OBJECT",
+      properties: {
+        message: { type: "STRING" },
+        type: { type: "STRING" }
+      },
+      required: ["message"]
+    }
+  }
+];
 
 export async function handler(event) {
   const headers = {
@@ -21,39 +180,36 @@ export async function handler(event) {
   };
 
   if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 204,
-      headers,
-      body: "",
-    };
+    return { statusCode: 204, headers, body: "" };
   }
 
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({
-        error: "Method not allowed",
-      }),
+      body: JSON.stringify({ error: "Method not allowed" }),
     };
   }
 
   try {
     let body;
-
     try {
       body = JSON.parse(event.body || "{}");
     } catch {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({
-          error: "Invalid JSON body",
-        }),
+        body: JSON.stringify({ error: "Invalid JSON body" }),
       };
     }
 
-    const { message, conversation = [] } = body;
+    const { message, conversation = [], toolResults = null } = body;
+
+    // Tool-result continuation turn (after frontend executed tools)
+    if (toolResults && Array.isArray(toolResults)) {
+      // Client is sending back tool results; we continue the conversation
+      // For simplicity in this serverless function we re-generate with context
+    }
 
     if (typeof message !== "string" || !message.trim()) {
       return {
@@ -69,29 +225,15 @@ export async function handler(event) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({
-          error: "Message too long (max 2000 characters)",
-        }),
+        body: JSON.stringify({ error: "Message too long (max 2000 characters)" }),
       };
     }
 
-    if (!Array.isArray(conversation)) {
+    if (!Array.isArray(conversation) || conversation.length > 40) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({
-          error: "Conversation must be an array",
-        }),
-      };
-    }
-
-    if (conversation.length > 40) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: "Conversation history too long",
-        }),
+        body: JSON.stringify({ error: "Invalid conversation" }),
       };
     }
 
@@ -106,7 +248,6 @@ export async function handler(event) {
       };
     }
 
-    // Sanitize and keep only recent valid turns (history only — current message is separate)
     const safeConversation = conversation
       .filter(
         (m) =>
@@ -121,7 +262,6 @@ export async function handler(event) {
         parts: [{ text: String(m.content).slice(0, 4000) }],
       }));
 
-    // Structured multi-turn contents (proper Gemini conversation history)
     const contents = [
       ...safeConversation,
       {
@@ -130,26 +270,58 @@ export async function handler(event) {
       },
     ];
 
+    // If tool results are provided, append them as function response parts
+    // (simplified: we append a system-style summary for the model)
+    if (toolResults && Array.isArray(toolResults) && toolResults.length > 0) {
+      const summary = toolResults
+        .map((t) => `Tool ${t.name}: ${t.ok ? JSON.stringify(t.result) : "Error: " + t.error}`)
+        .join("\n");
+      contents.push({
+        role: "user",
+        parts: [{ text: `Tool execution results:\n${summary}\n\nPlease respond to the user based on these results.` }],
+      });
+    }
+
     const result = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
+      model: "gemini-2.0-flash",
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         temperature: 0.7,
-        maxOutputTokens: 600,
+        maxOutputTokens: 800,
         topP: 0.95,
+        tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
       },
     });
 
-    const reply = (result.text || "").trim();
+    // Check for function calls
+    const candidate = result.candidates?.[0];
+    const parts = candidate?.content?.parts || [];
+    const functionCalls = parts.filter((p) => p.functionCall);
+
+    if (functionCalls.length > 0) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          type: "tool_calls",
+          toolCalls: functionCalls.map((p) => ({
+            name: p.functionCall.name,
+            args: p.functionCall.args || {},
+          })),
+          // Also return any text part if present
+          reply: parts.find((p) => p.text)?.text || null,
+        }),
+      };
+    }
+
+    const reply = (result.text || parts.find((p) => p.text)?.text || "").trim();
 
     if (!reply) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({
-          error: "Empty response from Gemini",
-        }),
+        body: JSON.stringify({ error: "Empty response from Gemini" }),
       };
     }
 
@@ -157,16 +329,14 @@ export async function handler(event) {
       statusCode: 200,
       headers,
       body: JSON.stringify({
+        type: "text",
         reply,
       }),
     };
   } catch (err) {
     console.error("Gemini Error:", err?.message || err);
-
-    // Distinguish configuration / auth errors from transient ones
     const msg = String(err?.message || err || "Unknown error");
-    const isConfig =
-      /API key|authentication|permission|quota|billing/i.test(msg);
+    const isConfig = /API key|authentication|permission|quota|billing/i.test(msg);
 
     return {
       statusCode: isConfig ? 503 : 500,
