@@ -1,7 +1,7 @@
 /**
  * Trosmos OS — AI Permission Manager
  * Destructive or sensitive tools require explicit user confirmation.
- * Safe tools can be auto-allowed when configured.
+ * Uses event bus so UI can render a proper modal instead of window.confirm.
  */
 
 import { eventBus } from './event-bus.js';
@@ -12,44 +12,51 @@ const SENSITIVE = new Set(['WRITE', 'MOVE']);
 export class PermissionManager {
   constructor(storage) {
     this.storage = storage;
-    this.trusted = new Set(['READ', 'EXECUTE']); // default trusted levels
-    this.sessionAllow = new Set(); // session-level grants
+    this.trusted = new Set(['READ', 'EXECUTE']);
+    this.sessionAllow = new Set();
     this._pending = null;
+    this._queue = [];
   }
 
   async init() {
-    const rec = await this.storage.get('permissions', 'prefs');
-    if (rec?.data?.trusted) {
-      this.trusted = new Set(rec.data.trusted);
+    try {
+      const rec = await this.storage.get('permissions', 'prefs');
+      if (rec?.data?.trusted && Array.isArray(rec.data.trusted)) {
+        this.trusted = new Set(rec.data.trusted);
+      }
+    } catch {
+      /* keep defaults */
     }
   }
 
-  /**
-   * Request permission for a tool.
-   * Returns true if allowed, false if denied.
-   */
   async request(toolName, level, args = {}) {
-    // Always allow trusted levels
     if (this.trusted.has(level) || this.sessionAllow.has(`${toolName}:${level}`)) {
       return true;
     }
 
-    // Destructive / sensitive → UI confirmation
     const needsConfirm = DESTRUCTIVE.has(level) || SENSITIVE.has(level);
     if (!needsConfirm) return true;
 
     return new Promise((resolve) => {
-      this._pending = { toolName, level, args, resolve };
-      eventBus.emit('permission:request', {
-        toolName,
-        level,
-        args,
-        message: this._humanMessage(toolName, level, args)
-      });
+      const entry = { toolName, level, args, resolve };
+      if (this._pending) {
+        this._queue.push(entry);
+        return;
+      }
+      this._show(entry);
     });
   }
 
-  /** Called by UI when user accepts or declines */
+  _show(entry) {
+    this._pending = entry;
+    eventBus.emit('permission:request', {
+      toolName: entry.toolName,
+      level: entry.level,
+      args: entry.args,
+      message: this._humanMessage(entry.toolName, entry.level, entry.args)
+    });
+  }
+
   respond(allowed, remember = false) {
     if (!this._pending) return;
     const { toolName, level, resolve } = this._pending;
@@ -58,11 +65,16 @@ export class PermissionManager {
       this.sessionAllow.add(`${toolName}:${level}`);
     }
     resolve(!!allowed);
-    eventBus.emit('permission:resolved', { allowed });
+    eventBus.emit('permission:resolved', { allowed: !!allowed });
+
+    if (this._queue.length) {
+      const next = this._queue.shift();
+      setTimeout(() => this._show(next), 60);
+    }
   }
 
   _humanMessage(tool, level, args) {
-    const path = args.path || args.name || args.parent || '';
+    const path = args.path || args.name || args.parent || args.newParent || '';
     switch (level) {
       case 'DELETE':
         return `Allow Trosmos AI to permanently delete "${path}"?`;
@@ -83,6 +95,16 @@ export class PermissionManager {
       id: 'prefs',
       data: { trusted: [...this.trusted] }
     });
+  }
+
+  cancelAll() {
+    if (this._pending) {
+      this._pending.resolve(false);
+      this._pending = null;
+    }
+    while (this._queue.length) {
+      this._queue.shift().resolve(false);
+    }
   }
 }
 

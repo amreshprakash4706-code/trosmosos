@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "2.5.0",
-  "description": "Premium AI-native operating system — production-grade interactive demo",
+  "version": "2.6.0",
+  "description": "Premium AI-native operating system \u2014 production-grade interactive demo",
   "type": "module",
   "private": true,
   "scripts": {

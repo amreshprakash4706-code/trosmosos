@@ -13,12 +13,18 @@ export default defineConfig({
       }
     },
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    cssCodeSplit: true,
+    sourcemap: false
   },
   server: {
     port: 5173,
-    open: false
+    open: false,
+    headers: {
+      'X-Content-Type-Options': 'nosniff'
+    }
   },
-  // Proxy Netlify functions in local dev if needed
-  // For full AI, deploy to Netlify or set GEMINI_API_KEY and run functions separately
+  preview: {
+    port: 4173
+  }
 });

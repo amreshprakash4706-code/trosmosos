@@ -21,11 +21,18 @@ npm run start   # serves dist/
 ## Architecture highlights
 
 - Modular core under `src/` (EventBus, Storage, VFS, AI tools, Permissions)
-- Real AI agent with controlled tools + permission prompts
-- Persistent virtual filesystem (non-destructive IndexedDB migrations)
+- Real AI agent with controlled tools + permission prompts (modal UI)
+- Persistent virtual filesystem (non-destructive IndexedDB migrations, path-safe)
 - Window / Process / Desktop managers
 - Command palette (Ctrl+K)
 - Task Manager
-- PWA + offline shell
+- PWA + offline shell (SW v6)
 
 Preserves the original Trosmos visual identity (glassmorphism, aurora, dock, window chrome).
+
+## Security notes
+
+- `GEMINI_API_KEY` is server-side only (Netlify function)
+- AI tool arguments are validated and path-normalized
+- Destructive AI actions require explicit user confirmation
+- User/AI chat content is sanitized before DOM insertion
