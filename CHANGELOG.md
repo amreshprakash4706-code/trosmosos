@@ -1,3 +1,11 @@
+## v2.7.1 — Calculator fix
+
+- Calculator now evaluates with a CSP-safe parser (no `Function`/`eval`)
+- Keyboard support: numbers, operators, Enter/=, Backspace, C/Delete, Esc
+- Pure local math — no AI involved
+
+---
+
 # Trosmos OS — Changelog
 
 ## v2.7 — Complete Desktop Environment
