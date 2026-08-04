@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <!-- SEO -->
-    <title>Trosmos OS • Premium AI-Native Operating System</title>
+    <title>Trosmos OS 2.7 • Premium AI-Native Operating System</title>
     <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. Interactive production-grade demo.">
     <meta name="keywords" content="Trosmos OS, AI OS, AI-native operating system, glassmorphism, AI copilot, productivity, demo">
     <meta name="author" content="Trosmos">
@@ -626,7 +626,30 @@
         .window {
             touch-action: none;
         }
-    </style>
+    
+/* Trosmos OS v2.7 */
+.window-resize-handle { position: absolute; z-index: 20; background: transparent; }
+.window-resize-handle.n  { top: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.window-resize-handle.s  { bottom: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.window-resize-handle.e  { right: -3px; top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.window-resize-handle.w  { left: -3px; top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.window-resize-handle.ne { top: -3px; right: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+.window-resize-handle.nw { top: -3px; left: -3px; width: 12px; height: 12px; cursor: nwse-resize; }
+.window-resize-handle.se { bottom: -3px; right: -3px; width: 14px; height: 14px; cursor: nwse-resize; }
+.window-resize-handle.sw { bottom: -3px; left: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+.window.maximized .window-resize-handle { display: none; }
+@media (max-width: 768px) { .window-resize-handle { display: none !important; } }
+.calc-btn { min-height: 48px; }
+.notes-item.active { background: rgba(59,130,246,0.15); }
+.clipboard-item:hover { background: rgba(255,255,255,0.06); }
+.lock-screen {
+  position: fixed; inset: 0; z-index: 700;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(9,9,11,0.92); backdrop-filter: blur(24px);
+}
+.lock-screen.hidden { display: none !important; }
+
+</style>
 </head>
 <body class="bg-[#09090B] text-white overflow-hidden">
     <!-- ============================================ -->
@@ -895,6 +918,16 @@
                 <button onclick="openAppStore()" data-app="app-store-window" aria-label="Open App Store" data-tooltip="App Store" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-store text-xl text-orange-400" aria-hidden="true"></i>
                 </button>
+                
+                <button onclick="openTerminal()" data-app="terminal-window" aria-label="Open Terminal" data-tooltip="Terminal" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-terminal text-xl text-emerald-400" aria-hidden="true"></i>
+                </button>
+                <button onclick="openCalculator()" data-app="calculator-window" aria-label="Open Calculator" data-tooltip="Calculator" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-calculator text-xl text-amber-400" aria-hidden="true"></i>
+                </button>
+                <button onclick="openNotes()" data-app="notes-window" aria-label="Open Notes" data-tooltip="Notes" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-note-sticky text-xl text-yellow-300" aria-hidden="true"></i>
+                </button>
                 <div class="w-px h-8 bg-white/15 mx-1" aria-hidden="true"></div>
                 <button onclick="openSettings()" data-app="settings-window" aria-label="Open Settings" data-tooltip="Settings" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-cog text-xl text-white/70" aria-hidden="true"></i>
@@ -950,6 +983,44 @@
                     </div>
                     <span class="text-xs">App Store</span>
                 </div>
+
+                <div onclick="openTerminal(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+                        <i class="fa-solid fa-terminal text-white"></i>
+                    </div>
+                    <span class="text-xs">Terminal</span>
+                </div>
+                <div onclick="openCalculator(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                        <i class="fa-solid fa-calculator text-white"></i>
+                    </div>
+                    <span class="text-xs">Calculator</span>
+                </div>
+                <div onclick="openNotes(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                        <i class="fa-solid fa-note-sticky text-white"></i>
+                    </div>
+                    <span class="text-xs">Notes</span>
+                </div>
+                <div onclick="openClock(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-clock text-white"></i>
+                    </div>
+                    <span class="text-xs">Clock</span>
+                </div>
+                <div onclick="openClipboard(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                        <i class="fa-solid fa-clipboard text-white"></i>
+                    </div>
+                    <span class="text-xs">Clipboard</span>
+                </div>
+                <div onclick="openHelp(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-circle-question text-white"></i>
+                    </div>
+                    <span class="text-xs">Help</span>
+                </div>
+
             </div>
             
             <div class="mt-6 pt-4 border-t border-white/10 text-xs text-white/40">
@@ -1430,7 +1501,38 @@
                 id: 'task-manager', name: 'Task Manager', icon: 'fa-microchip',
                 color: 'from-cyan-400 to-blue-500', windowId: 'task-manager-window',
                 singleton: true, category: 'system'
-            }
+            },
+            'terminal': {
+                id: 'terminal', name: 'Terminal', icon: 'fa-terminal',
+                color: 'from-emerald-400 to-cyan-500', windowId: 'terminal-window',
+                singleton: true, category: 'system'
+            },
+            'calculator': {
+                id: 'calculator', name: 'Calculator', icon: 'fa-calculator',
+                color: 'from-amber-400 to-orange-500', windowId: 'calculator-window',
+                singleton: true, category: 'utilities'
+            },
+            'notes': {
+                id: 'notes', name: 'Notes', icon: 'fa-note-sticky',
+                color: 'from-yellow-400 to-amber-500', windowId: 'notes-window',
+                singleton: true, category: 'productivity'
+            },
+            'clock': {
+                id: 'clock', name: 'Clock', icon: 'fa-clock',
+                color: 'from-sky-400 to-blue-600', windowId: 'clock-window',
+                singleton: true, category: 'utilities'
+            },
+            'clipboard': {
+                id: 'clipboard', name: 'Clipboard', icon: 'fa-clipboard',
+                color: 'from-violet-400 to-purple-600', windowId: 'clipboard-window',
+                singleton: true, category: 'utilities'
+            },
+            'help': {
+                id: 'help', name: 'Help', icon: 'fa-circle-question',
+                color: 'from-slate-400 to-slate-600', windowId: 'help-window',
+                singleton: true, category: 'system'
+            },
+
         };
 
         const DESKTOP_ICONS_DEFAULT = [
@@ -1438,7 +1540,10 @@
             { id: 'files', appId: 'file-manager', label: 'Files', x: 40, y: 200 },
             { id: 'browser', appId: 'browser', label: 'Browser', x: 40, y: 320 },
             { id: 'settings', appId: 'settings', label: 'Settings', x: 40, y: 440 },
-            { id: 'welcome', type: 'file', path: '/Home/Documents/Welcome.md', label: 'Welcome.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 80 }
+            { id: 'welcome', type: 'file', path: '/Home/Documents/Welcome.md', label: 'Welcome.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 80 },
+            { id: 'terminal', appId: 'terminal', label: 'Terminal', x: 160, y: 200 },
+            { id: 'notes', appId: 'notes', label: 'Notes', x: 160, y: 320 },
+            { id: 'calc', appId: 'calculator', label: 'Calculator', x: 160, y: 440 }
         ];
 
         const DEFAULT_VFS_SEED = [
@@ -1447,7 +1552,9 @@
             { path: '/Home/Downloads', name: 'Downloads', type: 'folder', parent: '/Home', modified: Date.now() },
             { path: '/Home/Pictures', name: 'Pictures', type: 'folder', parent: '/Home', modified: Date.now() },
             { path: '/Home/Projects', name: 'Projects', type: 'folder', parent: '/Home', modified: Date.now() },
-            { path: '/Home/Documents/Welcome.md', name: 'Welcome.md', type: 'file', parent: '/Home/Documents', mime: 'text/markdown', size: 380, modified: Date.now(), content: '# Welcome to Trosmos OS\n\nYour AI-native operating system is ready.\n\n- Ask the AI to create notes, folders, or open apps\n- Files persist across sessions\n- Press Ctrl+K for the command palette\n- Open Task Manager to inspect running processes' }
+            { path: '/Home/Documents/Welcome.md', name: 'Welcome.md', type: 'file', parent: '/Home/Documents', mime: 'text/markdown', size: 380, modified: Date.now(), content: '# Welcome to Trosmos OS\n\nYour AI-native operating system is ready.\n\n- Ask the AI to create notes, folders, or open apps\n- Files persist across sessions\n- Press Ctrl+K for the command palette\n- Open Task Manager to inspect running processes\n- Try Terminal (Ctrl+T) and Calculator' },
+            { path: '/Home/Trash', name: 'Trash', type: 'folder', parent: '/Home', mime: null, size: 0, modified: Date.now() },
+            { path: '/Home/Projects/Orion.md', name: 'Orion.md', type: 'file', parent: '/Home/Projects', mime: 'text/markdown', size: 120, modified: Date.now(), content: '# Project Orion\n\nResearch notes for the next milestone.\n' }
         ];
 
         // ------------------ STORAGE MANAGER (IndexedDB) ------------------
@@ -2102,7 +2209,11 @@
                     const activateIcon = () => {
                         if (icon.appId) {
                             const app = APP_REGISTRY[icon.appId];
-                            if (app) Trosmos.windows.focusOrOpen(app.windowId);
+                            if (app) {
+                                const openers = { terminal: openTerminal, calculator: openCalculator, notes: openNotes, clock: openClock, clipboard: openClipboard, help: openHelp };
+                                if (openers[icon.appId]) openers[icon.appId]();
+                                else Trosmos.windows.focusOrOpen(app.windowId);
+                            }
                         } else if (icon.type === 'file') {
                             this.openTextEditor({ path: icon.path, name: icon.label });
                         }
@@ -3031,7 +3142,14 @@
             { id: 'create-note', label: 'Create Note', keywords: 'note new write', action: () => Trosmos.ai?.processCommand('create note Quick Note') },
             { id: 'create-folder', label: 'Create Folder', keywords: 'folder new mkdir', action: () => createNewFolder() },
             { id: 'toggle-notifications', label: 'Notifications', keywords: 'notifications center', action: () => showNotificationCenter() },
-            { id: 'lock', label: 'Lock System', keywords: 'lock logout sign out', action: () => { document.getElementById('desktop')?.classList.add('hidden'); document.getElementById('login-screen')?.classList.remove('hidden'); } },
+            { id: 'open-terminal', label: 'Open Terminal', keywords: 'terminal shell console cmd', action: () => openTerminal() },
+            { id: 'open-calculator', label: 'Open Calculator', keywords: 'calculator math calc', action: () => openCalculator() },
+            { id: 'open-notes', label: 'Open Notes', keywords: 'notes memo write', action: () => openNotes() },
+            { id: 'open-clock', label: 'Open Clock', keywords: 'clock time date', action: () => openClock() },
+            { id: 'open-clipboard', label: 'Open Clipboard', keywords: 'clipboard paste history', action: () => openClipboard() },
+            { id: 'open-help', label: 'Open Help', keywords: 'help about support', action: () => openHelp() },
+            { id: 'lock', label: 'Lock System', keywords: 'lock logout sign out', action: () => lockSystem() },
+            { id: 'signout', label: 'Sign Out', keywords: 'logout sign out exit session', action: () => { document.getElementById('desktop')?.classList.add('hidden'); const l=document.getElementById('login-screen'); if(l){ l.classList.remove('hidden'); l.classList.add('flex'); } } },
         ];
 
         function showCommandPalette() {
@@ -3359,5 +3477,6 @@
     </div>
     <div id="trosmos-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="/trosmos-apps.js" defer></script>
 </body>
 </html>

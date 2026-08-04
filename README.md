@@ -1,6 +1,6 @@
-# Trosmos OS
+# Trosmos OS 2.7
 
-Premium AI-native web operating system.
+Premium AI-native web operating system — complete interactive desktop environment.
 
 ## Quick start
 
@@ -9,30 +9,30 @@ npm install
 npm run dev
 ```
 
-Open the URL shown by Vite. For full AI (Gemini tools), deploy to Netlify and set `GEMINI_API_KEY`.
+Open the Vite URL. For full AI tool-calling, deploy to Netlify and set `GEMINI_API_KEY`.
 
-## Production build
+## Features
 
-```bash
-npm run build
-npm run start   # serves dist/
-```
-
-## Architecture highlights
-
-- Modular core under `src/` (EventBus, Storage, VFS, AI tools, Permissions)
-- Real AI agent with controlled tools + permission prompts (modal UI)
-- Persistent virtual filesystem (non-destructive IndexedDB migrations, path-safe)
-- Window / Process / Desktop managers
+- Desktop with icons, dock, Start menu, lock screen
+- Window manager: drag, resize, minimize, maximize, focus, persist
+- Virtual filesystem (IndexedDB) + File Manager
+- Terminal, Calculator, Notes, Clock, Clipboard, Browser, Settings, App Store, Task Manager
 - Command palette (Ctrl+K)
-- Task Manager
-- PWA + offline shell (SW v6)
+- Trosmos AI copilot with permission-gated tools
+- PWA + offline shell
 
-Preserves the original Trosmos visual identity (glassmorphism, aurora, dock, window chrome).
+## Keyboard
 
-## Security notes
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+K | Command palette |
+| Ctrl+T | Terminal |
+| Ctrl+L | Lock screen |
+| Esc | Close overlays |
 
-- `GEMINI_API_KEY` is server-side only (Netlify function)
-- AI tool arguments are validated and path-normalized
-- Destructive AI actions require explicit user confirmation
-- User/AI chat content is sanitized before DOM insertion
+## Security
+
+- `GEMINI_API_KEY` server-side only (Netlify function)
+- Path-normalized VFS
+- XSS-safe rendering
+- Destructive AI actions require confirmation
