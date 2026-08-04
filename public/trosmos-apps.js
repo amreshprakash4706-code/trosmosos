@@ -384,6 +384,7 @@
     justEvaled: false,
     open() {
       this.ensureDOM();
+      this._bindKeys();
       focusOrOpen('calculator-window');
     },
     ensureDOM() {
@@ -446,54 +447,177 @@
       if (key === 'C') {
         this.expr = '0';
         this.justEvaled = false;
-      } else if (key === '⌫') {
+      } else if (key === '⌫' || key === 'Backspace') {
         this.expr = this.expr.length <= 1 ? '0' : this.expr.slice(0, -1);
       } else if (key === '±') {
-        this.expr = this.expr.startsWith('-')
-          ? this.expr.slice(1)
-          : this.expr !== '0'
-            ? '-' + this.expr
-            : this.expr;
+        if (this.expr === 'Error') this.expr = '0';
+        else if (this.expr.startsWith('-')) this.expr = this.expr.slice(1) || '0';
+        else if (this.expr !== '0') this.expr = '-' + this.expr;
       } else if (key === '%') {
         try {
-          this.expr = String(this._eval(this.expr) / 100);
+          this.expr = this._format(this._eval(this.expr) / 100);
           this.justEvaled = true;
         } catch (_) {
           this.expr = 'Error';
+          this.justEvaled = true;
         }
-      } else if (key === '=') {
+      } else if (key === '=' || key === 'Enter') {
         try {
-          const n = this._eval(this.expr);
-          this.expr = String(Number.isFinite(n) ? +n.toPrecision(12) : 'Error');
+          this.expr = this._format(this._eval(this.expr));
           this.justEvaled = true;
         } catch (_) {
           this.expr = 'Error';
           this.justEvaled = true;
         }
-      } else if (['+', '−', '×', '÷'].includes(key)) {
+      } else if (['+', '−', '×', '÷', '*', '/'].includes(key)) {
+        const map = { '*': '×', '/': '÷', '-': '−' };
+        const op = map[key] || key;
         this.justEvaled = false;
         const last = this.expr.slice(-1);
-        if (['+', '−', '×', '÷'].includes(last)) this.expr = this.expr.slice(0, -1) + key;
-        else this.expr += key;
-      } else {
+        if (['+', '−', '×', '÷'].includes(last)) this.expr = this.expr.slice(0, -1) + op;
+        else if (this.expr === 'Error') this.expr = '0' + op;
+        else this.expr += op;
+      } else if (/^[0-9.]$/.test(key)) {
         if (this.justEvaled || this.expr === '0' || this.expr === 'Error') {
           this.expr = key === '.' ? '0.' : key;
           this.justEvaled = false;
-        } else this.expr += key;
+        } else if (key === '.' && /\.\d*$/.test(this.expr.split(/[+\u2212\u00d7\u00f7]/).pop() || '')) {
+          /* ignore second decimal in current number */
+        } else {
+          this.expr += key;
+        }
       }
       const el = document.getElementById('calc-display');
       if (el) el.textContent = this.expr;
     },
+    _format(n) {
+      if (typeof n !== 'number' || !Number.isFinite(n)) throw new Error('nan');
+      // Trim floating noise while keeping useful precision
+      const s = String(+n.toPrecision(12));
+      return s;
+    },
+    /**
+     * Safe arithmetic evaluator (no Function / eval — CSP-safe).
+     * Supports + − × ÷, unary minus, decimals, and parentheses.
+     */
     _eval(raw) {
-      const s = String(raw)
+      const src = String(raw)
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/−/g, '-')
-        .replace(/[^0-9+\-*/().\s]/g, '');
-      if (!s || /[+\-*/.]$/.test(s.trim())) throw new Error('bad');
-      const r = Function('"use strict"; return (' + s + ');')();
-      if (typeof r !== 'number' || !Number.isFinite(r)) throw new Error('nan');
-      return r;
+        .replace(/\s+/g, '');
+      if (!src) throw new Error('empty');
+
+      let i = 0;
+      const peek = () => src[i];
+      const next = () => src[i++];
+
+      const parseNumber = () => {
+        let start = i;
+        if (peek() === '.') i++;
+        while (peek() && /[0-9]/.test(peek())) i++;
+        if (peek() === '.' && start === i - (src[start] === '.' ? 1 : 0)) {
+          /* already consumed leading dot */
+        } else if (peek() === '.') {
+          i++;
+          while (peek() && /[0-9]/.test(peek())) i++;
+        }
+        const slice = src.slice(start, i);
+        if (!slice || slice === '.') throw new Error('bad number');
+        const n = Number(slice);
+        if (!Number.isFinite(n)) throw new Error('bad number');
+        return n;
+      };
+
+      // expression = term (('+'|'-') term)*
+      // term       = factor (('*'|'/') factor)*
+      // factor     = ('+'|'-') factor | number | '(' expression ')'
+      const parseFactor = () => {
+        if (peek() === '+') {
+          next();
+          return parseFactor();
+        }
+        if (peek() === '-') {
+          next();
+          return -parseFactor();
+        }
+        if (peek() === '(') {
+          next();
+          const v = parseExpression();
+          if (peek() !== ')') throw new Error('paren');
+          next();
+          return v;
+        }
+        if (peek() && /[0-9.]/.test(peek())) return parseNumber();
+        throw new Error('factor');
+      };
+
+      const parseTerm = () => {
+        let v = parseFactor();
+        while (peek() === '*' || peek() === '/') {
+          const op = next();
+          const r = parseFactor();
+          if (op === '*') v *= r;
+          else {
+            if (r === 0) throw new Error('div0');
+            v /= r;
+          }
+        }
+        return v;
+      };
+
+      const parseExpression = () => {
+        let v = parseTerm();
+        while (peek() === '+' || peek() === '-') {
+          const op = next();
+          const r = parseTerm();
+          v = op === '+' ? v + r : v - r;
+        }
+        return v;
+      };
+
+      const result = parseExpression();
+      if (i !== src.length) throw new Error('trailing');
+      if (typeof result !== 'number' || !Number.isFinite(result)) throw new Error('nan');
+      return result;
+    },
+    _onKey(e) {
+      const win = document.getElementById('calculator-window');
+      if (!win || win.classList.contains('hidden')) return;
+      // Don't steal keys while typing in inputs/textareas elsewhere
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      const k = e.key;
+      if (k === 'Escape') {
+        if (window.Trosmos?.windows?.close) Trosmos.windows.close('calculator-window');
+        return;
+      }
+      const map = {
+        Enter: '=',
+        '=': '=',
+        Backspace: '⌫',
+        Delete: 'C',
+        c: 'C',
+        C: 'C',
+        '%': '%',
+        '+': '+',
+        '-': '−',
+        '*': '×',
+        '/': '÷',
+        x: '×',
+        X: '×'
+      };
+      let key = map[k];
+      if (!key && /^[0-9.]$/.test(k)) key = k;
+      if (!key) return;
+      e.preventDefault();
+      this.press(key);
+    },
+    _bindKeys() {
+      if (this._keysBound) return;
+      this._keysBound = true;
+      document.addEventListener('keydown', (e) => this._onKey(e));
     }
   };
 
