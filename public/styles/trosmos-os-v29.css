@@ -1,0 +1,622 @@
+/* ============================================================
+   Trosmos OS 2.9 — Device-aware OS shell, mobile home, workspaces
+   Extends (does not replace) existing trosmos.css identity
+   ============================================================ */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --mobile-status-h: 28px;
+  --mobile-dock-h: 72px;
+  --workspace-bar-h: 28px;
+  --os-vh: 100dvh;
+}
+
+html, body {
+  height: 100%;
+  min-height: 100dvh;
+  overscroll-behavior: none;
+}
+
+/* ---------- Device mode body classes ---------- */
+body.trosmos-mobile #desktop-area > .desktop-icon,
+body.trosmos-mobile #weather-widget,
+body.trosmos-mobile #desktop-area > .absolute.top-8.right-8 {
+  display: none !important;
+}
+
+body.trosmos-mobile #desktop {
+  padding-top: calc(var(--mobile-status-h) + var(--safe-top));
+  padding-bottom: calc(var(--mobile-dock-h) + var(--safe-bottom));
+}
+
+body.trosmos-mobile .desktop-topbar,
+body.trosmos-mobile #desktop > .flex.items-center.justify-between.px-6 {
+  display: none !important;
+}
+
+body.trosmos-mobile .dock-container,
+body.trosmos-mobile #desktop > .absolute.bottom-6 {
+  display: none !important;
+}
+
+body.trosmos-desktop #mobile-home,
+body.trosmos-desktop #mobile-status-bar,
+body.trosmos-tablet #mobile-home {
+  display: none !important;
+}
+
+/* ---------- Mobile status bar ---------- */
+#mobile-status-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 250;
+  height: calc(var(--mobile-status-h) + var(--safe-top));
+  padding: var(--safe-top) 12px 0;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(9, 9, 11, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+
+body.trosmos-mobile #mobile-status-bar {
+  display: flex;
+  pointer-events: auto;
+}
+
+#mobile-status-bar .msb-left,
+#mobile-status-bar .msb-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 72px;
+}
+
+#mobile-status-bar .msb-right {
+  justify-content: flex-end;
+}
+
+#mobile-status-bar .msb-center {
+  flex: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Mobile home screen ---------- */
+#mobile-home {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  padding: 12px 16px 8px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+body.trosmos-mobile #mobile-home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body.trosmos-mobile.trosmos-app-open #mobile-home {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#mobile-home .mh-greeting {
+  padding: 8px 4px 0;
+}
+
+#mobile-home .mh-greeting h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+#mobile-home .mh-greeting p {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+#mobile-home .mh-widget-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+#mobile-home .mh-widget {
+  border-radius: 20px;
+  padding: 14px;
+  min-height: 88px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+}
+
+#mobile-home .mh-app-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+  padding: 8px 0 24px;
+}
+
+#mobile-home .mh-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  padding: 6px 4px;
+  border-radius: 16px;
+  min-height: 76px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1), background 0.15s ease;
+}
+
+#mobile-home .mh-app:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#mobile-home .mh-app-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+#mobile-home .mh-app-label {
+  font-size: 11px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.2;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Mobile bottom dock ---------- */
+#mobile-dock {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 240;
+  padding: 8px 12px calc(8px + var(--safe-bottom));
+  justify-content: center;
+  pointer-events: none;
+}
+
+body.trosmos-mobile #mobile-dock {
+  display: flex;
+  pointer-events: auto;
+}
+
+#mobile-dock .md-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 4px;
+  width: min(420px, 100%);
+  padding: 8px 10px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+#mobile-dock .md-btn {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.15rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+#mobile-dock .md-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#mobile-dock .md-btn.active {
+  background: rgba(59, 130, 246, 0.25);
+  color: white;
+}
+
+/* ---------- Mobile app chrome (fullscreen apps) ---------- */
+body.trosmos-mobile .window:not(.hidden) {
+  left: 0 !important;
+  top: calc(var(--mobile-status-h) + var(--safe-top)) !important;
+  right: 0 !important;
+  bottom: calc(var(--mobile-dock-h) + var(--safe-bottom)) !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100vw !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+body.trosmos-mobile .window .window-control.minimize,
+body.trosmos-mobile .window .window-control.maximize,
+body.trosmos-mobile .window-resize-handle {
+  display: none !important;
+}
+
+body.trosmos-mobile .window .window-titlebar,
+body.trosmos-mobile .window > .flex.items-center.justify-between {
+  min-height: 48px;
+  padding-left: 8px;
+}
+
+/* ---------- App switcher (Alt+Tab / recent) ---------- */
+#app-switcher {
+  position: fixed;
+  inset: 0;
+  z-index: 520;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 24px;
+  padding-top: calc(24px + var(--safe-top));
+  padding-bottom: calc(24px + var(--safe-bottom));
+}
+
+#app-switcher.open {
+  display: flex;
+}
+
+#app-switcher .as-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+#app-switcher .as-card {
+  flex: 0 0 auto;
+  width: min(220px, 70vw);
+  height: min(160px, 40vh);
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  scroll-snap-align: center;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+#app-switcher .as-card.active,
+#app-switcher .as-card:focus-visible {
+  border-color: var(--electric, #3B82F6);
+  transform: scale(1.04);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+}
+
+#app-switcher .as-card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(124, 58, 237, 0.15));
+}
+
+#app-switcher .as-card-label {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Power menu ---------- */
+#power-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 530;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  padding: var(--safe-top) 16px var(--safe-bottom);
+}
+
+#power-menu.open {
+  display: flex;
+}
+
+#power-menu .pm-card {
+  width: min(320px, 100%);
+  border-radius: 24px;
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+}
+
+#power-menu .pm-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+#power-menu .pm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+#power-menu .pm-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s ease, transform 0.12s ease;
+  min-height: 88px;
+}
+
+#power-menu .pm-btn:hover,
+#power-menu .pm-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+#power-menu .pm-btn:active {
+  transform: scale(0.96);
+}
+
+#power-menu .pm-btn i {
+  font-size: 1.35rem;
+  opacity: 0.9;
+}
+
+#power-menu .pm-btn.danger {
+  color: #f87171;
+}
+
+#power-menu .pm-cancel {
+  margin-top: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 13px;
+  min-height: 44px;
+}
+
+/* ---------- Workspace bar (desktop) ---------- */
+#workspace-bar {
+  display: none;
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + var(--safe-bottom));
+  transform: translateX(-50%);
+  z-index: 210;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+body.trosmos-desktop #workspace-bar {
+  display: flex;
+}
+
+#workspace-bar .ws-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+#workspace-bar .ws-dot.active {
+  background: var(--electric, #3B82F6);
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+#workspace-bar .ws-dot:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- Quick settings sheet (mobile) ---------- */
+#quick-settings {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 510;
+  display: none;
+  padding: calc(12px + var(--safe-top)) 16px 20px;
+  background: rgba(17, 24, 39, 0.96);
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#quick-settings.open {
+  display: block;
+  transform: translateY(0);
+}
+
+#quick-settings .qs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+
+#quick-settings .qs-tile {
+  aspect-ratio: 1;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: white;
+  font-size: 11px;
+  cursor: pointer;
+  min-height: 72px;
+}
+
+#quick-settings .qs-tile.on {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+#quick-settings .qs-tile i {
+  font-size: 1.2rem;
+}
+
+/* ---------- Sleep overlay ---------- */
+#sleep-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 750;
+  background: #000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+#sleep-overlay.open {
+  display: flex;
+}
+
+/* ---------- Touch-friendly context menu ---------- */
+@media (pointer: coarse) {
+  #context-menu {
+    min-width: 220px;
+  }
+  .context-item {
+    padding: 12px 18px;
+    min-height: 44px;
+  }
+  .calc-btn {
+    min-height: 52px;
+  }
+}
+
+/* ---------- Desktop polish: keep dock clear of workspace bar ---------- */
+body.trosmos-desktop #desktop > .absolute.bottom-6 {
+  bottom: 1.25rem;
+}
+
+/* ---------- Improved command palette on mobile ---------- */
+@media (max-width: 768px) {
+  #command-palette > div {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: 100% !important;
+    top: calc(12% + var(--safe-top)) !important;
+    max-height: 70dvh;
+  }
+  #palette-results {
+    max-height: 50dvh;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #quick-settings,
+  #app-switcher .as-card,
+  #mobile-home .mh-app,
+  #power-menu .pm-btn {
+    transition: none !important;
+  }
+}
+
+/* ---------- Landscape phone: denser home grid ---------- */
+@media (max-width: 900px) and (orientation: landscape) {
+  body.trosmos-mobile #mobile-home .mh-app-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  body.trosmos-mobile #mobile-home .mh-widget-row {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+/* ---------- High-DPI subtle borders ---------- */
+@media (min-resolution: 2dppx) {
+  .glass, .glass-strong {
+    border-width: 0.5px;
+  }
+}
