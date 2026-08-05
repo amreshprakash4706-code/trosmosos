@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <!-- SEO -->
-    <title>Trosmos OS 2.7 • Premium AI-Native Operating System</title>
+    <title>Trosmos OS 2.9 • Premium AI-Native Operating System</title>
     <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. Interactive production-grade demo.">
     <meta name="keywords" content="Trosmos OS, AI OS, AI-native operating system, glassmorphism, AI copilot, productivity, demo">
     <meta name="author" content="Trosmos">
@@ -48,6 +48,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/styles/trosmos.css">
+    <link rel="stylesheet" href="/styles/trosmos-os-v29.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
     <style>
         /* Fonts loaded via preload link above for better performance. Fallback in noscript. */
@@ -522,6 +523,23 @@
             animation: slide-in-right 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
         }
 
+
+        /* User preference: reduce motion (from Settings / palette) */
+        html.reduce-motion .smooth,
+        html.reduce-motion .smooth-slow,
+        html.reduce-motion .window,
+        html.reduce-motion .aurora-bg,
+        html.reduce-motion .live-wallpaper::before,
+        html.reduce-motion .cosmic-particle,
+        html.reduce-motion .dock-icon,
+        html.reduce-motion .file-item,
+        html.reduce-motion .app-card,
+        html.reduce-motion .icon-btn,
+        html.reduce-motion .notification {
+            animation: none !important;
+            transition: none !important;
+        }
+
         /* Accessibility: Respect reduced motion preference */
         @media (prefers-reduced-motion: reduce) {
             .smooth, .smooth-slow, .window, .aurora-bg, .live-wallpaper::before,
@@ -724,7 +742,7 @@
                     </div>
                     <div class="flex items-center gap-x-2">
                         <i class="fa-solid fa-check text-emerald-400"></i>
-                        <span>Trosmos 2.5 with AI</span>
+                        <span>Trosmos 2.8 with AI</span>
                     </div>
                 </div>
             </div>
@@ -1888,6 +1906,28 @@
                     if (proc) proc.status = 'running';
                 }
             }
+
+            list() {
+                return Array.from(this.processes.values()).map((p) => ({
+                    pid: p.pid,
+                    appId: p.appId,
+                    windowId: p.windowId,
+                    status: p.status,
+                    started: p.started,
+                    uptimeMs: Date.now() - (p.started || Date.now())
+                }));
+            }
+
+            killPid(pid) {
+                const proc = this.processes.get(pid);
+                if (!proc) return false;
+                if (proc.windowId && Trosmos.windows?.close) {
+                    Trosmos.windows.close(proc.windowId);
+                }
+                this.processes.delete(pid);
+                Trosmos.runningProcesses.delete(proc.windowId);
+                return true;
+            }
         }
 
         // ------------------ WINDOW MANAGER ------------------
@@ -1933,6 +1973,16 @@
                 let startX, startY, origX, origY, winW, winH;
 
                 header.style.cursor = 'grab';
+
+                // Double-click titlebar to maximize / restore
+                if (!header.dataset.dblMax) {
+                    header.dataset.dblMax = '1';
+                    header.addEventListener('dblclick', (e) => {
+                        if (e.target.closest('button') || e.target.closest('.window-control')) return;
+                        const id = win.id;
+                        if (id) this.maximize(id);
+                    });
+                }
 
                 const clamp = (x, y) => {
                     const margin = 48; // keep at least this much of the titlebar reachable
@@ -2425,20 +2475,37 @@
         // ------------------ NOTIFICATION MANAGER ------------------
         class NotificationManager {
             constructor() {
-                this.list = [
-                    { id: 1, title: 'System Update', body: 'Trosmos 2.5 is ready to install', time: '2m ago', icon: 'fa-download' },
-                    { id: 2, title: 'AI Insight', body: '3 new suggestions based on your recent files', time: '15m ago', icon: 'fa-robot' },
-                    { id: 3, title: 'Calendar', body: 'Team sync in 30 minutes', time: '28m ago', icon: 'fa-calendar' },
-                    { id: 4, title: 'Security', body: 'Login from new device detected', time: '1h ago', icon: 'fa-shield' }
-                ];
+                this.list = [];
+                this.nextId = 1;
+                this.maxHistory = 50;
+            }
+
+            async load() {
+                try {
+                    const rec = await Trosmos.storage?.get('notifications', 'history');
+                    if (rec?.data?.list && Array.isArray(rec.data.list)) {
+                        this.list = rec.data.list.slice(0, this.maxHistory);
+                        this.nextId = (Math.max(0, ...this.list.map((n) => n.id || 0)) || 0) + 1;
+                    }
+                } catch (_) {}
+                this.render();
+            }
+
+            async persist() {
+                try {
+                    await Trosmos.storage?.put('notifications', {
+                        id: 'history',
+                        data: { list: this.list.slice(0, this.maxHistory) }
+                    });
+                } catch (_) {}
             }
 
             show(message, type = 'info') {
                 const toast = document.createElement('div');
                 toast.className = 'notification fixed bottom-24 right-6 glass rounded-2xl px-5 py-3 flex items-center gap-x-3 z-[90] depth';
-                const icon = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : 'fa-info text-[#3B82F6]';
-                toast.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i> <div></div>`;
-                toast.querySelector('div').textContent = message; // Safe: never inject raw HTML
+                const iconClass = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : type === 'warning' ? 'fa-triangle-exclamation text-amber-400' : 'fa-info text-[#3B82F6]';
+                toast.innerHTML = '<i class="fa-solid ' + iconClass + '" aria-hidden="true"></i> <div></div>';
+                toast.querySelector('div').textContent = message;
                 toast.setAttribute('role', 'status');
                 toast.setAttribute('aria-live', 'polite');
                 document.body.appendChild(toast);
@@ -2447,20 +2514,41 @@
                     toast.style.transform = 'translateX(120%)';
                     setTimeout(() => toast.remove(), 400);
                 }, 3200);
+                // Persist to notification center
+                this.list.unshift({
+                    id: this.nextId++,
+                    title: type === 'error' ? 'Error' : type === 'success' ? 'Success' : type === 'warning' ? 'Warning' : 'Info',
+                    body: String(message || '').slice(0, 200),
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    icon: type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-bell',
+                    type,
+                    read: false,
+                    ts: Date.now()
+                });
+                this.list = this.list.slice(0, this.maxHistory);
+                this.persist();
+                this.render();
             }
 
             render() {
                 const container = document.getElementById('notification-list');
                 if (!container) return;
                 container.textContent = '';
+                if (!this.list.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'p-6 text-center text-white/40 text-sm';
+                    empty.textContent = 'No notifications';
+                    container.appendChild(empty);
+                    return;
+                }
                 const frag = document.createDocumentFragment();
                 this.list.forEach(n => {
                     const row = document.createElement('div');
-                    row.className = 'p-3 rounded-xl hover:bg-white/5 cursor-pointer';
+                    row.className = 'p-3 rounded-xl hover:bg-white/5 cursor-pointer' + (n.read ? '' : ' border-l-2 border-blue-400');
                     const inner = document.createElement('div');
                     inner.className = 'flex items-start gap-x-3';
                     const icon = document.createElement('i');
-                    icon.className = `fa-solid ${n.icon || 'fa-bell'} text-[#3B82F6] mt-0.5`;
+                    icon.className = 'fa-solid ' + (n.icon || 'fa-bell') + ' text-[#3B82F6] mt-0.5';
                     icon.setAttribute('aria-hidden', 'true');
                     const bodyWrap = document.createElement('div');
                     bodyWrap.className = 'flex-1 min-w-0';
@@ -2475,10 +2563,27 @@
                     const time = document.createElement('div');
                     time.className = 'text-[10px] text-white/40';
                     time.textContent = n.time || '';
+                    const dismiss = document.createElement('button');
+                    dismiss.type = 'button';
+                    dismiss.className = 'text-white/30 hover:text-white text-sm px-1';
+                    dismiss.setAttribute('aria-label', 'Dismiss');
+                    dismiss.textContent = '×';
+                    dismiss.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.list = this.list.filter((x) => x.id !== n.id);
+                        this.persist();
+                        this.render();
+                    });
                     inner.appendChild(icon);
                     inner.appendChild(bodyWrap);
                     inner.appendChild(time);
+                    inner.appendChild(dismiss);
                     row.appendChild(inner);
+                    row.addEventListener('click', () => {
+                        n.read = true;
+                        this.persist();
+                        this.render();
+                    });
                     frag.appendChild(row);
                 });
                 container.appendChild(frag);
@@ -2486,6 +2591,7 @@
 
             clear() {
                 this.list = [];
+                this.persist();
                 this.render();
             }
         }
@@ -2964,6 +3070,18 @@
         function openTaskManager() {
             Trosmos.windows.focusOrOpen('task-manager-window');
             renderTaskManager();
+            // Auto-refresh while open
+            const win = document.getElementById('task-manager-window');
+            if (win && !win._tmTimer) {
+                win._tmTimer = setInterval(() => {
+                    if (win.classList.contains('hidden')) {
+                        clearInterval(win._tmTimer);
+                        win._tmTimer = null;
+                        return;
+                    }
+                    renderTaskManager();
+                }, 2000);
+            }
         }
         function renderTaskManager() {
             const list = document.getElementById('task-manager-list');
@@ -3132,13 +3250,26 @@
         }
         function browserReload() { browserNavigate(); }
 
-        const COMMAND_PALETTE_CMDS = [
+        const COMMAND_PALETTE_CMDS = window.COMMAND_PALETTE_CMDS = [
             { id: 'open-ai', label: 'Open AI Chat', keywords: 'ai chat assistant copilot', action: () => openAIAssistant() },
             { id: 'open-files', label: 'Open Files', keywords: 'files folder manager', action: () => openFileManager() },
             { id: 'open-browser', label: 'Open Browser', keywords: 'browser web', action: () => openBrowser() },
             { id: 'open-settings', label: 'Open Settings', keywords: 'settings preferences', action: () => openSettings() },
             { id: 'open-store', label: 'Open App Store', keywords: 'store apps install', action: () => openAppStore() },
             { id: 'open-taskmgr', label: 'Open Task Manager', keywords: 'task manager processes', action: () => openTaskManager() },
+            { id: 'open-terminal', label: 'Open Terminal', keywords: 'terminal shell console cmd', action: () => typeof openTerminal === 'function' && openTerminal() },
+            { id: 'open-calculator', label: 'Open Calculator', keywords: 'calculator calc math', action: () => typeof openCalculator === 'function' && openCalculator() },
+            { id: 'open-notes', label: 'Open Notes', keywords: 'notes write memo editor', action: () => typeof openNotes === 'function' && openNotes() },
+            { id: 'open-clock', label: 'Open Clock', keywords: 'clock time timezone', action: () => typeof openClock === 'function' && openClock() },
+            { id: 'open-clipboard', label: 'Open Clipboard', keywords: 'clipboard history paste', action: () => typeof openClipboard === 'function' && openClipboard() },
+            { id: 'open-help', label: 'Help & About', keywords: 'help about shortcuts', action: () => typeof openHelp === 'function' && openHelp() },
+            { id: 'lock-system', label: 'Lock Screen', keywords: 'lock screen security', action: () => typeof lockSystem === 'function' && lockSystem() },
+            { id: 'toggle-reduce-motion', label: 'Toggle Reduce Motion', keywords: 'accessibility motion animation', action: () => {
+                const reduced = document.documentElement.classList.toggle('reduce-motion');
+                if (Trosmos.settings) Trosmos.settings.reduceMotion = reduced;
+                Trosmos.storage?.put('settings', { id: 'prefs', data: { ...Trosmos.settings } });
+                Trosmos.notifications?.show(reduced ? 'Reduce motion on' : 'Reduce motion off', 'info');
+            }},
             { id: 'create-note', label: 'Create Note', keywords: 'note new write', action: () => Trosmos.ai?.processCommand('create note Quick Note') },
             { id: 'create-folder', label: 'Create Folder', keywords: 'folder new mkdir', action: () => createNewFolder() },
             { id: 'toggle-notifications', label: 'Notifications', keywords: 'notifications center', action: () => showNotificationCenter() },
@@ -3358,6 +3489,12 @@
             if (!Trosmos.browser) Trosmos.browser = new BrowserManager();
             if (!Trosmos.ai) Trosmos.ai = new AIModule();
             if (!Trosmos.notifications) Trosmos.notifications = new NotificationManager();
+            try { await Trosmos.notifications.load?.(); } catch (_) {}
+
+            // Apply reduce-motion preference
+            if (Trosmos.settings?.reduceMotion) {
+                document.documentElement.classList.add('reduce-motion');
+            }
 
             // Pre-register static windows
             ['ai-window', 'file-manager-window', 'browser-window', 'settings-window', 'app-store-window'].forEach(id => {
@@ -3457,9 +3594,11 @@
                 }).catch(err => console.warn('SW registration failed (ok for local file://)', err));
             }
 
-            console.log('%c[Trosmos OS] Production build initialized. All modules loaded. Ready for enterprise use.', 'color:#3B82F6');
+            console.log('%c[Trosmos OS] v2.9 production shell ready — desktop + mobile OS modes, workspaces, app switcher.', 'color:#3B82F6');
         }
 
+        window.openCommandPalette = showCommandPalette;
+        window.showCommandPalette = showCommandPalette;
         window.onload = initializeTrosmosOS;
     </script>
 
@@ -3478,5 +3617,6 @@
     <div id="trosmos-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <script src="/trosmos-apps.js" defer></script>
+    <script src="/trosmos-enhance.js" defer></script>
 </body>
 </html>

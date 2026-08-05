@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "2.7.0",
-  "description": "Premium AI-native operating system \u2014 complete interactive desktop environment",
+  "version": "2.9.0",
+  "description": "Premium AI-native operating system \u2014 desktop + mobile interactive environment (v2.9)",
   "type": "module",
   "private": true,
   "scripts": {

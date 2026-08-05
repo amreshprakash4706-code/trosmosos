@@ -1,9 +1,12 @@
 /**
- * Trosmos OS 2.7 — Built-in Applications Extension
- * Loaded after the core OS script. Expects global Trosmos, escapeHtml.
+ * Trosmos OS 2.8 — Built-in Applications Extension
+ * Full app registry, upgraded Terminal/Calculator/Notes/Clipboard,
+ * system services bridge. Loaded after core OS. Expects Trosmos, escapeHtml.
  */
 (function () {
   'use strict';
+
+  const OS_VERSION = '2.9.0';
 
   function esc(s) {
     if (typeof escapeHtml === 'function') return escapeHtml(s);
@@ -24,9 +27,56 @@
     if (window.Trosmos?.windows?.focusOrOpen) Trosmos.windows.focusOrOpen(id);
     else {
       const w = document.getElementById(id);
-      if (w) w.classList.remove('hidden');
+      if (w) {
+        w.classList.remove('hidden');
+        if (window.Trosmos?.windows?.focus) Trosmos.windows.focus(id);
+      }
     }
   }
+
+  /* ---------- Application Registry (single source of truth) ---------- */
+  const AppRegistry = {
+    apps: {
+      ai: { id: 'ai', name: 'Trosmos AI', icon: 'fa-robot', category: 'System', version: '2.9', description: 'Intelligent OS copilot', windowId: 'ai-window', singleton: true, defaultSize: { w: 420, h: 560 }, minSize: { w: 320, h: 400 }, permissions: ['EXECUTE'], launch: () => typeof openAIAssistant === 'function' && openAIAssistant() },
+      files: { id: 'files', name: 'Files', icon: 'fa-folder', category: 'System', version: '2.9', description: 'Virtual filesystem manager', windowId: 'file-manager-window', singleton: true, defaultSize: { w: 780, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => typeof openFileManager === 'function' && openFileManager() },
+      browser: { id: 'browser', name: 'Browser', icon: 'fa-globe', category: 'Internet', version: '2.9', description: 'Web browser with tabs', windowId: 'browser-window', singleton: true, defaultSize: { w: 900, h: 600 }, minSize: { w: 480, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openBrowser === 'function' && openBrowser() },
+      settings: { id: 'settings', name: 'Settings', icon: 'fa-gear', category: 'System', version: '2.9', description: 'System preferences', windowId: 'settings-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 480, h: 360 }, permissions: ['SYSTEM'], launch: () => typeof openSettings === 'function' && openSettings() },
+      'app-store': { id: 'app-store', name: 'App Store', icon: 'fa-store', category: 'System', version: '2.9', description: 'Discover Trosmos apps', windowId: 'app-store-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 420, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openAppStore === 'function' && openAppStore() },
+      'task-manager': { id: 'task-manager', name: 'Task Manager', icon: 'fa-chart-simple', category: 'System', version: '2.9', description: 'Process monitor', windowId: 'task-manager-window', singleton: true, defaultSize: { w: 560, h: 420 }, minSize: { w: 360, h: 280 }, permissions: ['EXECUTE'], launch: () => typeof openTaskManager === 'function' && openTaskManager() },
+      terminal: { id: 'terminal', name: 'Terminal', icon: 'fa-terminal', category: 'Developer', version: '2.9', description: 'Sandboxed Trosmos shell', windowId: 'terminal-window', singleton: false, defaultSize: { w: 720, h: 460 }, minSize: { w: 400, h: 280 }, permissions: ['EXECUTE', 'READ', 'WRITE'], launch: () => openTerminal() },
+      calculator: { id: 'calculator', name: 'Calculator', icon: 'fa-calculator', category: 'Utilities', version: '2.9', description: 'Scientific calculator', windowId: 'calculator-window', singleton: true, defaultSize: { w: 340, h: 520 }, minSize: { w: 280, h: 400 }, permissions: ['EXECUTE'], launch: () => openCalculator() },
+      notes: { id: 'notes', name: 'Notes', icon: 'fa-note-sticky', category: 'Productivity', version: '2.9', description: 'Persistent notes editor', windowId: 'notes-window', singleton: true, defaultSize: { w: 760, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => openNotes() },
+      clock: { id: 'clock', name: 'Clock', icon: 'fa-clock', category: 'Utilities', version: '2.9', description: 'Live clock & timezone', windowId: 'clock-window', singleton: true, defaultSize: { w: 380, h: 340 }, minSize: { w: 280, h: 260 }, permissions: ['EXECUTE'], launch: () => openClock() },
+      clipboard: { id: 'clipboard', name: 'Clipboard', icon: 'fa-clipboard', category: 'Utilities', version: '2.9', description: 'Clipboard history', windowId: 'clipboard-window', singleton: true, defaultSize: { w: 480, h: 420 }, minSize: { w: 320, h: 280 }, permissions: ['EXECUTE'], launch: () => openClipboard() },
+      help: { id: 'help', name: 'Help & About', icon: 'fa-circle-question', category: 'System', version: '2.9', description: 'Keyboard shortcuts & about', windowId: 'help-window', singleton: true, defaultSize: { w: 560, h: 480 }, minSize: { w: 360, h: 320 }, permissions: ['EXECUTE'], launch: () => openHelp() }
+    },
+    get(id) { return this.apps[id] || null; },
+    list() { return Object.values(this.apps); },
+    byCategory() {
+      const map = {};
+      this.list().forEach((a) => {
+        if (!map[a.category]) map[a.category] = [];
+        map[a.category].push(a);
+      });
+      return map;
+    },
+    search(q) {
+      const s = String(q || '').toLowerCase().trim();
+      if (!s) return this.list();
+      return this.list().filter((a) =>
+        a.name.toLowerCase().includes(s) ||
+        a.description.toLowerCase().includes(s) ||
+        a.category.toLowerCase().includes(s) ||
+        a.id.includes(s)
+      );
+    },
+    launch(id) {
+      const app = this.get(id);
+      if (!app) return false;
+      try { app.launch(); return true; } catch (e) { console.error('[AppRegistry]', e); return false; }
+    }
+  };
+  window.AppRegistry = AppRegistry;
 
   /* ---------- Clipboard ---------- */
   const ClipboardManager = {
@@ -134,7 +184,7 @@
       focusOrOpen('terminal-window');
       if (!this.ready) {
         this.ready = true;
-        this.writeln('Trosmos Shell v2.7 — sandboxed virtual environment', 'muted');
+        this.writeln('Trosmos Shell v2.8 — sandboxed virtual environment', 'muted');
         this.writeln('Type <span class="text-cyan-300">help</span> for commands.', 'muted');
         this.writeln('');
       }
@@ -230,9 +280,12 @@
         switch (cmd) {
           case 'help':
           case '?':
-            this.writeln(
-              'Commands: help clear pwd ls cd cat touch mkdir rm echo whoami date uname history neofetch open notify search'
-            );
+            this.writeln('<span class="text-cyan-300">Trosmos Shell — commands</span>');
+            this.writeln('  help, clear, pwd, ls, cd, cat, write, touch, mkdir');
+            this.writeln('  rm, mv, cp, echo, whoami, date, uname, neofetch');
+            this.writeln('  history, open, apps, processes, settings, system');
+            this.writeln('  version, search, notify, exit');
+            this.writeln('<span class="text-white/40">Tab completes commands • ↑↓ history • Ctrl+L clear</span>');
             break;
           case 'clear':
           case 'cls': {
@@ -327,7 +380,7 @@
             break;
           case 'uname':
           case 'neofetch':
-            this.writeln('Trosmos OS 2.7 · AI-Native · ' + window.innerWidth + '×' + window.innerHeight);
+            this.writeln('Trosmos OS ' + OS_VERSION + ' · AI-Native · ' + window.innerWidth + '×' + window.innerHeight);
             break;
           case 'history':
             this.history.forEach((h, i) => this.writeln('  ' + (i + 1) + '  ' + esc(h)));
@@ -365,6 +418,120 @@
             );
             break;
           }
+          case 'write': {
+            if (args.length < 2) {
+              this.writeln('usage: write <file> <content…>', 'error');
+              break;
+            }
+            const wname = args[0].split('/').pop();
+            const content = args.slice(1).join(' ');
+            await vfs?.createFile(this.cwd, wname, content);
+            this.writeln('written ' + esc(wname), 'ok');
+            if (typeof renderFileManager === 'function') renderFileManager();
+            break;
+          }
+          case 'mv': {
+            if (args.length < 2) {
+              this.writeln('usage: mv <src> <dest-parent-or-name>', 'error');
+              break;
+            }
+            const src = this.resolve(args[0]);
+            const destArg = args[1];
+            // If dest looks like a folder path, move into it; else rename in place
+            const destResolved = this.resolve(destArg);
+            const destMeta = vfs?.getFile(destResolved);
+            if (destMeta && destMeta.type === 'folder') {
+              const item = await vfs?.move(src, destResolved);
+              this.writeln(item ? 'moved → ' + esc(item.path) : 'mv failed', item ? 'ok' : 'error');
+            } else {
+              const item = await vfs?.rename(src, destArg.split('/').pop());
+              this.writeln(item ? 'renamed → ' + esc(item.path) : 'mv failed', item ? 'ok' : 'error');
+            }
+            if (typeof renderFileManager === 'function') renderFileManager();
+            break;
+          }
+          case 'cp': {
+            if (args.length < 2) {
+              this.writeln('usage: cp <src> <new-name>', 'error');
+              break;
+            }
+            const csrc = this.resolve(args[0]);
+            const srcFile = vfs?.getFile(csrc);
+            if (!srcFile || srcFile.type !== 'file') {
+              this.writeln('cp: source not a file', 'error');
+              break;
+            }
+            const content = await vfs?.readFile(csrc);
+            const newName = args[1].split('/').pop();
+            const created = await vfs?.createFile(this.cwd, newName, content ?? '');
+            this.writeln(created ? 'copied → ' + esc(created.path) : 'cp failed', created ? 'ok' : 'error');
+            if (typeof renderFileManager === 'function') renderFileManager();
+            break;
+          }
+          case 'find': {
+            const q = args.join(' ').trim();
+            if (!q) { this.writeln('usage: find <query>'); break; }
+            const hits = vfs?.search?.(q) || [];
+            if (!hits.length) this.writeln('No matches');
+            else hits.slice(0, 40).forEach((f) => this.writeln((f.type === 'folder' ? 'd ' : 'f ') + f.path));
+            break;
+          }
+          case 'reboot':
+          case 'restart':
+            this.writeln('Restarting Trosmos…');
+            setTimeout(() => location.reload(), 400);
+            break;
+          case 'shutdown':
+            this.writeln('Shutting down…');
+            setTimeout(() => { if (window.TrosmosEnhance?.PowerMenu) TrosmosEnhance.PowerMenu.action('shutdown'); }, 300);
+            break;
+          case 'apps': {
+            const list = window.AppRegistry?.list?.() || [];
+            if (!list.length) this.writeln('(no registry)', 'muted');
+            list.forEach((a) => this.writeln('  <span class="text-cyan-300">' + esc(a.id) + '</span>  ' + esc(a.name) + ' · ' + esc(a.category)));
+            break;
+          }
+          case 'processes':
+          case 'ps': {
+            const procs = Trosmos.processes?.processes;
+            if (!procs || procs.size === 0) {
+              this.writeln('No tracked processes', 'muted');
+            } else {
+              this.writeln('PID   STATUS      APP');
+              procs.forEach((p) => {
+                this.writeln(
+                  String(p.pid).padEnd(6) +
+                    String(p.status).padEnd(12) +
+                    esc(p.appId || p.windowId || '')
+                );
+              });
+            }
+            break;
+          }
+          case 'settings': {
+            if (args[0] === 'list' || !args[0]) {
+              const s = Trosmos.settings || {};
+              Object.keys(s).forEach((k) => this.writeln('  ' + esc(k) + ' = ' + esc(String(s[k]))));
+            } else if (args[0] === 'open') {
+              if (typeof openSettings === 'function') openSettings();
+              this.writeln('opened', 'ok');
+            } else {
+              this.writeln('usage: settings [list|open]', 'muted');
+            }
+            break;
+          }
+          case 'system':
+          case 'version': {
+            this.writeln('Trosmos OS ' + (typeof OS_VERSION !== 'undefined' ? OS_VERSION : '2.8.0'));
+            this.writeln('Shell · sandboxed VFS · ' + window.innerWidth + '×' + window.innerHeight);
+            this.writeln('UA: ' + esc((navigator.userAgent || '').slice(0, 80)));
+            this.writeln('Online: ' + (navigator.onLine ? 'yes' : 'no'));
+            if (performance?.memory) {
+              const m = performance.memory;
+              this.writeln('JS heap: ' + Math.round(m.usedJSHeapSize / 1048576) + ' / ' + Math.round(m.jsHeapSizeLimit / 1048576) + ' MB (Chrome)');
+            }
+            break;
+          }
           case 'exit':
             Trosmos.windows?.close('terminal-window');
             break;
@@ -382,65 +549,113 @@
   const CalculatorApp = {
     expr: '0',
     justEvaled: false,
+    history: [],
+    mode: 'basic', // basic | sci
     open() {
       this.ensureDOM();
       this._bindKeys();
+      this.renderHistory();
       focusOrOpen('calculator-window');
     },
     ensureDOM() {
       if (document.getElementById('calculator-window')) return;
-      const keys = [
+      const keysBasic = [
         ['C', '⌫', '%', '÷'],
         ['7', '8', '9', '×'],
         ['4', '5', '6', '−'],
         ['1', '2', '3', '+'],
         ['±', '0', '.', '=']
       ];
-      const pad = keys
-        .flatMap((row) =>
-          row.map((k) => {
-            const op = ['÷', '×', '−', '+', '='].includes(k);
-            const cls = op
-              ? 'bg-blue-500/80 hover:bg-blue-400 text-white'
-              : k === 'C'
-                ? 'bg-white/10 hover:bg-rose-500/40'
-                : 'bg-white/8 hover:bg-white/15';
-            return (
-              '<button type="button" data-key="' +
-              k +
-              '" class="calc-btn rounded-2xl text-lg font-medium transition-colors ' +
-              cls +
-              '">' +
-              k +
-              '</button>'
-            );
-          })
-        )
-        .join('');
+      const keysSci = [
+        ['C', '⌫', '%', '÷'],
+        ['√', 'x²', '^', '×'],
+        ['sin', 'cos', 'tan', '−'],
+        ['log', 'ln', 'π', '+'],
+        ['±', '0', '.', '=']
+      ];
+      const buildPad = (keys) =>
+        keys
+          .flatMap((row) =>
+            row.map((k) => {
+              const op = ['÷', '×', '−', '+', '=', '^'].includes(k);
+              const sci = ['√', 'x²', 'sin', 'cos', 'tan', 'log', 'ln', 'π'].includes(k);
+              const cls = op
+                ? 'bg-blue-500/80 hover:bg-blue-400 text-white'
+                : k === 'C'
+                  ? 'bg-white/10 hover:bg-rose-500/40'
+                  : sci
+                    ? 'bg-purple-500/30 hover:bg-purple-500/50 text-sm'
+                    : 'bg-white/8 hover:bg-white/15';
+              return (
+                '<button type="button" data-key="' +
+                k +
+                '" class="calc-btn rounded-2xl font-medium transition-colors ' +
+                cls +
+                '">' +
+                k +
+                '</button>'
+              );
+            })
+          )
+          .join('');
       const win = document.createElement('div');
       win.id = 'calculator-window';
       win.setAttribute('role', 'dialog');
       win.setAttribute('aria-label', 'Calculator');
       win.className =
-        'window hidden absolute top-28 left-1/2 -translate-x-1/2 w-[320px] h-[480px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col';
+        'window hidden absolute top-28 left-1/2 -translate-x-1/2 w-[340px] h-[540px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col';
       win.innerHTML =
         '<div class="window-titlebar flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move select-none">' +
         '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center"><i class="fa-solid fa-calculator text-white text-xs"></i></div>' +
         '<div class="font-medium text-sm">Calculator</div></div>' +
         '<div class="window-controls">' +
-        '<button type="button" class="window-control minimize" onclick="Trosmos.windows.minimize(\'calculator-window\')"><i class="fa-solid fa-minus"></i></button>' +
-        '<button type="button" class="window-control close" onclick="Trosmos.windows.close(\'calculator-window\')"><i class="fa-solid fa-xmark"></i></button>' +
+        '<button type="button" class="window-control minimize" aria-label="Minimize" onclick="Trosmos.windows.minimize(\'calculator-window\')"><i class="fa-solid fa-minus"></i></button>' +
+        '<button type="button" class="window-control close" aria-label="Close" onclick="Trosmos.windows.close(\'calculator-window\')"><i class="fa-solid fa-xmark"></i></button>' +
         '</div></div>' +
-        '<div class="flex-1 flex flex-col p-4 gap-3">' +
-        '<div id="calc-display" class="h-16 rounded-2xl bg-black/30 flex items-end justify-end px-4 py-3 font-mono text-3xl text-white tracking-tight overflow-x-auto" aria-live="polite">0</div>' +
-        '<div class="grid grid-cols-4 gap-2 flex-1" id="calc-pad">' +
-        pad +
+        '<div class="flex-1 flex flex-col p-3 gap-2 min-h-0">' +
+        '<div class="flex items-center justify-between gap-2">' +
+        '<button type="button" id="calc-mode-btn" class="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15">Scientific</button>' +
+        '<button type="button" id="calc-copy-btn" class="text-[10px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15" title="Copy result">Copy</button>' +
+        '</div>' +
+        '<div id="calc-display" class="h-14 rounded-2xl bg-black/30 flex items-end justify-end px-4 py-2 font-mono text-2xl text-white tracking-tight overflow-x-auto" aria-live="polite">0</div>' +
+        '<div id="calc-history" class="h-12 overflow-y-auto text-[11px] text-white/40 font-mono px-1 space-y-0.5"></div>' +
+        '<div class="grid grid-cols-4 gap-1.5 flex-1" id="calc-pad">' +
+        buildPad(keysBasic) +
         '</div></div>';
       document.body.appendChild(win);
       registerWin('calculator-window', win);
       win.querySelector('#calc-pad').addEventListener('click', (e) => {
         const b = e.target.closest('[data-key]');
         if (b) this.press(b.dataset.key);
+      });
+      win.querySelector('#calc-mode-btn')?.addEventListener('click', () => {
+        this.mode = this.mode === 'basic' ? 'sci' : 'basic';
+        const pad = win.querySelector('#calc-pad');
+        pad.innerHTML = buildPad(this.mode === 'sci' ? keysSci : keysBasic);
+        win.querySelector('#calc-mode-btn').textContent = this.mode === 'sci' ? 'Basic' : 'Scientific';
+      });
+      win.querySelector('#calc-copy-btn')?.addEventListener('click', () => {
+        const t = this.expr === 'Error' ? '' : this.expr;
+        if (t && navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText(t);
+          Trosmos.notifications?.show('Result copied', 'success');
+        }
+      });
+    },
+    renderHistory() {
+      const el = document.getElementById('calc-history');
+      if (!el) return;
+      el.innerHTML = this.history
+        .slice(0, 6)
+        .map((h) => '<div class="truncate cursor-pointer hover:text-white/70" data-hist="' + esc(h.result) + '">' + esc(h.expr) + ' = ' + esc(h.result) + '</div>')
+        .join('');
+      el.querySelectorAll('[data-hist]').forEach((n) => {
+        n.addEventListener('click', () => {
+          this.expr = n.getAttribute('data-hist') || '0';
+          this.justEvaled = true;
+          const d = document.getElementById('calc-display');
+          if (d) d.textContent = this.expr;
+        });
       });
     },
     press(key) {
@@ -461,28 +676,58 @@
           this.expr = 'Error';
           this.justEvaled = true;
         }
-      } else if (key === '=' || key === 'Enter') {
+      } else if (key === 'π') {
+        if (this.justEvaled || this.expr === '0' || this.expr === 'Error') {
+          this.expr = String(Math.PI);
+          this.justEvaled = false;
+        } else this.expr += String(Math.PI);
+      } else if (['√', 'x²', 'sin', 'cos', 'tan', 'log', 'ln'].includes(key)) {
         try {
-          this.expr = this._format(this._eval(this.expr));
+          const v = this._eval(this.expr);
+          let r;
+          if (key === '√') r = Math.sqrt(v);
+          else if (key === 'x²') r = v * v;
+          else if (key === 'sin') r = Math.sin(v);
+          else if (key === 'cos') r = Math.cos(v);
+          else if (key === 'tan') r = Math.tan(v);
+          else if (key === 'log') r = Math.log10(v);
+          else if (key === 'ln') r = Math.log(v);
+          const prev = this.expr;
+          this.expr = this._format(r);
+          this.history.unshift({ expr: key + '(' + prev + ')', result: this.expr });
+          this.history = this.history.slice(0, 20);
+          this.renderHistory();
           this.justEvaled = true;
         } catch (_) {
           this.expr = 'Error';
           this.justEvaled = true;
         }
-      } else if (['+', '−', '×', '÷', '*', '/'].includes(key)) {
+      } else if (key === '=' || key === 'Enter') {
+        try {
+          const prev = this.expr;
+          this.expr = this._format(this._eval(this.expr));
+          this.history.unshift({ expr: prev, result: this.expr });
+          this.history = this.history.slice(0, 20);
+          this.renderHistory();
+          this.justEvaled = true;
+        } catch (_) {
+          this.expr = 'Error';
+          this.justEvaled = true;
+        }
+      } else if (['+', '−', '×', '÷', '*', '/', '^'].includes(key)) {
         const map = { '*': '×', '/': '÷', '-': '−' };
         const op = map[key] || key;
         this.justEvaled = false;
         const last = this.expr.slice(-1);
-        if (['+', '−', '×', '÷'].includes(last)) this.expr = this.expr.slice(0, -1) + op;
+        if (['+', '−', '×', '÷', '^'].includes(last)) this.expr = this.expr.slice(0, -1) + op;
         else if (this.expr === 'Error') this.expr = '0' + op;
         else this.expr += op;
       } else if (/^[0-9.]$/.test(key)) {
         if (this.justEvaled || this.expr === '0' || this.expr === 'Error') {
           this.expr = key === '.' ? '0.' : key;
           this.justEvaled = false;
-        } else if (key === '.' && /\.\d*$/.test(this.expr.split(/[+\u2212\u00d7\u00f7]/).pop() || '')) {
-          /* ignore second decimal in current number */
+        } else if (key === '.' && /\.\d*$/.test(this.expr.split(/[+\u2212\u00d7\u00f7^]/).pop() || '')) {
+          /* ignore second decimal */
         } else {
           this.expr += key;
         }
@@ -492,13 +737,11 @@
     },
     _format(n) {
       if (typeof n !== 'number' || !Number.isFinite(n)) throw new Error('nan');
-      // Trim floating noise while keeping useful precision
-      const s = String(+n.toPrecision(12));
-      return s;
+      return String(+n.toPrecision(12));
     },
     /**
      * Safe arithmetic evaluator (no Function / eval — CSP-safe).
-     * Supports + − × ÷, unary minus, decimals, and parentheses.
+     * Supports + − × ÷ ^, unary minus, decimals, parentheses.
      */
     _eval(raw) {
       const src = String(raw)
@@ -516,9 +759,7 @@
         let start = i;
         if (peek() === '.') i++;
         while (peek() && /[0-9]/.test(peek())) i++;
-        if (peek() === '.' && start === i - (src[start] === '.' ? 1 : 0)) {
-          /* already consumed leading dot */
-        } else if (peek() === '.') {
+        if (peek() === '.') {
           i++;
           while (peek() && /[0-9]/.test(peek())) i++;
         }
@@ -529,9 +770,6 @@
         return n;
       };
 
-      // expression = term (('+'|'-') term)*
-      // term       = factor (('*'|'/') factor)*
-      // factor     = ('+'|'-') factor | number | '(' expression ')'
       const parseFactor = () => {
         if (peek() === '+') {
           next();
@@ -552,11 +790,22 @@
         throw new Error('factor');
       };
 
-      const parseTerm = () => {
+      // power has higher precedence (right-assoc)
+      const parsePower = () => {
         let v = parseFactor();
+        if (peek() === '^') {
+          next();
+          const r = parsePower();
+          v = Math.pow(v, r);
+        }
+        return v;
+      };
+
+      const parseTerm = () => {
+        let v = parsePower();
         while (peek() === '*' || peek() === '/') {
           const op = next();
-          const r = parseFactor();
+          const r = parsePower();
           if (op === '*') v *= r;
           else {
             if (r === 0) throw new Error('div0');
@@ -584,7 +833,6 @@
     _onKey(e) {
       const win = document.getElementById('calculator-window');
       if (!win || win.classList.contains('hidden')) return;
-      // Don't steal keys while typing in inputs/textareas elsewhere
       const tag = (e.target.tagName || '').toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
@@ -606,7 +854,8 @@
         '*': '×',
         '/': '÷',
         x: '×',
-        X: '×'
+        X: '×',
+        '^': '^'
       };
       let key = map[k];
       if (!key && /^[0-9.]$/.test(k)) key = k;
@@ -634,16 +883,39 @@
             {
               id: 1,
               title: 'Welcome',
-              body: 'Your notes persist across sessions.\n\nClick + New note to create more.',
+              body: 'Your notes persist across sessions.\n\nClick + New note to create more.\nUse Save to Files to store in the virtual filesystem under /Home/Notes.',
               modified: Date.now()
             }
           ];
       } catch (_) {
         this.notes = [{ id: 1, title: 'Welcome', body: 'Your notes live here.', modified: Date.now() }];
       }
+      // Ensure /Home/Notes folder exists for VFS integration
+      try {
+        const vfs = Trosmos?.vfs;
+        if (vfs && !vfs.exists('/Home/Notes')) {
+          await vfs.createFolder('/Home', 'Notes');
+        }
+      } catch (_) {}
     },
     async persist() {
       await Trosmos.storage?.put('appState', { id: 'notes', data: { notes: this.notes } });
+    },
+    async saveToVFS() {
+      this.saveCurrent();
+      const n = this.notes.find((x) => x.id === this.current);
+      if (!n) return;
+      const vfs = Trosmos?.vfs;
+      if (!vfs) {
+        Trosmos.notifications?.show('Filesystem unavailable', 'warning');
+        return;
+      }
+      if (!vfs.exists('/Home/Notes')) await vfs.createFolder('/Home', 'Notes');
+      const safe = (n.title || 'Untitled').replace(/[^\w\s.\-]/g, '').trim() || 'Untitled';
+      const name = safe.endsWith('.md') ? safe : safe + '.md';
+      await vfs.createFile('/Home/Notes', name, n.body || '', 'text/markdown');
+      Trosmos.notifications?.show('Saved to /Home/Notes/' + name, 'success');
+      if (typeof renderFileManager === 'function') renderFileManager();
     },
     open() {
       this.ensureDOM();
@@ -670,7 +942,8 @@
         '</div></div>' +
         '<div class="flex flex-1 min-h-0">' +
         '<div class="w-56 border-r border-white/10 flex flex-col">' +
-        '<div class="p-3"><button type="button" id="notes-new-btn" class="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm">+ New note</button></div>' +
+        '<div class="p-3 space-y-2"><button type="button" id="notes-new-btn" class="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-sm">+ New note</button>' +
+        '<button type="button" id="notes-vfs-btn" class="w-full py-2 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-sm text-blue-200">Save to Files</button></div>' +
         '<div id="notes-list" class="flex-1 overflow-y-auto px-2 pb-2 space-y-1"></div></div>' +
         '<div class="flex-1 flex flex-col min-w-0">' +
         '<input id="notes-title" class="bg-transparent px-5 py-3 text-lg font-medium outline-none border-b border-white/10" placeholder="Title" />' +
@@ -679,8 +952,16 @@
       document.body.appendChild(win);
       registerWin('notes-window', win);
       win.querySelector('#notes-new-btn')?.addEventListener('click', () => this.create());
+      win.querySelector('#notes-vfs-btn')?.addEventListener('click', () => this.saveToVFS());
       document.getElementById('notes-title').addEventListener('input', () => this.saveCurrent());
       document.getElementById('notes-body').addEventListener('input', () => this.saveCurrent());
+      // Ctrl+S to save to VFS when notes focused
+      win.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          this.saveToVFS();
+        }
+      });
     },
     renderList() {
       const list = document.getElementById('notes-list');
@@ -735,6 +1016,13 @@
   /* ---------- Clock ---------- */
   const ClockApp = {
     timer: null,
+    mode: 'clock', // clock | stopwatch | timer
+    swRunning: false,
+    swStart: 0,
+    swAcc: 0,
+    swInterval: null,
+    timerRemaining: 0,
+    timerInterval: null,
     open() {
       this.ensureDOM();
       focusOrOpen('clock-window');
@@ -749,7 +1037,7 @@
       win.setAttribute('role', 'dialog');
       win.setAttribute('aria-label', 'Clock');
       win.className =
-        'window hidden absolute top-32 left-1/2 -translate-x-1/2 w-[380px] h-[340px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col';
+        'window hidden absolute top-24 left-1/2 -translate-x-1/2 w-[400px] h-[420px] glass-strong rounded-premium overflow-hidden z-50 flex flex-col';
       win.innerHTML =
         '<div class="window-titlebar flex items-center justify-between px-4 py-2.5 border-b border-white/10 cursor-move select-none">' +
         '<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center"><i class="fa-solid fa-clock text-white text-xs"></i></div>' +
@@ -758,17 +1046,154 @@
         '<button type="button" class="window-control minimize" onclick="Trosmos.windows.minimize(\'clock-window\')"><i class="fa-solid fa-minus"></i></button>' +
         '<button type="button" class="window-control close" onclick="Trosmos.windows.close(\'clock-window\')"><i class="fa-solid fa-xmark"></i></button>' +
         '</div></div>' +
-        '<div class="flex-1 flex flex-col items-center justify-center gap-2">' +
-        '<div id="clock-big" class="text-5xl font-display font-semibold tracking-tight">--:--:--</div>' +
+        '<div class="flex gap-1 px-3 pt-3" role="tablist">' +
+        '<button type="button" data-clock-tab="clock" class="clock-tab flex-1 py-2 rounded-xl text-xs bg-white/10">Clock</button>' +
+        '<button type="button" data-clock-tab="stopwatch" class="clock-tab flex-1 py-2 rounded-xl text-xs text-white/50 hover:bg-white/5">Stopwatch</button>' +
+        '<button type="button" data-clock-tab="timer" class="clock-tab flex-1 py-2 rounded-xl text-xs text-white/50 hover:bg-white/5">Timer</button>' +
+        '</div>' +
+        '<div class="flex-1 flex flex-col items-center justify-center gap-2 px-4" id="clock-panel">' +
+        '<div id="clock-big" class="text-5xl font-display font-semibold tracking-tight tabular-nums">--:--:--</div>' +
         '<div id="clock-full" class="text-white/50 text-sm"></div>' +
-        '<div class="mt-6 grid grid-cols-2 gap-3 w-full px-8">' +
+        '<div class="mt-6 grid grid-cols-2 gap-3 w-full px-4">' +
         '<div class="glass rounded-2xl p-4 text-center"><div class="text-xs text-white/40 mb-1">Timezone</div><div id="clock-tz" class="text-sm font-medium">—</div></div>' +
         '<div class="glass rounded-2xl p-4 text-center"><div class="text-xs text-white/40 mb-1">UTC Offset</div><div id="clock-offset" class="text-sm font-medium">—</div></div>' +
         '</div></div>';
       document.body.appendChild(win);
       registerWin('clock-window', win);
+      win.querySelectorAll('[data-clock-tab]').forEach((btn) => {
+        btn.addEventListener('click', () => this.setMode(btn.dataset.clockTab));
+      });
+    },
+    setMode(mode) {
+      this.mode = mode;
+      const win = document.getElementById('clock-window');
+      if (!win) return;
+      win.querySelectorAll('[data-clock-tab]').forEach((b) => {
+        const on = b.dataset.clockTab === mode;
+        b.className = 'clock-tab flex-1 py-2 rounded-xl text-xs ' + (on ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5');
+      });
+      const panel = document.getElementById('clock-panel');
+      if (!panel) return;
+      if (mode === 'clock') {
+        panel.innerHTML =
+          '<div id="clock-big" class="text-5xl font-display font-semibold tracking-tight tabular-nums">--:--:--</div>' +
+          '<div id="clock-full" class="text-white/50 text-sm"></div>' +
+          '<div class="mt-6 grid grid-cols-2 gap-3 w-full px-4">' +
+          '<div class="glass rounded-2xl p-4 text-center"><div class="text-xs text-white/40 mb-1">Timezone</div><div id="clock-tz" class="text-sm font-medium">—</div></div>' +
+          '<div class="glass rounded-2xl p-4 text-center"><div class="text-xs text-white/40 mb-1">UTC Offset</div><div id="clock-offset" class="text-sm font-medium">—</div></div></div>';
+        this.tick();
+      } else if (mode === 'stopwatch') {
+        panel.innerHTML =
+          '<div id="sw-display" class="text-5xl font-display font-semibold tracking-tight tabular-nums">00:00.00</div>' +
+          '<div class="flex gap-2 mt-6">' +
+          '<button type="button" id="sw-start" class="px-5 py-2.5 rounded-xl bg-emerald-500/80 hover:bg-emerald-400 text-sm font-medium min-h-[44px]">Start</button>' +
+          '<button type="button" id="sw-reset" class="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-sm min-h-[44px]">Reset</button></div>';
+        panel.querySelector('#sw-start')?.addEventListener('click', () => this.toggleStopwatch());
+        panel.querySelector('#sw-reset')?.addEventListener('click', () => this.resetStopwatch());
+        this.renderStopwatch();
+      } else {
+        panel.innerHTML =
+          '<div id="tm-display" class="text-5xl font-display font-semibold tracking-tight tabular-nums">05:00</div>' +
+          '<div class="flex gap-2 mt-4 flex-wrap justify-center">' +
+          '<button type="button" data-tm="60" class="px-3 py-2 rounded-xl bg-white/10 text-xs min-h-[40px]">1m</button>' +
+          '<button type="button" data-tm="300" class="px-3 py-2 rounded-xl bg-white/10 text-xs min-h-[40px]">5m</button>' +
+          '<button type="button" data-tm="600" class="px-3 py-2 rounded-xl bg-white/10 text-xs min-h-[40px]">10m</button>' +
+          '<button type="button" data-tm="1500" class="px-3 py-2 rounded-xl bg-white/10 text-xs min-h-[40px]">25m</button></div>' +
+          '<div class="flex gap-2 mt-4">' +
+          '<button type="button" id="tm-start" class="px-5 py-2.5 rounded-xl bg-sky-500/80 hover:bg-sky-400 text-sm font-medium min-h-[44px]">Start</button>' +
+          '<button type="button" id="tm-reset" class="px-5 py-2.5 rounded-xl bg-white/10 text-sm min-h-[44px]">Reset</button></div>';
+        if (!this.timerRemaining) this.timerRemaining = 300;
+        this.renderTimer();
+        panel.querySelectorAll('[data-tm]').forEach((b) =>
+          b.addEventListener('click', () => {
+            this.stopTimer();
+            this.timerRemaining = Number(b.dataset.tm);
+            this.renderTimer();
+          })
+        );
+        panel.querySelector('#tm-start')?.addEventListener('click', () => this.toggleTimer());
+        panel.querySelector('#tm-reset')?.addEventListener('click', () => {
+          this.stopTimer();
+          this.timerRemaining = 300;
+          this.renderTimer();
+        });
+      }
+    },
+    fmtMs(ms) {
+      const m = Math.floor(ms / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      const cs = Math.floor((ms % 1000) / 10);
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + '.' + String(cs).padStart(2, '0');
+    },
+    fmtSec(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    },
+    toggleStopwatch() {
+      const btn = document.getElementById('sw-start');
+      if (this.swRunning) {
+        this.swAcc += performance.now() - this.swStart;
+        this.swRunning = false;
+        clearInterval(this.swInterval);
+        if (btn) btn.textContent = 'Start';
+      } else {
+        this.swStart = performance.now();
+        this.swRunning = true;
+        this.swInterval = setInterval(() => this.renderStopwatch(), 30);
+        if (btn) btn.textContent = 'Stop';
+      }
+    },
+    resetStopwatch() {
+      this.swRunning = false;
+      clearInterval(this.swInterval);
+      this.swAcc = 0;
+      this.swStart = 0;
+      const btn = document.getElementById('sw-start');
+      if (btn) btn.textContent = 'Start';
+      this.renderStopwatch();
+    },
+    renderStopwatch() {
+      const el = document.getElementById('sw-display');
+      if (!el) return;
+      let ms = this.swAcc;
+      if (this.swRunning) ms += performance.now() - this.swStart;
+      el.textContent = this.fmtMs(ms);
+    },
+    toggleTimer() {
+      const btn = document.getElementById('tm-start');
+      if (this.timerInterval) {
+        this.stopTimer();
+        if (btn) btn.textContent = 'Start';
+        return;
+      }
+      if (this.timerRemaining <= 0) this.timerRemaining = 300;
+      if (btn) btn.textContent = 'Pause';
+      this.timerInterval = setInterval(() => {
+        this.timerRemaining -= 1;
+        this.renderTimer();
+        if (this.timerRemaining <= 0) {
+          this.stopTimer();
+          if (btn) btn.textContent = 'Start';
+          Trosmos.notifications?.show('Timer finished', 'success');
+          try {
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          } catch (_) {}
+        }
+      }, 1000);
+    },
+    stopTimer() {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+      const btn = document.getElementById('tm-start');
+      if (btn) btn.textContent = 'Start';
+    },
+    renderTimer() {
+      const el = document.getElementById('tm-display');
+      if (el) el.textContent = this.fmtSec(Math.max(0, this.timerRemaining));
     },
     tick() {
+      if (this.mode !== 'clock') return;
       const now = new Date();
       const el = document.getElementById('clock-big');
       if (!el) return;
@@ -812,16 +1237,19 @@
         '<div class="font-medium text-sm">Help & About</div></div>' +
         '<div class="window-controls"><button type="button" class="window-control close" onclick="Trosmos.windows.close(\'help-window\')"><i class="fa-solid fa-xmark"></i></button></div></div>' +
         '<div class="flex-1 overflow-y-auto p-6 space-y-5 text-sm text-white/80 leading-relaxed">' +
-        '<div><h3 class="text-lg font-semibold text-white mb-1">Trosmos OS 2.7</h3>' +
-        '<p class="text-white/50">Premium AI-native operating system.</p></div>' +
+        '<div><h3 class="text-lg font-semibold text-white mb-1">Trosmos OS 2.8</h3>' +
+        '<p class="text-white/50">Premium AI-native operating system — evolved desktop environment.</p></div>' +
         '<div><h4 class="font-medium text-white mb-2">Keyboard shortcuts</h4><ul class="space-y-1 text-white/60">' +
-        '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl+K</kbd> Command palette</li>' +
+        '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl+K</kbd> Command palette / system search</li>' +
         '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl+T</kbd> Terminal</li>' +
         '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl+L</kbd> Lock screen</li>' +
+        '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Ctrl+S</kbd> Save note to Files (in Notes)</li>' +
         '<li><kbd class="px-1.5 py-0.5 rounded bg-white/10 text-xs">Esc</kbd> Close overlays</li></ul></div>' +
         '<div><h4 class="font-medium text-white mb-2">Built-in apps</h4>' +
-        '<p>AI, Files, Browser, Terminal, Calculator, Notes, Clock, Clipboard, Settings, App Store, Task Manager.</p></div>' +
-        '<div class="text-white/40 text-xs pt-2 border-t border-white/10">Files persist via IndexedDB. AI requires Netlify + GEMINI_API_KEY.</div></div>';
+        '<p>AI, Files, Browser, Terminal, Calculator (scientific), Notes (VFS), Clock, Clipboard, Settings, App Store, Task Manager.</p></div>' +
+        '<div><h4 class="font-medium text-white mb-2">Terminal</h4>' +
+        '<p class="text-white/60">Full sandboxed shell: ls, cd, cat, write, mkdir, rm, mv, cp, apps, processes, system, search, open…</p></div>' +
+        '<div class="text-white/40 text-xs pt-2 border-t border-white/10">Files persist via IndexedDB. AI requires Netlify + GEMINI_API_KEY. AppRegistry unifies launchers.</div></div>';
       document.body.appendChild(win);
       registerWin('help-window', win);
     }
@@ -1001,7 +1429,7 @@
       }
     });
 
-    console.log('%c[Trosmos] Apps extension v2.7 loaded', 'color:#10B981');
+    console.log('%c[Trosmos] Apps extension v2.9 loaded', 'color:#10B981');
   }
 
   if (document.readyState === 'complete') {
