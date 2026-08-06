@@ -694,3 +694,78 @@
     animation: none !important; transition: none !important;
   }
 }
+
+/* ===== Trosmos OS 4.0 — Workspace & Kernel utilities ===== */
+.workspace-hidden {
+  pointer-events: none !important;
+}
+
+[data-theme="light"] body,
+.theme-light body {
+  /* light theme hooks — variables applied by ThemeEngine */
+}
+
+.window.snapped-left {
+  left: 0 !important;
+  top: 0 !important;
+  width: 50% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-right {
+  left: 50% !important;
+  top: 0 !important;
+  width: 50% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-top {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 50% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-tl {
+  left: 0 !important;
+  top: 0 !important;
+  width: 50% !important;
+  height: 50% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-tr {
+  left: 50% !important;
+  top: 0 !important;
+  width: 50% !important;
+  height: 50% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-bl {
+  left: 0 !important;
+  top: 50% !important;
+  width: 50% !important;
+  height: 50% !important;
+  border-radius: 0 !important;
+}
+.window.snapped-br {
+  left: 50% !important;
+  top: 50% !important;
+  width: 50% !important;
+  height: 50% !important;
+  border-radius: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus-visible for accessibility */
+.window-control:focus-visible,
+.dock-icon:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent, #3B82F6);
+  outline-offset: 2px;
+}
