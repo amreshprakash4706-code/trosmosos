@@ -1,7 +1,7 @@
 {
   "name": "Trosmos OS",
   "short_name": "Trosmos",
-  "description": "Premium AI-native operating system \u2014 desktop and mobile shell with intelligent copilot.",
+  "description": "Premium AI-native operating system \u2014 modular kernel, desktop and mobile shell with intelligent copilot.",
   "start_url": "/",
   "display": "standalone",
   "display_override": [
@@ -46,6 +46,11 @@
       "name": "Terminal",
       "url": "/?app=terminal",
       "description": "Open terminal"
+    },
+    {
+      "name": "System Monitor",
+      "url": "/?app=system-monitor",
+      "description": "Open system monitor"
     }
   ]
 }

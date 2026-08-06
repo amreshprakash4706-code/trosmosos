@@ -1,11 +1,12 @@
-/* Trosmos OS Service Worker v9 — offline shell + asset cache */
-const CACHE_NAME = 'trosmos-os-v9';
+/* Trosmos OS Service Worker v4.0 — offline shell + asset cache */
+const CACHE_NAME = 'trosmos-os-v40';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/sw.js',
   '/trosmos-apps.js',
+  '/trosmos-kernel-boot.js',
   '/trosmos-enhance.js',
   '/styles/trosmos.css',
   '/styles/trosmos-os-v29.css'
@@ -54,7 +55,7 @@ self.addEventListener('fetch', (event) => {
             (shell) =>
               shell ||
               new Response(
-                '<!DOCTYPE html><html><body style="background:#09090B;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100dvh;margin:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"><div style="text-align:center"><h1>Trosmos OS</h1><p>You are offline. Local apps remain available after reconnect + reload.</p></div></body></html>',
+                '<!DOCTYPE html><html><body style="background:#09090B;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100dvh;margin:0"><div style="text-align:center"><h1>Trosmos OS</h1><p>You are offline. Local apps remain available after reconnect.</p></div></body></html>',
                 { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
               )
           )

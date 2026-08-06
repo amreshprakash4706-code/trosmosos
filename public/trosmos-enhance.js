@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '2.9.0';
+  const VERSION = '4.0.0';
 
   /* ---------- Device detection ---------- */
   const Device = {
@@ -720,9 +720,9 @@
     const extra = [
       { id: 'power-menu', label: 'Power Menu', keywords: 'power lock sleep shutdown restart', action: () => PowerMenu.open() },
       { id: 'app-switcher', label: 'Switch App', keywords: 'alt tab switch recent apps', action: () => AppSwitcher.open() },
-      { id: 'ws-1', label: 'Workspace 1', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(0) },
-      { id: 'ws-2', label: 'Workspace 2', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(1) },
-      { id: 'ws-3', label: 'Workspace 3', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(2) },
+      { id: 'ws-1', label: 'Main', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(0) },
+      { id: 'ws-2', label: 'Work', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(1) },
+      { id: 'ws-3', label: 'Development', keywords: 'workspace desktop virtual', action: () => Workspaces.switchTo(2) },
       { id: 'mobile-home', label: 'Go Home', keywords: 'home mobile', action: () => MobileShell.goHome() },
       { id: 'sleep', label: 'Sleep', keywords: 'sleep suspend', action: () => SleepOverlay.show() }
     ];
@@ -773,4 +773,53 @@
     QuickSettings,
     Sensors
   };
+
+
+  /* ---------- Window snap (edge + quarter) ---------- */
+  function snapWindow(id, mode) {
+    const win = document.getElementById(id);
+    if (!win || !window.Trosmos?.windows) return;
+    // Clear previous snap classes
+    win.classList.remove('snapped-left','snapped-right','snapped-top','snapped-tl','snapped-tr','snapped-bl','snapped-br','maximized');
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const layouts = {
+      left:  { left: 0, top: 0, width: vw/2, height: vh },
+      right: { left: vw/2, top: 0, width: vw/2, height: vh },
+      top:   { left: 0, top: 0, width: vw, height: vh/2 },
+      tl:    { left: 0, top: 0, width: vw/2, height: vh/2 },
+      tr:    { left: vw/2, top: 0, width: vw/2, height: vh/2 },
+      bl:    { left: 0, top: vh/2, width: vw/2, height: vh/2 },
+      br:    { left: vw/2, top: vh/2, width: vw/2, height: vh/2 }
+    };
+    const L = layouts[mode];
+    if (!L) return;
+    win.style.left = L.left + 'px';
+    win.style.top = L.top + 'px';
+    win.style.width = L.width + 'px';
+    win.style.height = L.height + 'px';
+    win.classList.add('snapped-' + mode);
+    win.classList.remove('minimized', 'hidden');
+    if (window.__TrosmosEventBus) window.__TrosmosEventBus.emit('window:snapped', { id, mode });
+  }
+  window.snapWindow = snapWindow;
+
+  // Edge snap on drag end — observe titlebar mouseup near edges
+  document.addEventListener('mouseup', (e) => {
+    const win = e.target.closest?.('.window');
+    if (!win || win.classList.contains('maximized')) return;
+    const EDGE = 24;
+    const x = e.clientX, y = e.clientY;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let mode = null;
+    if (x <= EDGE && y <= EDGE) mode = 'tl';
+    else if (x >= vw - EDGE && y <= EDGE) mode = 'tr';
+    else if (x <= EDGE && y >= vh - EDGE) mode = 'bl';
+    else if (x >= vw - EDGE && y >= vh - EDGE) mode = 'br';
+    else if (x <= EDGE) mode = 'left';
+    else if (x >= vw - EDGE) mode = 'right';
+    else if (y <= EDGE) mode = 'top';
+    if (mode && win.id) snapWindow(win.id, mode);
+  });
+
 })();
