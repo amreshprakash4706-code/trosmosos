@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <!-- SEO -->
-    <title>Trosmos OS 2.9 • Premium AI-Native Operating System</title>
+    <title>Trosmos OS 4.0 • Premium AI-Native Operating System</title>
     <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. Interactive production-grade demo.">
     <meta name="keywords" content="Trosmos OS, AI OS, AI-native operating system, glassmorphism, AI copilot, productivity, demo">
     <meta name="author" content="Trosmos">
@@ -645,7 +645,7 @@
             touch-action: none;
         }
     
-/* Trosmos OS v2.7 */
+/* Trosmos OS v4.0 */
 .window-resize-handle { position: absolute; z-index: 20; background: transparent; }
 .window-resize-handle.n  { top: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
 .window-resize-handle.s  { bottom: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
@@ -815,7 +815,7 @@
                 </div>
             </div>
 
-            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 2.5 • AI-Native Computing</p>
+            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 4.0 • AI-Native Computing</p>
         </div>
     </div>
 
@@ -3594,7 +3594,7 @@
                 }).catch(err => console.warn('SW registration failed (ok for local file://)', err));
             }
 
-            console.log('%c[Trosmos OS] v2.9 production shell ready — desktop + mobile OS modes, workspaces, app switcher.', 'color:#3B82F6');
+            console.log('%c[Trosmos OS] v4.0.0 kernel platform ready — modular APIs, app lifecycle, workspaces, search, trash.', 'color:#3B82F6');
         }
 
         window.openCommandPalette = showCommandPalette;
@@ -3617,6 +3617,7 @@
     <div id="trosmos-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <script src="/trosmos-apps.js" defer></script>
+    <script src="/trosmos-kernel-boot.js" defer></script>
     <script src="/trosmos-enhance.js" defer></script>
 </body>
 </html>

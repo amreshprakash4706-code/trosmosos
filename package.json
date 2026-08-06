@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "2.9.0",
-  "description": "Premium AI-native operating system \u2014 desktop + mobile interactive environment (v2.9)",
+  "version": "4.0.0",
+  "description": "Trosmos OS 4.0 — Premium AI-native browser operating system with modular kernel, app lifecycle, workspaces, and controlled APIs",
   "type": "module",
   "private": true,
   "scripts": {

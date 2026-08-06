@@ -1,6 +1,6 @@
-# Trosmos OS 2.9
+# Trosmos OS 4.0
 
-Premium AI-native web operating system — complete interactive desktop environment.
+Premium AI-native browser operating system — modular kernel, app lifecycle, workspaces, controlled APIs.
 
 ## Quick start
 
@@ -11,23 +11,52 @@ npm run dev
 
 Open the Vite URL. For full AI tool-calling, deploy to Netlify and set `GEMINI_API_KEY`.
 
+## Architecture (v4.0)
+
+```
+Trosmos Kernel
+├── Event Bus
+├── App Registry + Lifecycle
+├── Command Registry
+├── Search Index
+├── Permissions
+├── Window Manager hooks
+├── Workspaces
+├── Clipboard Service
+├── Trash / Recovery
+├── Undo / Redo
+├── Theme Engine
+├── Session (lock)
+├── Network Service
+├── System Monitor
+├── Audit Log
+├── Migration Engine
+├── Crash Recovery
+├── Deep Links
+└── i18n foundation
+
+Controlled APIs on window.Trosmos:
+  apps, commands, search, events, clipboard, theme,
+  workspaces, trash, undo, audit, session, network, monitor
+```
+
 ## Features
 
-- Dual-mode shell: full desktop windows **and** native-feeling mobile home/dock
-- Workspaces, Alt+Tab app switcher, power menu, quick settings
-- Safe-area / PWA standalone support
-
-- Desktop with icons, dock, Start menu, lock screen
-- Window manager: drag, resize, minimize, maximize (double-click titlebar), focus, snap, persist
+- Modular OS kernel with isolated app lifecycle (registered → launching → running → suspended → closing → closed / failed)
+- Extensible app registry (metadata, capabilities, file associations, deep links)
+- Universal command palette + search index (apps, files, notes, commands)
+- Multi-workspace desktop (Main, Work, Development, Personal)
+- Trash with restore / permanent delete
+- Undo/redo infrastructure
+- Theme engine (light / dark / system)
+- Real system monitor (browser APIs only — no fabricated metrics)
+- Clipboard abstraction with internal history
+- Permission-gated AI tools
 - Virtual filesystem (IndexedDB) + File Manager
-- Terminal (sandboxed shell: ls, cd, cat, write, mv, cp, apps, processes, system…)
-- Calculator (scientific + history), Notes (VFS save), Clock, Clipboard
-- Browser, Settings, App Store, Task Manager, Help
-- Command palette (Ctrl+K) with unified app search
-- Trosmos AI copilot with permission-gated tools
-- App Registry — single catalog for launchers
-- Persistent notifications
+- Dual-mode shell: desktop windows + mobile home/dock
 - PWA + offline shell
+- Deep links (`?app=files`, `?file=/Home/Documents/x.txt`)
+- Crash isolation — one broken app does not take down the shell
 
 ## Keyboard
 
@@ -36,7 +65,9 @@ Open the Vite URL. For full AI tool-calling, deploy to Netlify and set `GEMINI_A
 | Ctrl+K | Command palette |
 | Ctrl+T | Terminal |
 | Ctrl+L | Lock screen |
-| Ctrl+S | Save note to Files (in Notes) |
+| Ctrl+Z | Undo |
+| Ctrl+Shift+Z / Ctrl+Y | Redo |
+| Ctrl+Alt+1..4 | Switch workspace |
 | Esc | Close overlays |
 
 ## Security
@@ -45,13 +76,22 @@ Open the Vite URL. For full AI tool-calling, deploy to Netlify and set `GEMINI_A
 - Path-normalized VFS
 - XSS-safe rendering
 - Destructive AI actions require confirmation
-- Calculator uses a CSP-safe expression parser (no `eval`)
+- Deep links validated — no arbitrary code from URL params
+- Calculator uses CSP-safe expression parser (no `eval`)
 
-## Architecture
+## Project layout
 
 ```
-index.html          Core OS (WindowManager, VFS, AI, Desktop…)
-public/trosmos-apps.js   Apps extension + AppRegistry
-src/                Modular services (event-bus, permissions, storage, VFS, AI tools)
-netlify/functions/  Gemini-backed AI endpoint
+index.html                 Core shell UI + WindowManager / VFS / AI
+public/trosmos-kernel-boot.js   Kernel bridge (v4 APIs)
+public/trosmos-apps.js          App implementations
+public/trosmos-enhance.js        Device mode / mobile / workspaces UI
+src/core/                       Modular kernel sources (ES modules)
+src/filesystem/                 VFS, storage, trash
+src/services/                   AI tools
+netlify/functions/              Gemini-backed AI endpoint
 ```
+
+## Version
+
+**4.0.0** — Major architectural rebuild toward a cohesive browser OS platform.

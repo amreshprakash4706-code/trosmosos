@@ -1,65 +1,54 @@
 # Trosmos OS — Changelog
 
-## v2.9.0 — True dual-mode OS shell
-
-### Device modes
-- Automatic **desktop / tablet / mobile** detection (viewport + pointer + hover)
-- Mobile home screen with app grid, widgets, greeting
-- Mobile status bar (time, network, battery when available)
-- Mobile bottom navigation (Home, Search, AI, Recents, Power)
-- Safe-area insets (`viewport-fit=cover`, `env(safe-area-inset-*)`, `100dvh`)
-
-### Multitasking
-- **Alt+Tab** application switcher (desktop) / Recents (mobile)
-- **Ctrl/Cmd+W** closes focused window
-- **Ctrl+1/2/3** virtual workspaces (desktop)
-- Workspace bar with persistent window assignment
-
-### System
-- Power menu: Lock, Sleep, Restart, Shut down
-- Quick Settings panel (mobile status bar)
-- Idle auto-lock (15 min)
-- Offline-aware status + SW cache v9 (apps + enhance + CSS)
-
-### Applications
-- **Clock 2.9** — Clock / Stopwatch / Timer tabs
-- **Terminal** — date, whoami, uname, find, history, echo, reboot, shutdown
-- AppRegistry version bump to 2.9
-
-### Identity
-- Preserves Trosmos glassmorphism, aurora, branding, AI-native core
-
-## v2.8.0 — Full System Evolution
+## v4.0.0 — Modular OS Kernel Platform
 
 ### Architecture
-- Unified **App Registry** (`window.AppRegistry`) — single source of truth for desktop, Start menu, command palette, Terminal `apps`, and launchers
-- ProcessManager: `list()`, `killPid()`, richer process metadata
-- NotificationManager: persistent history via IndexedDB, read/unread, dismiss, no fake seed data
-- WindowManager: double-click title bar to maximize/restore
+- **Kernel-like core** with controlled APIs: `Trosmos.apps`, `Trosmos.commands`, `Trosmos.search`, `Trosmos.events`, `Trosmos.clipboard`, `Trosmos.theme`, `Trosmos.workspaces`, `Trosmos.trash`, `Trosmos.undo`, `Trosmos.audit`, `Trosmos.session`, `Trosmos.network`, `Trosmos.monitor`
+- **App Registry** with lifecycle states: registered → launching → running → suspended → closing → closed / failed
+- Application isolation — one broken app cannot take down the shell
+- Extensible registration: metadata, capabilities, file associations, deep links, commands
+- **Universal Search Index** (apps, files, notes, commands) with ranked results
+- **Command Registry** shared by palette and launcher
+- **Event Bus** with system event catalog and recent history
+- **Permission system** expanded with capability model
+- **Migration engine** (schema v1 → v4)
+- **Audit log** for app launches, permissions, filesystem, errors
+- **Crash recovery** with isolation and restart support
+- **Deep link** validation (`?app=`, `?file=`) — no arbitrary code execution
 
-### Applications
-- **Terminal 2.8** — `write`, `mv`, `cp`, `apps`, `processes`/`ps`, `settings`, `system`/`version`, expanded help
-- **Calculator** — scientific mode (√, x², sin/cos/tan, log/ln, π, ^), history panel, copy result, CSP-safe parser
-- **Notes** — Save to Files (`/Home/Notes`), Ctrl+S, VFS integration
-- **Help** — updated for 2.8 shortcuts and features
+### Window & Desktop
+- Multi-workspace desktop (Main, Work, Development, Personal) with persistence
+- Ctrl+Alt+1..4 workspace switching
+- Window assignment to workspaces
+- System Monitor app (real browser metrics only)
 
-### System
-- Command palette expanded: Terminal, Calculator, Notes, Clock, Clipboard, Help, Lock, Reduce Motion
-- Task Manager auto-refreshes while open; Focus / End process actions
-- Settings: reduce-motion preference applied system-wide
-- Notifications persist across sessions
+### Filesystem
+- **Trash / Recovery**: soft-delete → restore / permanent delete
+- VFS delete routes through trash by default
+- Undo/redo infrastructure for reversible operations
 
-### Security & Quality
-- Calculator remains free of `eval` / `Function`
-- Notification toasts use `textContent` (XSS-safe)
-- Existing permission gates for AI tools retained
+### Services
+- Clipboard abstraction with internal history (honest about browser limits)
+- Theme engine: light / dark / system via CSS custom properties
+- Network service (online / offline / degraded)
+- Session lock with idle timeout
+- i18n foundation (English + Hindi string tables)
 
-### v2.7.1 — Calculator fix
-- CSP-safe parser, keyboard support
+### UX
+- Command palette enriched with unified search
+- Self-diagnostic (`Trosmos.diagnose()`)
+- Startup path prioritizes critical shell
 
-### v2.7 — Complete Desktop Environment
-- Terminal, Calculator, Notes, Clock, Clipboard, Help
-- Resizable windows, lock screen, expanded dock
+### Compatibility
+- Existing IndexedDB user data preserved via migrations
+- Legacy app openers and window manager retained
+- Dual-mode desktop/mobile shell from v2.9 preserved
 
-### v2.6 — Production Hardening
-- StorageManager, PermissionManager, AI tools, SW v6
+---
+
+## v2.9.0 — True dual-mode OS shell
+
+- Automatic desktop / tablet / mobile detection
+- Mobile home screen, status bar, bottom navigation
+- Workspaces, Alt+Tab, power menu, quick settings
+- Safe-area / PWA standalone support
