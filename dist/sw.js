@@ -1,10 +1,20 @@
-// Trosmos OS Service Worker — production offline shell + safe updates
-const CACHE_NAME = 'trosmos-os-v6';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/sw.js'];
+/* Trosmos OS Service Worker v11 — offline shell + asset cache (OS 4.0) */
+const CACHE_NAME = 'trosmos-os-v11';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/sw.js',
+  '/trosmos-apps.js',
+  '/trosmos-enhance.js',
+  '/styles/trosmos.css',
+  '/styles/trosmos-os-v29.css'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS))
       .then(() => self.skipWaiting())
       .catch((err) => console.warn('[Trosmos SW] install cache failed', err))
@@ -13,9 +23,10 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -43,7 +54,7 @@ self.addEventListener('fetch', (event) => {
             (shell) =>
               shell ||
               new Response(
-                '<!DOCTYPE html><html><body style="background:#09090B;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Trosmos OS</h1><p>You are offline. Reconnect to continue.</p></div></body></html>',
+                '<!DOCTYPE html><html><body style="background:#09090B;color:#fff;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100dvh;margin:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"><div style="text-align:center"><h1>Trosmos OS</h1><p>You are offline. Local apps remain available after reconnect + reload.</p></div></body></html>',
                 { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
               )
           )
@@ -58,14 +69,21 @@ self.addEventListener('fetch', (event) => {
         .then((resp) => {
           if (resp && resp.ok && resp.type === 'basic') {
             const clone = resp.clone();
-            caches.open(CACHE_NAME).then((cache) => { cache.put(event.request, clone); }).catch(() => {});
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            }).catch(() => {});
           }
           return resp;
         })
-        .catch(() => cached || new Response('Offline', {
-          status: 503, statusText: 'Service Unavailable',
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-        }));
+        .catch(
+          () =>
+            cached ||
+            new Response('Offline', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+            })
+        );
       return cached || fetchPromise;
     })
   );

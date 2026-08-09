@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <!-- SEO -->
-    <title>Trosmos OS • Premium AI-Native Operating System</title>
-    <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. Interactive production-grade demo.">
+    <title>Trosmos OS 4.1 • Premium AI-Native Operating System</title>
+    <meta name="description" content="Experience Trosmos OS — the beautiful, intelligent, AI-first operating system. Zero-latency copilot, glassmorphism UI, virtual filesystem, draggable windows, and full OS control via natural language. ">
     <meta name="keywords" content="Trosmos OS, AI OS, AI-native operating system, glassmorphism, AI copilot, productivity, demo">
     <meta name="author" content="Trosmos">
     <meta name="robots" content="index, follow">
@@ -21,7 +21,7 @@
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Trosmos OS • AI-Native Operating System">
-    <meta name="twitter:description" content="Zero-latency AI copilot inside a stunning glassmorphism desktop. Try the interactive demo.">
+    <meta name="twitter:description" content="Zero-latency AI copilot inside a stunning glassmorphism desktop. ">
     
     <!-- PWA & Mobile -->
     <meta name="theme-color" content="#09090B">
@@ -48,6 +48,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/styles/trosmos.css">
+    <link rel="stylesheet" href="/styles/trosmos-os-v29.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" media="print" onload="this.media='all'">
     <style>
         /* Fonts loaded via preload link above for better performance. Fallback in noscript. */
@@ -342,9 +343,7 @@
             transition: transform 0.15s cubic-bezier(0.23, 1.0, 0.32, 1), 
                        background-color 0.1s ease;
             pointer-events: auto;
-            -webkit-user-select: none;
-               -moz-user-select: none;
-                    user-select: none;
+            user-select: none;
             width: 88px;
         }
         .desktop-icon:hover {
@@ -524,6 +523,23 @@
             animation: slide-in-right 0.4s cubic-bezier(0.23, 1.0, 0.32, 1);
         }
 
+
+        /* User preference: reduce motion (from Settings / palette) */
+        html.reduce-motion .smooth,
+        html.reduce-motion .smooth-slow,
+        html.reduce-motion .window,
+        html.reduce-motion .aurora-bg,
+        html.reduce-motion .live-wallpaper::before,
+        html.reduce-motion .cosmic-particle,
+        html.reduce-motion .dock-icon,
+        html.reduce-motion .file-item,
+        html.reduce-motion .app-card,
+        html.reduce-motion .icon-btn,
+        html.reduce-motion .notification {
+            animation: none !important;
+            transition: none !important;
+        }
+
         /* Accessibility: Respect reduced motion preference */
         @media (prefers-reduced-motion: reduce) {
             .smooth, .smooth-slow, .window, .aurora-bg, .live-wallpaper::before,
@@ -628,7 +644,30 @@
         .window {
             touch-action: none;
         }
-    </style>
+    
+/* Trosmos OS v2.7 */
+.window-resize-handle { position: absolute; z-index: 20; background: transparent; }
+.window-resize-handle.n  { top: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.window-resize-handle.s  { bottom: -3px; left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.window-resize-handle.e  { right: -3px; top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.window-resize-handle.w  { left: -3px; top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.window-resize-handle.ne { top: -3px; right: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+.window-resize-handle.nw { top: -3px; left: -3px; width: 12px; height: 12px; cursor: nwse-resize; }
+.window-resize-handle.se { bottom: -3px; right: -3px; width: 14px; height: 14px; cursor: nwse-resize; }
+.window-resize-handle.sw { bottom: -3px; left: -3px; width: 12px; height: 12px; cursor: nesw-resize; }
+.window.maximized .window-resize-handle { display: none; }
+@media (max-width: 768px) { .window-resize-handle { display: none !important; } }
+.calc-btn { min-height: 48px; }
+.notes-item.active { background: rgba(59,130,246,0.15); }
+.clipboard-item:hover { background: rgba(255,255,255,0.06); }
+.lock-screen {
+  position: fixed; inset: 0; z-index: 700;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(9,9,11,0.92); backdrop-filter: blur(24px);
+}
+.lock-screen.hidden { display: none !important; }
+
+</style>
 </head>
 <body class="bg-[#09090B] text-white overflow-hidden">
     <!-- ============================================ -->
@@ -703,7 +742,7 @@
                     </div>
                     <div class="flex items-center gap-x-2">
                         <i class="fa-solid fa-check text-emerald-400"></i>
-                        <span>Trosmos 2.5 with AI</span>
+                        <span>Trosmos 4.0 with AI</span>
                     </div>
                 </div>
             </div>
@@ -727,15 +766,15 @@
 
             <div class="glass rounded-3xl p-9 depth">
                 <div class="text-center mb-8">
-                    <h2 class="text-3xl font-semibold tracking-tight">Welcome back</h2>
-                    <p class="text-white/60 mt-2">Sign in to continue to your workspace</p>
+                    <h2 class="text-3xl font-semibold tracking-tight" id="login-title">Welcome back</h2>
+                    <p class="text-white/60 mt-2" id="login-mode-hint">Sign in for cloud sync, or continue offline</p>
                 </div>
 
                 <!-- Login Form -->
                 <form class="space-y-5" onsubmit="event.preventDefault(); performLogin();" autocomplete="on">
                     <div>
-                        <label for="login-username" class="block text-sm font-medium text-white/70 mb-2">Username or Email</label>
-                        <input id="login-username" name="username" type="text" value="aria@trosmos.dev"
+                        <label for="login-username" class="block text-sm font-medium text-white/70 mb-2">Username</label>
+                        <input id="login-username" name="username" type="text" value="" placeholder="username"
                                autocomplete="username" required
                                aria-required="true"
                                class="w-full bg-white/5 border border-white/15 focus:border-[#3B82F6]/60 rounded-2xl px-5 py-3.5 text-sm outline-none transition-all">
@@ -743,40 +782,42 @@
                     
                     <div>
                         <label for="login-password" class="block text-sm font-medium text-white/70 mb-2">Password</label>
-                        <input id="login-password" name="password" type="password" value="demo2026"
+                        <input id="login-password" name="password" type="password" value="" placeholder="password (min 8 for new accounts)"
                                autocomplete="current-password" required
                                aria-required="true"
                                class="w-full bg-white/5 border border-white/15 focus:border-[#3B82F6]/60 rounded-2xl px-5 py-3.5 text-sm outline-none transition-all">
                     </div>
+
+                    <div id="login-error" class="hidden text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2" role="alert"></div>
 
                     <div class="flex items-center justify-between text-sm">
                         <label for="login-remember" class="flex items-center gap-x-2 cursor-pointer">
                             <input id="login-remember" name="remember" type="checkbox" checked class="accent-[#3B82F6]">
                             <span class="text-white/70">Remember this device</span>
                         </label>
-                        <a href="#" class="text-[#3B82F6] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#3B82F6]">Forgot password?</a>
+                        <button type="button" id="login-register-toggle" onclick="toggleRegisterMode()" class="text-[#3B82F6] hover:underline text-xs bg-transparent border-0 cursor-pointer">Create account</button>
                     </div>
 
-                    <button type="submit"
+                    <button type="submit" id="login-submit-btn"
                             class="w-full py-4 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#7C3AED] font-semibold text-lg hover:brightness-110 active:scale-[0.985] transition-all shadow-lg shadow-[#3B82F6]/30">
                         Sign in to Trosmos
                     </button>
                 </form>
 
-                <!-- Biometric Option -->
+                <!-- Offline / local option -->
                 <div class="mt-6 pt-6 border-t border-white/10">
-                    <button type="button" onclick="performBiometricLogin()"
+                    <button type="button" onclick="performLocalLogin()"
                             class="w-full flex items-center justify-center gap-x-3 py-3.5 rounded-2xl border border-white/15 hover:bg-white/5 transition-all group">
-                        <i class="fa-solid fa-fingerprint text-2xl text-[#06B6D4]"></i>
+                        <i class="fa-solid fa-laptop text-2xl text-[#06B6D4]"></i>
                         <div class="text-left">
-                            <div class="font-medium">Sign in with Biometrics</div>
-                            <div class="text-xs text-white/50">Touch ID • Face ID • Windows Hello</div>
+                            <div class="font-medium">Continue offline</div>
+                            <div class="text-xs text-white/50">Local IndexedDB workspace — no account needed</div>
                         </div>
                     </button>
                 </div>
             </div>
 
-            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 2.5 • AI-Native Computing</p>
+            <p class="text-center text-xs text-white/40 mt-8">Trosmos OS 4.1 • Full-stack Web OS</p>
         </div>
     </div>
 
@@ -897,6 +938,16 @@
                 <button onclick="openAppStore()" data-app="app-store-window" aria-label="Open App Store" data-tooltip="App Store" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-store text-xl text-orange-400" aria-hidden="true"></i>
                 </button>
+                
+                <button onclick="openTerminal()" data-app="terminal-window" aria-label="Open Terminal" data-tooltip="Terminal" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-terminal text-xl text-emerald-400" aria-hidden="true"></i>
+                </button>
+                <button onclick="openCalculator()" data-app="calculator-window" aria-label="Open Calculator" data-tooltip="Calculator" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-calculator text-xl text-amber-400" aria-hidden="true"></i>
+                </button>
+                <button onclick="openNotes()" data-app="notes-window" aria-label="Open Notes" data-tooltip="Notes" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
+                    <i class="fa-solid fa-note-sticky text-xl text-yellow-300" aria-hidden="true"></i>
+                </button>
                 <div class="w-px h-8 bg-white/15 mx-1" aria-hidden="true"></div>
                 <button onclick="openSettings()" data-app="settings-window" aria-label="Open Settings" data-tooltip="Settings" class="dock-icon w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/10 transition-all">
                     <i class="fa-solid fa-cog text-xl text-white/70" aria-hidden="true"></i>
@@ -952,6 +1003,44 @@
                     </div>
                     <span class="text-xs">App Store</span>
                 </div>
+
+                <div onclick="openTerminal(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+                        <i class="fa-solid fa-terminal text-white"></i>
+                    </div>
+                    <span class="text-xs">Terminal</span>
+                </div>
+                <div onclick="openCalculator(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                        <i class="fa-solid fa-calculator text-white"></i>
+                    </div>
+                    <span class="text-xs">Calculator</span>
+                </div>
+                <div onclick="openNotes(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                        <i class="fa-solid fa-note-sticky text-white"></i>
+                    </div>
+                    <span class="text-xs">Notes</span>
+                </div>
+                <div onclick="openClock(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-clock text-white"></i>
+                    </div>
+                    <span class="text-xs">Clock</span>
+                </div>
+                <div onclick="openClipboard(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                        <i class="fa-solid fa-clipboard text-white"></i>
+                    </div>
+                    <span class="text-xs">Clipboard</span>
+                </div>
+                <div onclick="openHelp(); toggleStartMenu()" class="flex flex-col items-center gap-y-2 p-3 rounded-2xl hover:bg-white/5 cursor-pointer">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 flex items-center justify-center">
+                        <i class="fa-solid fa-circle-question text-white"></i>
+                    </div>
+                    <span class="text-xs">Help</span>
+                </div>
+
             </div>
             
             <div class="mt-6 pt-4 border-t border-white/10 text-xs text-white/40">
@@ -1432,7 +1521,38 @@
                 id: 'task-manager', name: 'Task Manager', icon: 'fa-microchip',
                 color: 'from-cyan-400 to-blue-500', windowId: 'task-manager-window',
                 singleton: true, category: 'system'
-            }
+            },
+            'terminal': {
+                id: 'terminal', name: 'Terminal', icon: 'fa-terminal',
+                color: 'from-emerald-400 to-cyan-500', windowId: 'terminal-window',
+                singleton: true, category: 'system'
+            },
+            'calculator': {
+                id: 'calculator', name: 'Calculator', icon: 'fa-calculator',
+                color: 'from-amber-400 to-orange-500', windowId: 'calculator-window',
+                singleton: true, category: 'utilities'
+            },
+            'notes': {
+                id: 'notes', name: 'Notes', icon: 'fa-note-sticky',
+                color: 'from-yellow-400 to-amber-500', windowId: 'notes-window',
+                singleton: true, category: 'productivity'
+            },
+            'clock': {
+                id: 'clock', name: 'Clock', icon: 'fa-clock',
+                color: 'from-sky-400 to-blue-600', windowId: 'clock-window',
+                singleton: true, category: 'utilities'
+            },
+            'clipboard': {
+                id: 'clipboard', name: 'Clipboard', icon: 'fa-clipboard',
+                color: 'from-violet-400 to-purple-600', windowId: 'clipboard-window',
+                singleton: true, category: 'utilities'
+            },
+            'help': {
+                id: 'help', name: 'Help', icon: 'fa-circle-question',
+                color: 'from-slate-400 to-slate-600', windowId: 'help-window',
+                singleton: true, category: 'system'
+            },
+
         };
 
         const DESKTOP_ICONS_DEFAULT = [
@@ -1440,7 +1560,10 @@
             { id: 'files', appId: 'file-manager', label: 'Files', x: 40, y: 200 },
             { id: 'browser', appId: 'browser', label: 'Browser', x: 40, y: 320 },
             { id: 'settings', appId: 'settings', label: 'Settings', x: 40, y: 440 },
-            { id: 'welcome', type: 'file', path: '/Home/Documents/Welcome.md', label: 'Welcome.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 80 }
+            { id: 'welcome', type: 'file', path: '/Home/Documents/Welcome.md', label: 'Welcome.md', icon: 'fa-file-lines', color: '#10B981', x: 160, y: 80 },
+            { id: 'terminal', appId: 'terminal', label: 'Terminal', x: 160, y: 200 },
+            { id: 'notes', appId: 'notes', label: 'Notes', x: 160, y: 320 },
+            { id: 'calc', appId: 'calculator', label: 'Calculator', x: 160, y: 440 }
         ];
 
         const DEFAULT_VFS_SEED = [
@@ -1449,7 +1572,9 @@
             { path: '/Home/Downloads', name: 'Downloads', type: 'folder', parent: '/Home', modified: Date.now() },
             { path: '/Home/Pictures', name: 'Pictures', type: 'folder', parent: '/Home', modified: Date.now() },
             { path: '/Home/Projects', name: 'Projects', type: 'folder', parent: '/Home', modified: Date.now() },
-            { path: '/Home/Documents/Welcome.md', name: 'Welcome.md', type: 'file', parent: '/Home/Documents', mime: 'text/markdown', size: 380, modified: Date.now(), content: '# Welcome to Trosmos OS\n\nYour AI-native operating system is ready.\n\n- Ask the AI to create notes, folders, or open apps\n- Files persist across sessions\n- Press Ctrl+K for the command palette\n- Open Task Manager to inspect running processes' }
+            { path: '/Home/Documents/Welcome.md', name: 'Welcome.md', type: 'file', parent: '/Home/Documents', mime: 'text/markdown', size: 380, modified: Date.now(), content: '# Welcome to Trosmos OS\n\nYour AI-native operating system is ready.\n\n- Ask the AI to create notes, folders, or open apps\n- Files persist across sessions\n- Press Ctrl+K for the command palette\n- Open Task Manager to inspect running processes\n- Try Terminal (Ctrl+T) and Calculator' },
+            { path: '/Home/Trash', name: 'Trash', type: 'folder', parent: '/Home', mime: null, size: 0, modified: Date.now() },
+            { path: '/Home/Projects/Orion.md', name: 'Orion.md', type: 'file', parent: '/Home/Projects', mime: 'text/markdown', size: 120, modified: Date.now(), content: '# Project Orion\n\nResearch notes for the next milestone.\n' }
         ];
 
         // ------------------ STORAGE MANAGER (IndexedDB) ------------------
@@ -1578,15 +1703,47 @@
             constructor(storage) {
                 this.storage = storage;
                 this.cache = new Map();
+                this.SCHEMA_VERSION = 3;
+            }
+
+            /** Normalize and validate path — prevent traversal and invalid chars */
+            static normalizePath(p) {
+                if (!p || typeof p !== 'string') return '/Home';
+                let s = p.replace(/\\/g, '/').replace(/\/+/g, '/');
+                if (!s.startsWith('/')) s = '/' + s;
+                // strip .. and .
+                const parts = [];
+                for (const part of s.split('/')) {
+                    if (!part || part === '.') continue;
+                    if (part === '..') { if (parts.length) parts.pop(); continue; }
+                    // forbid control / dangerous characters (null, backslash, < > | " * ?)
+                    if (/[\x00\\<>|"*?]/.test(part)) continue;
+                    parts.push(part.slice(0, 120));
+                }
+                const out = '/' + parts.join('/');
+                return out === '/' ? '/Home' : out;
+            }
+
+            static safeName(name) {
+                if (!name || typeof name !== 'string') return 'untitled';
+                return name.replace(/[\\/<>:"|?*\x00-\x1f]/g, '_').trim().slice(0, 120) || 'untitled';
             }
 
             async init() {
                 let files = await this.storage.get('filesystem', 'files');
+                let meta = await this.storage.get('filesystem', 'meta');
                 if (!files || !files.data || files.data.length === 0) {
                     await this.storage.put('filesystem', { id: 'files', data: DEFAULT_VFS_SEED });
+                    await this.storage.put('filesystem', { id: 'meta', data: { schema: this.SCHEMA_VERSION } });
                     this.cache.set('files', DEFAULT_VFS_SEED);
                 } else {
-                    this.cache.set('files', files.data);
+                    // light integrity: ensure every node has path/parent/name
+                    const cleaned = (files.data || []).filter(f => f && f.path && f.name && f.type);
+                    this.cache.set('files', cleaned);
+                    if (!meta || !meta.data || meta.data.schema !== this.SCHEMA_VERSION) {
+                        await this.storage.put('filesystem', { id: 'meta', data: { schema: this.SCHEMA_VERSION } });
+                        // future migrations would go here
+                    }
                 }
             }
 
@@ -1602,8 +1759,10 @@
             }
 
             async createFolder(parentPath, name) {
+                parentPath = VirtualFileSystem.normalizePath(parentPath);
+                name = VirtualFileSystem.safeName(name);
                 const files = this.cache.get('files') || [];
-                const newPath = `${parentPath}/${name}`.replace('//', '/');
+                const newPath = VirtualFileSystem.normalizePath(parentPath + '/' + name);
                 if (files.some(f => f.path === newPath)) return null;
                 const folder = {
                     path: newPath,
@@ -1619,23 +1778,27 @@
             }
 
             async createFile(parentPath, name, content = '', mime = 'text/plain') {
+                parentPath = VirtualFileSystem.normalizePath(parentPath);
+                name = VirtualFileSystem.safeName(name);
                 const files = this.cache.get('files') || [];
-                const newPath = `${parentPath}/${name}`.replace('//', '/');
+                const newPath = VirtualFileSystem.normalizePath(parentPath + '/' + name);
                 const existing = files.find(f => f.path === newPath);
                 if (existing) {
-                    existing.content = content;
+                    existing.content = String(content ?? '');
                     existing.modified = Date.now();
-                    existing.size = content.length;
+                    existing.size = existing.content.length;
+                    existing.mime = mime || existing.mime;
                 } else {
+                    const body = String(content ?? '');
                     const file = {
                         path: newPath,
                         name,
                         type: 'file',
                         parent: parentPath,
-                        mime,
-                        size: content.length,
+                        mime: mime || 'text/plain',
+                        size: body.length,
                         modified: Date.now(),
-                        content
+                        content: body
                     };
                     files.push(file);
                 }
@@ -1725,15 +1888,72 @@
             }
 
             async copy(srcPath, destParent) {
+                srcPath = VirtualFileSystem.normalizePath(srcPath);
+                destParent = VirtualFileSystem.normalizePath(destParent);
                 const files = this.cache.get('files') || [];
                 const item = files.find(f => f.path === srcPath);
                 if (!item) return null;
-                const newPath = `${destParent}/${item.name}`.replace('//','/');
-                const copy = { ...item, path: newPath, parent: destParent, modified: Date.now() };
-                files.push(copy);
+                const baseName = item.name;
+                let newPath = VirtualFileSystem.normalizePath(destParent + '/' + baseName);
+                // avoid collision by suffix
+                let n = 1;
+                while (files.some(f => f.path === newPath)) {
+                    const stem = baseName.includes('.') ? baseName.replace(/(\.[^.]+)$/, '') : baseName;
+                    const ext = baseName.includes('.') ? baseName.slice(baseName.lastIndexOf('.')) : '';
+                    newPath = VirtualFileSystem.normalizePath(destParent + '/' + stem + ' copy' + (n > 1 ? ' ' + n : '') + ext);
+                    n++;
+                }
+                const now = Date.now();
+                const copyNode = (src, destPath, parent) => {
+                    const node = { ...src, path: destPath, parent, modified: now };
+                    if (node.content != null) node.content = String(node.content);
+                    files.push(node);
+                    if (src.type === 'folder') {
+                        const children = files.filter(f => f.parent === src.path && f !== src);
+                        // note: filter uses original path; we already pushed so use snapshot
+                    }
+                    return node;
+                };
+                // snapshot children before mutation
+                const allDesc = files.filter(f => f.path === srcPath || f.path.startsWith(srcPath + '/'));
+                const rootCopy = { ...item, path: newPath, parent: destParent, modified: now };
+                if (rootCopy.content != null) rootCopy.content = String(rootCopy.content);
+                files.push(rootCopy);
+                if (item.type === 'folder') {
+                    const descendants = allDesc.filter(f => f.path.startsWith(srcPath + '/'));
+                    descendants.forEach(d => {
+                        const rel = d.path.slice(srcPath.length);
+                        const dest = VirtualFileSystem.normalizePath(newPath + rel);
+                        const parentDest = VirtualFileSystem.normalizePath(dest.slice(0, dest.lastIndexOf('/')) || newPath);
+                        const c = { ...d, path: dest, parent: parentDest, modified: now };
+                        if (c.content != null) c.content = String(c.content);
+                        files.push(c);
+                    });
+                }
                 this.cache.set('files', files);
                 await this.storage.put('filesystem', { id: 'files', data: files });
-                return copy;
+                return rootCopy;
+            }
+
+            /** Export a file as downloadable blob (browser download) */
+            async exportFile(path) {
+                const item = await this.getFile(path);
+                if (!item || item.type !== 'file') return false;
+                try {
+                    const blob = new Blob([item.content || ''], { type: item.mime || 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = item.name || 'download.txt';
+                    a.rel = 'noopener';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
             }
         }
 
@@ -1783,6 +2003,28 @@
                     if (proc) proc.status = 'running';
                 }
             }
+
+            list() {
+                return Array.from(this.processes.values()).map((p) => ({
+                    pid: p.pid,
+                    appId: p.appId,
+                    windowId: p.windowId,
+                    status: p.status,
+                    started: p.started,
+                    uptimeMs: Date.now() - (p.started || Date.now())
+                }));
+            }
+
+            killPid(pid) {
+                const proc = this.processes.get(pid);
+                if (!proc) return false;
+                if (proc.windowId && Trosmos.windows?.close) {
+                    Trosmos.windows.close(proc.windowId);
+                }
+                this.processes.delete(pid);
+                Trosmos.runningProcesses.delete(proc.windowId);
+                return true;
+            }
         }
 
         // ------------------ WINDOW MANAGER ------------------
@@ -1829,6 +2071,16 @@
 
                 header.style.cursor = 'grab';
 
+                // Double-click titlebar to maximize / restore
+                if (!header.dataset.dblMax) {
+                    header.dataset.dblMax = '1';
+                    header.addEventListener('dblclick', (e) => {
+                        if (e.target.closest('button') || e.target.closest('.window-control')) return;
+                        const id = win.id;
+                        if (id) this.maximize(id);
+                    });
+                }
+
                 const clamp = (x, y) => {
                     const margin = 48; // keep at least this much of the titlebar reachable
                     const maxX = Math.max(0, window.innerWidth - margin);
@@ -1858,12 +2110,104 @@
 
                 const moveDrag = (clientX, clientY) => {
                     if (!isDragging) return;
+                    window._lastDragX = clientX;
+                    window._lastDragY = clientY;
                     const dx = clientX - startX;
                     const dy = clientY - startY;
                     const pos = clamp(origX + dx, origY + dy);
                     win.style.left = pos.x + 'px';
                     win.style.top = pos.y + 'px';
                     win.style.transform = 'none';
+                    // Live snap preview
+                    const region = (typeof detectSnapRegion === 'function') ? detectSnapRegion(clientX, clientY) : null;
+                    if (region) showSnapPreview(region);
+                    else hideSnapPreview();
+                };
+
+                const hideSnapPreview = () => {
+                    const prev = document.getElementById('snap-preview');
+                    if (prev) prev.style.display = 'none';
+                };
+
+                const showSnapPreview = (region) => {
+                    let prev = document.getElementById('snap-preview');
+                    if (!prev) {
+                        prev = document.createElement('div');
+                        prev.id = 'snap-preview';
+                        prev.className = 'snap-preview';
+                        document.body.appendChild(prev);
+                    }
+                    const pad = 8;
+                    const dockH = 72;
+                    const topBar = 40;
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    let style = { display: 'block' };
+                    if (region === 'left') {
+                        style.left = pad + 'px'; style.top = topBar + 'px';
+                        style.width = (vw / 2 - pad * 1.5) + 'px'; style.height = (vh - topBar - dockH - pad) + 'px';
+                    } else if (region === 'right') {
+                        style.left = (vw / 2 + pad / 2) + 'px'; style.top = topBar + 'px';
+                        style.width = (vw / 2 - pad * 1.5) + 'px'; style.height = (vh - topBar - dockH - pad) + 'px';
+                    } else if (region === 'top') {
+                        style.left = pad + 'px'; style.top = topBar + 'px';
+                        style.width = (vw - pad * 2) + 'px'; style.height = (vh - topBar - dockH - pad) + 'px';
+                    } else {
+                        hideSnapPreview();
+                        return;
+                    }
+                    Object.assign(prev.style, style);
+                };
+
+                const detectSnapRegion = (clientX, clientY) => {
+                    const edge = 28;
+                    const vw = window.innerWidth;
+                    if (clientX <= edge) return 'left';
+                    if (clientX >= vw - edge) return 'right';
+                    if (clientY <= edge) return 'top';
+                    return null;
+                };
+
+                const applySnap = (region) => {
+                    if (!region) return;
+                    const pad = 8;
+                    const dockH = 72;
+                    const topBar = 40;
+                    const vw = window.innerWidth;
+                    const vh = window.innerHeight;
+                    const state = this.windows.get(win.id) || {};
+                    // save restore size if not already snapped/maximized
+                    if (!state.maximized && !state.snapped) {
+                        const rect = win.getBoundingClientRect();
+                        state.width = rect.width;
+                        state.height = rect.height;
+                        state.x = parseInt(win.style.left, 10) || rect.left;
+                        state.y = parseInt(win.style.top, 10) || rect.top;
+                    }
+                    win.classList.remove('maximized');
+                    state.maximized = false;
+                    if (region === 'left') {
+                        win.style.left = pad + 'px';
+                        win.style.top = topBar + 'px';
+                        win.style.width = (vw / 2 - pad * 1.5) + 'px';
+                        win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        state.snapped = 'left';
+                    } else if (region === 'right') {
+                        win.style.left = (vw / 2 + pad / 2) + 'px';
+                        win.style.top = topBar + 'px';
+                        win.style.width = (vw / 2 - pad * 1.5) + 'px';
+                        win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        state.snapped = 'right';
+                    } else if (region === 'top') {
+                        win.style.left = pad + 'px';
+                        win.style.top = topBar + 'px';
+                        win.style.width = (vw - pad * 2) + 'px';
+                        win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        state.snapped = 'top';
+                    }
+                    win.style.transform = 'none';
+                    this.windows.set(win.id, state);
+                    this.focus(win.id);
                 };
 
                 const endDrag = () => {
@@ -1871,6 +2215,18 @@
                     isDragging = false;
                     win.classList.remove('dragging');
                     header.style.cursor = 'grab';
+                    const region = detectSnapRegion(
+                        (typeof window._lastDragX === 'number' ? window._lastDragX : 0),
+                        (typeof window._lastDragY === 'number' ? window._lastDragY : 0)
+                    );
+                    hideSnapPreview();
+                    if (region) {
+                        applySnap(region);
+                    } else {
+                        // clear snap flag if free-dragged
+                        const st = this.windows.get(win.id);
+                        if (st) st.snapped = null;
+                    }
                     this.saveState(win.id);
                 };
                 
@@ -1970,7 +2326,7 @@
                 }
                 const state = this.windows.get(id) || {};
                 
-                if (state.maximized) {
+                if (state.maximized || state.snapped) {
                     win.classList.remove('maximized');
                     win.style.width = (state.width || 640) + 'px';
                     win.style.height = (state.height || 480) + 'px';
@@ -1978,6 +2334,7 @@
                     win.style.top = (state.y || 60) + 'px';
                     win.style.borderRadius = '';
                     state.maximized = false;
+                    state.snapped = null;
                 } else {
                     const rect = win.getBoundingClientRect();
                     state.width = rect.width;
@@ -1991,6 +2348,7 @@
                     win.style.height = '100%';
                     win.style.transform = 'none';
                     state.maximized = true;
+                    state.snapped = null;
                 }
                 this.windows.set(id, state);
                 this.focus(id);
@@ -2038,13 +2396,54 @@
                     icon.classList.remove('running', 'minimized');
                     const appId = icon.getAttribute('data-app');
                     if (!appId) return;
-                    const state = this.windows.get(appId);
-                    const isOpen = Trosmos.openWindows.has(appId);
+                    // Support both appId and windowId in data-app
+                    const isOpen = Trosmos.openWindows.has(appId) ||
+                        (APP_REGISTRY && Object.values(APP_REGISTRY).some(a => a.id === appId && Trosmos.openWindows.has(a.windowId)));
+                    const state = this.windows.get(appId) || (APP_REGISTRY && Object.values(APP_REGISTRY).find(a => a.id === appId) && this.windows.get(Object.values(APP_REGISTRY).find(a => a.id === appId).windowId));
                     if (isOpen) {
                         icon.classList.add('running');
                     } else if (state && state.minimized) {
                         icon.classList.add('minimized');
                     }
+                });
+            }
+
+            /** Keep every open window reachable after viewport/orientation change */
+            clampAllToViewport() {
+                const margin = 48;
+                const maxX = Math.max(0, window.innerWidth - margin);
+                const maxY = Math.max(0, window.innerHeight - margin);
+                document.querySelectorAll('.window:not(.hidden)').forEach(win => {
+                    if (win.classList.contains('maximized')) return;
+                    const state = this.windows.get(win.id);
+                    if (state && state.snapped) {
+                        // re-apply snap to new size
+                        const region = state.snapped;
+                        const pad = 8, dockH = 72, topBar = 40;
+                        const vw = window.innerWidth, vh = window.innerHeight;
+                        if (region === 'left') {
+                            win.style.left = pad + 'px'; win.style.top = topBar + 'px';
+                            win.style.width = (vw / 2 - pad * 1.5) + 'px';
+                            win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        } else if (region === 'right') {
+                            win.style.left = (vw / 2 + pad / 2) + 'px'; win.style.top = topBar + 'px';
+                            win.style.width = (vw / 2 - pad * 1.5) + 'px';
+                            win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        } else if (region === 'top') {
+                            win.style.left = pad + 'px'; win.style.top = topBar + 'px';
+                            win.style.width = (vw - pad * 2) + 'px';
+                            win.style.height = (vh - topBar - dockH - pad) + 'px';
+                        }
+                        return;
+                    }
+                    let x = parseInt(win.style.left, 10) || 0;
+                    let y = parseInt(win.style.top, 10) || 0;
+                    const w = win.offsetWidth || 400;
+                    x = Math.min(Math.max(x, margin - w), maxX);
+                    y = Math.min(Math.max(y, 0), maxY);
+                    win.style.left = x + 'px';
+                    win.style.top = y + 'px';
+                    if (state) { state.x = x; state.y = y; }
                 });
             }
         }
@@ -2104,7 +2503,11 @@
                     const activateIcon = () => {
                         if (icon.appId) {
                             const app = APP_REGISTRY[icon.appId];
-                            if (app) Trosmos.windows.focusOrOpen(app.windowId);
+                            if (app) {
+                                const openers = { terminal: openTerminal, calculator: openCalculator, notes: openNotes, clock: openClock, clipboard: openClipboard, help: openHelp };
+                                if (openers[icon.appId]) openers[icon.appId]();
+                                else Trosmos.windows.focusOrOpen(app.windowId);
+                            }
                         } else if (icon.type === 'file') {
                             this.openTextEditor({ path: icon.path, name: icon.label });
                         }
@@ -2277,22 +2680,35 @@
                 const content = document.getElementById('browser-content');
                 if (!content) return;
                 
-                // Simulated browser content for demo (title escaped against XSS)
-                // Real external navigation is intentionally not performed for security sandboxing.
+                // Honest browser: external sites cannot be embedded due to browser security (CORS/XFO).
+                // Provide real navigation via window.open and clear explanation.
+                const safeTitle = escapeHtml(this.activeTab.title);
+                const safeUrl = escapeHtml(url);
                 content.innerHTML = `
-                    <div class="max-w-2xl mx-auto text-center pt-16">
+                    <div class="max-w-2xl mx-auto text-center pt-12 px-6">
                         <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-[#3B82F6] to-[#7C3AED] flex items-center justify-center mx-auto mb-6">
                             <span class="text-white font-bold text-3xl">T</span>
                         </div>
-                        <h2 class="text-3xl font-display font-semibold mb-3">${escapeHtml(this.activeTab.title)}</h2>
-                        <p class="text-white/60 mb-8">Secure • Trosmos Web • AI Powered</p>
-                        <div class="inline-flex items-center gap-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-sm">
-                            <span class="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                            Ready
-                        </div>
+                        <h2 class="text-2xl font-display font-semibold mb-2">${safeTitle}</h2>
+                        <p class="text-white/50 text-sm mb-6 break-all">${safeUrl}</p>
+                        <p class="text-white/60 mb-6 leading-relaxed">For security, Trosmos Browser does not embed arbitrary third-party pages. Use the button below to open this URL in a real browser tab.</p>
+                        <button type="button" id="browser-open-external" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium transition-colors">
+                            <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open in new tab
+                        </button>
                         <p class="text-white/30 text-xs mt-8">History: ${this.activeTab.historyIndex + 1} / ${this.activeTab.history.length}</p>
                     </div>
                 `;
+                const openBtn = content.querySelector('#browser-open-external');
+                if (openBtn) {
+                    openBtn.addEventListener('click', () => {
+                        try {
+                            const u = this.activeTab.url.startsWith('http') ? this.activeTab.url : 'https://' + this.activeTab.url;
+                            window.open(u, '_blank', 'noopener,noreferrer');
+                        } catch (e) {
+                            if (window.Trosmos?.notify) Trosmos.notify('Could not open URL: ' + e.message, 'error');
+                        }
+                    });
+                }
                 this.renderTabs();
             }
 
@@ -2316,20 +2732,37 @@
         // ------------------ NOTIFICATION MANAGER ------------------
         class NotificationManager {
             constructor() {
-                this.list = [
-                    { id: 1, title: 'System Update', body: 'Trosmos 2.5 is ready to install', time: '2m ago', icon: 'fa-download' },
-                    { id: 2, title: 'AI Insight', body: '3 new suggestions based on your recent files', time: '15m ago', icon: 'fa-robot' },
-                    { id: 3, title: 'Calendar', body: 'Team sync in 30 minutes', time: '28m ago', icon: 'fa-calendar' },
-                    { id: 4, title: 'Security', body: 'Login from new device detected', time: '1h ago', icon: 'fa-shield' }
-                ];
+                this.list = [];
+                this.nextId = 1;
+                this.maxHistory = 50;
+            }
+
+            async load() {
+                try {
+                    const rec = await Trosmos.storage?.get('notifications', 'history');
+                    if (rec?.data?.list && Array.isArray(rec.data.list)) {
+                        this.list = rec.data.list.slice(0, this.maxHistory);
+                        this.nextId = (Math.max(0, ...this.list.map((n) => n.id || 0)) || 0) + 1;
+                    }
+                } catch (_) {}
+                this.render();
+            }
+
+            async persist() {
+                try {
+                    await Trosmos.storage?.put('notifications', {
+                        id: 'history',
+                        data: { list: this.list.slice(0, this.maxHistory) }
+                    });
+                } catch (_) {}
             }
 
             show(message, type = 'info') {
                 const toast = document.createElement('div');
                 toast.className = 'notification fixed bottom-24 right-6 glass rounded-2xl px-5 py-3 flex items-center gap-x-3 z-[90] depth';
-                const icon = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : 'fa-info text-[#3B82F6]';
-                toast.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i> <div></div>`;
-                toast.querySelector('div').textContent = message; // Safe: never inject raw HTML
+                const iconClass = type === 'success' ? 'fa-check text-emerald-400' : type === 'error' ? 'fa-triangle-exclamation text-red-400' : type === 'warning' ? 'fa-triangle-exclamation text-amber-400' : 'fa-info text-[#3B82F6]';
+                toast.innerHTML = '<i class="fa-solid ' + iconClass + '" aria-hidden="true"></i> <div></div>';
+                toast.querySelector('div').textContent = message;
                 toast.setAttribute('role', 'status');
                 toast.setAttribute('aria-live', 'polite');
                 document.body.appendChild(toast);
@@ -2338,20 +2771,41 @@
                     toast.style.transform = 'translateX(120%)';
                     setTimeout(() => toast.remove(), 400);
                 }, 3200);
+                // Persist to notification center
+                this.list.unshift({
+                    id: this.nextId++,
+                    title: type === 'error' ? 'Error' : type === 'success' ? 'Success' : type === 'warning' ? 'Warning' : 'Info',
+                    body: String(message || '').slice(0, 200),
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    icon: type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-bell',
+                    type,
+                    read: false,
+                    ts: Date.now()
+                });
+                this.list = this.list.slice(0, this.maxHistory);
+                this.persist();
+                this.render();
             }
 
             render() {
                 const container = document.getElementById('notification-list');
                 if (!container) return;
                 container.textContent = '';
+                if (!this.list.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'p-6 text-center text-white/40 text-sm';
+                    empty.textContent = 'No notifications';
+                    container.appendChild(empty);
+                    return;
+                }
                 const frag = document.createDocumentFragment();
                 this.list.forEach(n => {
                     const row = document.createElement('div');
-                    row.className = 'p-3 rounded-xl hover:bg-white/5 cursor-pointer';
+                    row.className = 'p-3 rounded-xl hover:bg-white/5 cursor-pointer' + (n.read ? '' : ' border-l-2 border-blue-400');
                     const inner = document.createElement('div');
                     inner.className = 'flex items-start gap-x-3';
                     const icon = document.createElement('i');
-                    icon.className = `fa-solid ${n.icon || 'fa-bell'} text-[#3B82F6] mt-0.5`;
+                    icon.className = 'fa-solid ' + (n.icon || 'fa-bell') + ' text-[#3B82F6] mt-0.5';
                     icon.setAttribute('aria-hidden', 'true');
                     const bodyWrap = document.createElement('div');
                     bodyWrap.className = 'flex-1 min-w-0';
@@ -2366,10 +2820,27 @@
                     const time = document.createElement('div');
                     time.className = 'text-[10px] text-white/40';
                     time.textContent = n.time || '';
+                    const dismiss = document.createElement('button');
+                    dismiss.type = 'button';
+                    dismiss.className = 'text-white/30 hover:text-white text-sm px-1';
+                    dismiss.setAttribute('aria-label', 'Dismiss');
+                    dismiss.textContent = '×';
+                    dismiss.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.list = this.list.filter((x) => x.id !== n.id);
+                        this.persist();
+                        this.render();
+                    });
                     inner.appendChild(icon);
                     inner.appendChild(bodyWrap);
                     inner.appendChild(time);
+                    inner.appendChild(dismiss);
                     row.appendChild(inner);
+                    row.addEventListener('click', () => {
+                        n.read = true;
+                        this.persist();
+                        this.render();
+                    });
                     frag.appendChild(row);
                 });
                 container.appendChild(frag);
@@ -2377,6 +2848,7 @@
 
             clear() {
                 this.list = [];
+                this.persist();
                 this.render();
             }
         }
@@ -2515,11 +2987,20 @@
                 }, 10000);
 
                 try {
-                    const res = await fetch('/.netlify/functions/grok', {
+                    // Prefer full-stack API when authenticated; fall back to Netlify function
+                    const useFullStack = window.TrosmosAPI && TrosmosAPI.isAuthenticated();
+                    const endpoint = useFullStack ? '/api/v1/ai/chat' : '/.netlify/functions/grok';
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (useFullStack) {
+                        const tok = TrosmosAPI.getToken();
+                        if (tok) headers.Authorization = 'Bearer ' + tok;
+                    }
+                    const res = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers,
                         body: JSON.stringify({ 
                             message, 
+                            history: this.conversation || [],
                             conversation: this.conversation || [],
                             toolResults: toolResults || null
                         }),
@@ -2672,7 +3153,7 @@
                 Trosmos.windows.open('ai-window');
                 const chat = document.getElementById('ai-chat');
                 if (chat && chat.children.length === 0) {
-                    this.addMessage('ai', "Hello Aria! I'm your Trosmos Copilot <span class='text-emerald-400'>powered by AI</span>. I can control apps, files, settings, create notes, snap windows, and more — plus answer any question. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, <b>snap files left</b>, or just chat with me!");
+                    this.addMessage('ai', "Hello — I'm your Trosmos Copilot <span class='text-emerald-400'>powered by AI</span>. I can control apps, files, settings, create notes, snap windows, and more. Try: <b>open browser</b>, <b>create note \"Ideas\"</b>, or just ask a question.");
                 }
                 setTimeout(() => document.getElementById('ai-input')?.focus(), 400);
             }
@@ -2855,35 +3336,86 @@
         function openTaskManager() {
             Trosmos.windows.focusOrOpen('task-manager-window');
             renderTaskManager();
+            // Auto-refresh while open
+            const win = document.getElementById('task-manager-window');
+            if (win && !win._tmTimer) {
+                win._tmTimer = setInterval(() => {
+                    if (win.classList.contains('hidden')) {
+                        clearInterval(win._tmTimer);
+                        win._tmTimer = null;
+                        return;
+                    }
+                    renderTaskManager();
+                }, 2000);
+            }
         }
         function renderTaskManager() {
             const list = document.getElementById('task-manager-list');
-            if (!list || !Trosmos.processes) return;
+            if (!list) return;
             list.innerHTML = '';
-            const procs = Array.from(Trosmos.processes.processes.values());
-            if (procs.length === 0) {
-                list.innerHTML = '<div class="text-white/40 text-sm py-8 text-center">No processes running</div>';
+
+            // Real system info (browser APIs only — never invent CPU/GPU)
+            const sys = document.createElement('div');
+            sys.className = 'px-3 py-3 mb-2 rounded-xl bg-white/5 border border-white/5 text-[11px] text-white/60 space-y-1';
+            const online = navigator.onLine ? 'Online' : 'Offline';
+            let mem = 'Memory: unavailable in this browser';
+            try {
+                if (performance && performance.memory) {
+                    const m = performance.memory;
+                    mem = 'JS heap: ' + Math.round(m.usedJSHeapSize / 1048576) + ' / ' + Math.round(m.jsHeapSizeLimit / 1048576) + ' MB';
+                }
+            } catch (_) {}
+            let net = 'Network: ' + (navigator.connection ? (navigator.connection.effectiveType || 'unknown') : 'API unavailable');
+            let bat = 'Battery: API unavailable or permission not granted';
+            sys.innerHTML = '<div class="font-medium text-white/80 text-xs mb-1">System (browser-reported)</div>' +
+                '<div>Status: ' + online + '</div>' +
+                '<div>' + mem + '</div>' +
+                '<div>' + net + '</div>' +
+                '<div id="tm-battery">' + bat + '</div>' +
+                '<div class="text-white/40 mt-1">CPU / GPU utilization is not exposed by browsers.</div>';
+            list.appendChild(sys);
+            // Async battery if available
+            if (navigator.getBattery) {
+                navigator.getBattery().then(b => {
+                    const el = document.getElementById('tm-battery');
+                    if (el) el.textContent = 'Battery: ' + Math.round(b.level * 100) + '% · ' + (b.charging ? 'charging' : 'discharging');
+                }).catch(() => {});
+            }
+
+            if (!Trosmos.processes) {
+                const empty = document.createElement('div');
+                empty.className = 'text-white/40 text-sm py-6 text-center';
+                empty.textContent = 'No process manager';
+                list.appendChild(empty);
                 return;
             }
+            const procs = Array.from(Trosmos.processes.processes.values());
+            if (procs.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'text-white/40 text-sm py-6 text-center';
+                empty.textContent = 'No tracked processes';
+                list.appendChild(empty);
+                return;
+            }
+            const hdr = document.createElement('div');
+            hdr.className = 'text-[10px] uppercase tracking-wider text-white/40 px-3 mb-1';
+            hdr.textContent = 'Processes (' + procs.length + ')';
+            list.appendChild(hdr);
             procs.forEach(p => {
-                const app = APP_REGISTRY[p.appId] || { name: p.appId, icon: 'fa-cube' };
+                const app = (typeof APP_REGISTRY !== 'undefined' && APP_REGISTRY[p.appId]) || { name: p.appId, icon: 'fa-cube' };
                 const row = document.createElement('div');
                 row.className = 'flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 group';
                 const uptime = Math.floor((Date.now() - p.started) / 1000);
                 const upStr = uptime < 60 ? uptime + 's' : Math.floor(uptime/60) + 'm';
-                row.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <i class="fa-solid ${app.icon} text-sm text-white/60 w-5"></i>
-                        <div>
-                            <div class="text-sm font-medium">${escapeHtml(app.name)}</div>
-                            <div class="text-[10px] text-white/40">PID ${p.pid} · ${p.status} · ${upStr}</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button type="button" class="px-2 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/20" onclick="Trosmos.windows.focus('${p.windowId}')">Focus</button>
-                        <button type="button" class="px-2 py-1 text-xs rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-300" onclick="Trosmos.windows.close('${p.windowId}'); setTimeout(renderTaskManager, 100)">End</button>
-                    </div>
-                `;
+                row.innerHTML =
+                    '<div class="flex items-center gap-3">' +
+                    '<i class="fa-solid ' + (app.icon || 'fa-cube') + ' text-sm text-white/60 w-5" aria-hidden="true"></i>' +
+                    '<div><div class="text-sm font-medium">' + escapeHtml(app.name) + '</div>' +
+                    '<div class="text-[10px] text-white/40">PID ' + p.pid + ' · ' + escapeHtml(p.status) + ' · ' + upStr + '</div></div></div>' +
+                    '<div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">' +
+                    '<button type="button" class="px-2 py-1 text-xs rounded-lg bg-white/10 hover:bg-white/20" onclick="Trosmos.windows.focus(\'' + p.windowId + '\')">Focus</button>' +
+                    '<button type="button" class="px-2 py-1 text-xs rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-300" onclick="Trosmos.windows.close(\'' + p.windowId + '\'); setTimeout(renderTaskManager, 100)">End</button>' +
+                    '</div>';
                 list.appendChild(row);
             });
         }
@@ -3023,17 +3555,37 @@
         }
         function browserReload() { browserNavigate(); }
 
-        const COMMAND_PALETTE_CMDS = [
+        const COMMAND_PALETTE_CMDS = window.COMMAND_PALETTE_CMDS = [
             { id: 'open-ai', label: 'Open AI Chat', keywords: 'ai chat assistant copilot', action: () => openAIAssistant() },
             { id: 'open-files', label: 'Open Files', keywords: 'files folder manager', action: () => openFileManager() },
             { id: 'open-browser', label: 'Open Browser', keywords: 'browser web', action: () => openBrowser() },
             { id: 'open-settings', label: 'Open Settings', keywords: 'settings preferences', action: () => openSettings() },
             { id: 'open-store', label: 'Open App Store', keywords: 'store apps install', action: () => openAppStore() },
             { id: 'open-taskmgr', label: 'Open Task Manager', keywords: 'task manager processes', action: () => openTaskManager() },
+            { id: 'open-terminal', label: 'Open Terminal', keywords: 'terminal shell console cmd', action: () => typeof openTerminal === 'function' && openTerminal() },
+            { id: 'open-calculator', label: 'Open Calculator', keywords: 'calculator calc math', action: () => typeof openCalculator === 'function' && openCalculator() },
+            { id: 'open-notes', label: 'Open Notes', keywords: 'notes write memo editor', action: () => typeof openNotes === 'function' && openNotes() },
+            { id: 'open-clock', label: 'Open Clock', keywords: 'clock time timezone', action: () => typeof openClock === 'function' && openClock() },
+            { id: 'open-clipboard', label: 'Open Clipboard', keywords: 'clipboard history paste', action: () => typeof openClipboard === 'function' && openClipboard() },
+            { id: 'open-help', label: 'Help & About', keywords: 'help about shortcuts', action: () => typeof openHelp === 'function' && openHelp() },
+            { id: 'lock-system', label: 'Lock Screen', keywords: 'lock screen security', action: () => typeof lockSystem === 'function' && lockSystem() },
+            { id: 'toggle-reduce-motion', label: 'Toggle Reduce Motion', keywords: 'accessibility motion animation', action: () => {
+                const reduced = document.documentElement.classList.toggle('reduce-motion');
+                if (Trosmos.settings) Trosmos.settings.reduceMotion = reduced;
+                Trosmos.storage?.put('settings', { id: 'prefs', data: { ...Trosmos.settings } });
+                Trosmos.notifications?.show(reduced ? 'Reduce motion on' : 'Reduce motion off', 'info');
+            }},
             { id: 'create-note', label: 'Create Note', keywords: 'note new write', action: () => Trosmos.ai?.processCommand('create note Quick Note') },
             { id: 'create-folder', label: 'Create Folder', keywords: 'folder new mkdir', action: () => createNewFolder() },
             { id: 'toggle-notifications', label: 'Notifications', keywords: 'notifications center', action: () => showNotificationCenter() },
-            { id: 'lock', label: 'Lock System', keywords: 'lock logout sign out', action: () => { document.getElementById('desktop')?.classList.add('hidden'); document.getElementById('login-screen')?.classList.remove('hidden'); } },
+            { id: 'open-terminal', label: 'Open Terminal', keywords: 'terminal shell console cmd', action: () => openTerminal() },
+            { id: 'open-calculator', label: 'Open Calculator', keywords: 'calculator math calc', action: () => openCalculator() },
+            { id: 'open-notes', label: 'Open Notes', keywords: 'notes memo write', action: () => openNotes() },
+            { id: 'open-clock', label: 'Open Clock', keywords: 'clock time date', action: () => openClock() },
+            { id: 'open-clipboard', label: 'Open Clipboard', keywords: 'clipboard paste history', action: () => openClipboard() },
+            { id: 'open-help', label: 'Open Help', keywords: 'help about support', action: () => openHelp() },
+            { id: 'lock', label: 'Lock System', keywords: 'lock logout sign out', action: () => lockSystem() },
+            { id: 'signout', label: 'Sign Out', keywords: 'logout sign out exit session', action: () => { document.getElementById('desktop')?.classList.add('hidden'); const l=document.getElementById('login-screen'); if(l){ l.classList.remove('hidden'); l.classList.add('flex'); } } },
         ];
 
         function showCommandPalette() {
@@ -3139,16 +3691,105 @@
             _clockInterval = setInterval(update, 30000);
         }
 
+        let _registerMode = false;
+        function toggleRegisterMode() {
+            _registerMode = !_registerMode;
+            const title = document.getElementById('login-title');
+            const btn = document.getElementById('login-submit-btn');
+            const toggle = document.getElementById('login-register-toggle');
+            const hint = document.getElementById('login-mode-hint');
+            if (_registerMode) {
+                if (title) title.textContent = 'Create account';
+                if (btn) btn.textContent = 'Create Trosmos account';
+                if (toggle) toggle.textContent = 'Already have an account?';
+                if (hint) hint.textContent = 'Register for multi-device cloud sync';
+            } else {
+                if (title) title.textContent = 'Welcome back';
+                if (btn) btn.textContent = 'Sign in to Trosmos';
+                if (toggle) toggle.textContent = 'Create account';
+                if (hint) hint.textContent = 'Sign in for cloud sync, or continue offline';
+            }
+            const err = document.getElementById('login-error');
+            if (err) { err.classList.add('hidden'); err.textContent = ''; }
+        }
+
+        function showLoginError(msg) {
+            const err = document.getElementById('login-error');
+            if (!err) return;
+            err.textContent = msg || 'Something went wrong';
+            err.classList.remove('hidden');
+        }
+
         function showLogin() {
             document.getElementById('landing-page').classList.add('hidden');
             const login = document.getElementById('login-screen');
             login.classList.remove('hidden');
             login.classList.add('flex');
-            // Accessibility: move focus to first form field
             setTimeout(() => document.getElementById('login-username')?.focus(), 50);
+            // Probe backend availability for UX hint
+            if (window.TrosmosAPI) {
+                TrosmosAPI.probe().then(p => {
+                    const hint = document.getElementById('login-mode-hint');
+                    if (hint && p.ok) hint.textContent = 'Server online — sign in for cloud sync, or continue offline';
+                    else if (hint) hint.textContent = 'Server offline — local mode available';
+                }).catch(() => {});
+            }
         }
 
-        function performLogin() {
+        async function performLogin() {
+            const username = document.getElementById('login-username')?.value?.trim();
+            const password = document.getElementById('login-password')?.value || '';
+            const errEl = document.getElementById('login-error');
+            if (errEl) { errEl.classList.add('hidden'); errEl.textContent = ''; }
+
+            if (!username || !password) {
+                showLoginError('Username and password required');
+                return;
+            }
+
+            // Try real backend when available
+            if (window.TrosmosAPI) {
+                const probe = await TrosmosAPI.probe().catch(() => ({ ok: false }));
+                if (probe.ok) {
+                    try {
+                        const btn = document.getElementById('login-submit-btn');
+                        if (btn) { btn.disabled = true; btn.textContent = _registerMode ? 'Creating…' : 'Signing in…'; }
+                        if (_registerMode) {
+                            await TrosmosAPI.register({ username, password, displayName: username });
+                            await TrosmosAPI.login({ username, password });
+                        } else {
+                            await TrosmosAPI.login({ username, password });
+                        }
+                        if (window.TrosmosBackend) {
+                            TrosmosBackend.user = TrosmosAPI.getStoredUser();
+                            TrosmosBackend.available = true;
+                        }
+                        finishLoginTransition();
+                        return;
+                    } catch (e) {
+                        showLoginError(e.message || 'Authentication failed');
+                        const btn = document.getElementById('login-submit-btn');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.textContent = _registerMode ? 'Create Trosmos account' : 'Sign in to Trosmos';
+                        }
+                        return;
+                    }
+                }
+            }
+            // Fallback: local mode (any credentials)
+            finishLoginTransition();
+        }
+
+        function performLocalLogin() {
+            finishLoginTransition();
+        }
+
+        function performBiometricLogin() {
+            performLocalLogin();
+        }
+
+        function finishLoginTransition() {
             const loginScreen = document.getElementById('login-screen');
             loginScreen.style.transition = 'all 0.4s cubic-bezier(0.23,1,0.32,1)';
             loginScreen.style.opacity = '0';
@@ -3158,12 +3799,6 @@
                 loginScreen.style.opacity = '1';
                 showDesktop();
             }, 420);
-        }
-
-        function performBiometricLogin() {
-            const btns = document.querySelectorAll('#login-screen button');
-            btns.forEach(b => b.disabled = true);
-            setTimeout(() => showDesktop(), 850);
         }
 
         async function showDesktop() {
@@ -3242,6 +3877,12 @@
             if (!Trosmos.browser) Trosmos.browser = new BrowserManager();
             if (!Trosmos.ai) Trosmos.ai = new AIModule();
             if (!Trosmos.notifications) Trosmos.notifications = new NotificationManager();
+            try { await Trosmos.notifications.load?.(); } catch (_) {}
+
+            // Apply reduce-motion preference
+            if (Trosmos.settings?.reduceMotion) {
+                document.documentElement.classList.add('reduce-motion');
+            }
 
             // Pre-register static windows
             ['ai-window', 'file-manager-window', 'browser-window', 'settings-window', 'app-store-window'].forEach(id => {
@@ -3251,6 +3892,18 @@
 
             // Initial file grid population
             renderFileManager();
+
+            // Keep windows reachable on resize / orientation change
+            let _resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(_resizeTimer);
+                _resizeTimer = setTimeout(() => {
+                    Trosmos.windows?.clampAllToViewport?.();
+                }, 120);
+            });
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => Trosmos.windows?.clampAllToViewport?.(), 200);
+            });
         }
 
         // Keyboard shortcuts (enhanced)
@@ -3326,6 +3979,20 @@
             PermissionUI.init();
             window.PermissionUI = PermissionUI;
 
+            // Initialize backend bridge (auth, cloud VFS, WS) — non-blocking
+            if (window.TrosmosBackend) {
+                try {
+                    const mode = await TrosmosBackend.init();
+                    console.info('[Trosmos] Backend mode:', mode);
+                    if (mode.user && mode.mode === 'cloud') {
+                        // Optional: auto-enter desktop if already authenticated
+                        // (user can still go through landing if preferred)
+                    }
+                } catch (e) {
+                    console.warn('[Trosmos] Backend init skipped', e);
+                }
+            }
+
             // Pre-register static windows for WindowManager
             document.querySelectorAll('.window').forEach(win => {
                 // will be registered properly on first open
@@ -3341,9 +4008,11 @@
                 }).catch(err => console.warn('SW registration failed (ok for local file://)', err));
             }
 
-            console.log('%c[Trosmos OS] Production build initialized. All modules loaded. Ready for enterprise use.', 'color:#3B82F6');
+            console.log('%c[Trosmos OS] v4.0 production shell ready — desktop + mobile OS modes, workspaces, app switcher.', 'color:#3B82F6');
         }
 
+        window.openCommandPalette = showCommandPalette;
+        window.showCommandPalette = showCommandPalette;
         window.onload = initializeTrosmosOS;
     </script>
 
@@ -3361,5 +4030,8 @@
     </div>
     <div id="trosmos-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="/trosmos-api.js"></script>
+    <script src="/trosmos-apps.js" defer></script>
+    <script src="/trosmos-enhance.js" defer></script>
 </body>
 </html>
