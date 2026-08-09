@@ -1,97 +1,67 @@
-# Trosmos OS 4.0
+# Trosmos OS 4.1 — Full-Stack Web Operating Environment
 
-Premium AI-native browser operating system — modular kernel, app lifecycle, workspaces, controlled APIs.
+Premium AI-native web operating system with a real Node.js backend, multi-user authentication, secure virtual filesystem, WebSockets, and the existing polished desktop/mobile shell.
+
+This is not a demo shell. The browser is the desktop environment; Node.js is the system backend.
 
 ## Quick start
 
 ```bash
 npm install
+cp .env.example .env
+# Optional: set JWT_SECRET and GEMINI_API_KEY in .env
+
 npm run dev
+# API :3000 + Vite :5173 (proxied). Open http://localhost:5173
 ```
 
-Open the Vite URL. For full AI tool-calling, deploy to Netlify and set `GEMINI_API_KEY`.
+Production-style:
 
-## Architecture (v4.0)
-
-```
-Trosmos Kernel
-├── Event Bus
-├── App Registry + Lifecycle
-├── Command Registry
-├── Search Index
-├── Permissions
-├── Window Manager hooks
-├── Workspaces
-├── Clipboard Service
-├── Trash / Recovery
-├── Undo / Redo
-├── Theme Engine
-├── Session (lock)
-├── Network Service
-├── System Monitor
-├── Audit Log
-├── Migration Engine
-├── Crash Recovery
-├── Deep Links
-└── i18n foundation
-
-Controlled APIs on window.Trosmos:
-  apps, commands, search, events, clipboard, theme,
-  workspaces, trash, undo, audit, session, network, monitor
+```bash
+npm run build
+npm start
+# http://localhost:3000
 ```
 
-## Features
+## Architecture
 
-- Modular OS kernel with isolated app lifecycle (registered → launching → running → suspended → closing → closed / failed)
-- Extensible app registry (metadata, capabilities, file associations, deep links)
-- Universal command palette + search index (apps, files, notes, commands)
-- Multi-workspace desktop (Main, Work, Development, Personal)
-- Trash with restore / permanent delete
-- Undo/redo infrastructure
-- Theme engine (light / dark / system)
-- Real system monitor (browser APIs only — no fabricated metrics)
-- Clipboard abstraction with internal history
-- Permission-gated AI tools
-- Virtual filesystem (IndexedDB) + File Manager
-- Dual-mode shell: desktop windows + mobile home/dock
-- PWA + offline shell
-- Deep links (`?app=files`, `?file=/Home/Documents/x.txt`)
-- Crash isolation — one broken app does not take down the shell
+- Desktop Environment, Window Manager, App System
+- Virtual Filesystem (per-user SQLite + offline IndexedDB)
+- User System + JWT Auth + bcrypt
+- Settings, Notifications, Tasks, Search
+- AI (Gemini tools, server-side where safe)
+- WebSocket real-time channel
+- /api/v1 REST surface + health/diagnostics
 
-## Keyboard
+## Stack
 
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+K | Command palette |
-| Ctrl+T | Terminal |
-| Ctrl+L | Lock screen |
-| Ctrl+Z | Undo |
-| Ctrl+Shift+Z / Ctrl+Y | Redo |
-| Ctrl+Alt+1..4 | Switch workspace |
-| Esc | Close overlays |
+Frontend: existing Trosmos UI (Vite + Tailwind)
+Backend: Node.js + Express + better-sqlite3 + ws
+Auth: JWT sessions, httpOnly cookies
+AI: optional Gemini via GEMINI_API_KEY
+
+## Auth modes
+
+1. Create account / Sign in — cloud-synced files, settings, notifications
+2. Continue offline — full local IndexedDB workspace
+
+## API base: /api/v1
+
+auth, files, settings, notifications, search, apps, tasks, users, ai, system
+
+WebSocket: /ws?token=<jwt>
 
 ## Security
 
-- `GEMINI_API_KEY` server-side only (Netlify function)
-- Path-normalized VFS
-- XSS-safe rendering
-- Destructive AI actions require confirmation
-- Deep links validated — no arbitrary code from URL params
-- Calculator uses CSP-safe expression parser (no `eval`)
+Password hashing, rate limits, helmet, path sanitization, per-user VFS isolation, no host shell for users, audit logs, secrets via env only.
 
-## Project layout
+## Scripts
 
-```
-index.html                 Core shell UI + WindowManager / VFS / AI
-public/trosmos-kernel-boot.js   Kernel bridge (v4 APIs)
-public/trosmos-apps.js          App implementations
-public/trosmos-enhance.js        Device mode / mobile / workspaces UI
-src/core/                       Modular kernel sources (ES modules)
-src/filesystem/                 VFS, storage, trash
-src/services/                   AI tools
-netlify/functions/              Gemini-backed AI endpoint
-```
+- npm run dev — concurrent server + Vite
+- npm run server — API only
+- npm run build / npm start — production
+- npm run db:reset — wipe SQLite
 
-## Version
+Database auto-creates at server/data/trosmos.db
 
-**4.0.0** — Major architectural rebuild toward a cohesive browser OS platform.
+See .env.example for configuration.

@@ -1,54 +1,29 @@
-# Trosmos OS — Changelog
+# Changelog
 
-## v4.0.0 — Modular OS Kernel Platform
+## 4.1.0 — Full-stack platform
 
-### Architecture
-- **Kernel-like core** with controlled APIs: `Trosmos.apps`, `Trosmos.commands`, `Trosmos.search`, `Trosmos.events`, `Trosmos.clipboard`, `Trosmos.theme`, `Trosmos.workspaces`, `Trosmos.trash`, `Trosmos.undo`, `Trosmos.audit`, `Trosmos.session`, `Trosmos.network`, `Trosmos.monitor`
-- **App Registry** with lifecycle states: registered → launching → running → suspended → closing → closed / failed
-- Application isolation — one broken app cannot take down the shell
-- Extensible registration: metadata, capabilities, file associations, deep links, commands
-- **Universal Search Index** (apps, files, notes, commands) with ranked results
-- **Command Registry** shared by palette and launcher
-- **Event Bus** with system event catalog and recent history
-- **Permission system** expanded with capability model
-- **Migration engine** (schema v1 → v4)
-- **Audit log** for app launches, permissions, filesystem, errors
-- **Crash recovery** with isolation and restart support
-- **Deep link** validation (`?app=`, `?file=`) — no arbitrary code execution
+### Backend
+- Node.js + Express system server
+- SQLite schema: users, sessions, files, settings, notifications, apps, tasks, audit_logs, ai_conversations, devices
+- JWT authentication with bcrypt password hashing and session table
+- Per-user virtual filesystem with quotas, trash, restore, search
+- REST API under /api/v1 (auth, files, settings, notifications, search, apps, tasks, users, ai, system)
+- WebSocket channel (/ws) for live notifications and events
+- AI proxy with server-side tool execution for file operations
+- Rate limiting, helmet, CORS, centralized error handling
+- Health and diagnostics endpoints
+- Graceful shutdown
 
-### Window & Desktop
-- Multi-workspace desktop (Main, Work, Development, Personal) with persistence
-- Ctrl+Alt+1..4 workspace switching
-- Window assignment to workspaces
-- System Monitor app (real browser metrics only)
+### Frontend
+- TrosmosAPI client for backend integration
+- Hybrid login: real register/login or offline local mode
+- AI module prefers /api/v1/ai/chat when authenticated
+- Vite proxy for /api and /ws in development
+- Preserved entire desktop shell, apps, window manager, and visual identity
 
-### Filesystem
-- **Trash / Recovery**: soft-delete → restore / permanent delete
-- VFS delete routes through trash by default
-- Undo/redo infrastructure for reversible operations
+### Ops
+- .env.example, concurrent dev scripts, production start
+- Zero external database required for development
 
-### Services
-- Clipboard abstraction with internal history (honest about browser limits)
-- Theme engine: light / dark / system via CSS custom properties
-- Network service (online / offline / degraded)
-- Session lock with idle timeout
-- i18n foundation (English + Hindi string tables)
-
-### UX
-- Command palette enriched with unified search
-- Self-diagnostic (`Trosmos.diagnose()`)
-- Startup path prioritizes critical shell
-
-### Compatibility
-- Existing IndexedDB user data preserved via migrations
-- Legacy app openers and window manager retained
-- Dual-mode desktop/mobile shell from v2.9 preserved
-
----
-
-## v2.9.0 — True dual-mode OS shell
-
-- Automatic desktop / tablet / mobile detection
-- Mobile home screen, status bar, bottom navigation
-- Workspaces, Alt+Tab, power menu, quick settings
-- Safe-area / PWA standalone support
+## 4.0.0
+- Premium client-side OS with window manager, VFS, AI copilot, apps, PWA
