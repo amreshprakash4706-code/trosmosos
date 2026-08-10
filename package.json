@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "4.1.0",
-  "description": "Trosmos OS 4.1 \u2014 full-stack AI-native web operating system. Real multi-user backend (Node.js + SQLite), secure VFS, auth, WebSockets, AI tools, window manager, terminal, and honest browser-capability boundaries.",
+  "version": "4.2.0",
+  "description": "Trosmos OS 4.2 \u2014 full-stack AI-native web operating system. Real multi-user backend (Node.js + SQLite), secure VFS, auth, WebSockets, AI tools, window manager, terminal, and honest browser-capability boundaries.",
   "type": "module",
   "private": true,
   "scripts": {
@@ -12,7 +12,8 @@
     "build": "vite build",
     "start": "NODE_ENV=production node server/src/index.js",
     "preview": "vite preview",
-    "db:reset": "rm -f server/data/trosmos.db server/data/trosmos.db-* && echo Database reset. Restart the server to recreate schema."
+    "db:reset": "rm -f server/data/trosmos.db server/data/trosmos.db-* && echo Database reset. Restart the server to recreate schema.",
+    "test": "node --test server/tests/**/*.test.js"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",

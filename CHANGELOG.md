@@ -1,29 +1,31 @@
 # Changelog
 
+## 4.2.0 — Production hardening
+
+### Security
+- Production startup fails closed if JWT_SECRET is missing, default, or too short
+- WebSocket authentication prefers HttpOnly cookie over query-string JWT
+- Helmet Content-Security-Policy and HSTS enabled in production
+- Session list + revoke endpoints (`GET/DELETE /api/v1/auth/sessions`)
+- Logout clears cookie with matching security attributes
+
+### Virtual filesystem
+- All multi-record mutations are transactional
+- Move/rename correctly maintain parent_id consistency for the subtree
+- Added recursive `copyNode` and `/api/v1/files/copy`
+- Added trash listing endpoint
+- Quota checks remain atomic with mutations
+- Restore refuses to collide with an existing live path
+
+### Backend / Frontend client
+- Version 4.2.0
+- WebSocket connection no longer requires a query token when cookie session is present
+- Added `copy` and session revoke helpers on `TrosmosAPI`
+- Preserved full desktop shell, apps, and visual identity
+
 ## 4.1.0 — Full-stack platform
-
-### Backend
-- Node.js + Express system server
-- SQLite schema: users, sessions, files, settings, notifications, apps, tasks, audit_logs, ai_conversations, devices
-- JWT authentication with bcrypt password hashing and session table
-- Per-user virtual filesystem with quotas, trash, restore, search
-- REST API under /api/v1 (auth, files, settings, notifications, search, apps, tasks, users, ai, system)
-- WebSocket channel (/ws) for live notifications and events
-- AI proxy with server-side tool execution for file operations
-- Rate limiting, helmet, CORS, centralized error handling
-- Health and diagnostics endpoints
-- Graceful shutdown
-
-### Frontend
-- TrosmosAPI client for backend integration
-- Hybrid login: real register/login or offline local mode
-- AI module prefers /api/v1/ai/chat when authenticated
-- Vite proxy for /api and /ws in development
-- Preserved entire desktop shell, apps, window manager, and visual identity
-
-### Ops
-- .env.example, concurrent dev scripts, production start
-- Zero external database required for development
+- Node.js + Express + SQLite multi-user backend
+- JWT auth, VFS, AI proxy, WebSocket, rate limits, helmet
 
 ## 4.0.0
-- Premium client-side OS with window manager, VFS, AI copilot, apps, PWA
+- Premium client-side OS

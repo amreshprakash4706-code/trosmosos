@@ -1,67 +1,45 @@
-# Trosmos OS 4.1 — Full-Stack Web Operating Environment
+# Trosmos OS 4.2 — Full-Stack AI-Native Web Operating System
 
-Premium AI-native web operating system with a real Node.js backend, multi-user authentication, secure virtual filesystem, WebSockets, and the existing polished desktop/mobile shell.
-
-This is not a demo shell. The browser is the desktop environment; Node.js is the system backend.
+Trosmos is a real multi-user web operating environment: window manager, virtual filesystem, applications, AI copilot with tool execution, authentication, WebSockets, and PWA support.
 
 ## Quick start
 
 ```bash
-npm install
 cp .env.example .env
-# Optional: set JWT_SECRET and GEMINI_API_KEY in .env
-
-npm run dev
-# API :3000 + Vite :5173 (proxied). Open http://localhost:5173
+# Set JWT_SECRET (required in production) and optional GEMINI_API_KEY
+npm install
+npm run dev          # concurrent API + Vite
+# or
+npm run server       # API + static frontend on :3000
 ```
 
-Production-style:
+Production:
 
 ```bash
-npm run build
+export NODE_ENV=production
+export JWT_SECRET="$(openssl rand -hex 32)"
 npm start
-# http://localhost:3000
 ```
 
-## Architecture
+## Security (4.2)
 
-- Desktop Environment, Window Manager, App System
-- Virtual Filesystem (per-user SQLite + offline IndexedDB)
-- User System + JWT Auth + bcrypt
-- Settings, Notifications, Tasks, Search
-- AI (Gemini tools, server-side where safe)
-- WebSocket real-time channel
-- /api/v1 REST surface + health/diagnostics
-
-## Stack
-
-Frontend: existing Trosmos UI (Vite + Tailwind)
-Backend: Node.js + Express + better-sqlite3 + ws
-Auth: JWT sessions, httpOnly cookies
-AI: optional Gemini via GEMINI_API_KEY
-
-## Auth modes
-
-1. Create account / Sign in — cloud-synced files, settings, notifications
-2. Continue offline — full local IndexedDB workspace
-
-## API base: /api/v1
-
-auth, files, settings, notifications, search, apps, tasks, users, ai, system
-
-WebSocket: /ws?token=<jwt>
-
-## Security
-
-Password hashing, rate limits, helmet, path sanitization, per-user VFS isolation, no host shell for users, audit logs, secrets via env only.
+- Production refuses to start with a missing/default JWT secret
+- HttpOnly session cookies (Secure + SameSite=Lax in production)
+- WebSocket prefers cookie handshake over JWT-in-URL
+- Helmet CSP + HSTS in production
+- Per-user VFS isolation, path normalization, quotas
+- Transactional filesystem mutations (rename/move/copy/trash/delete)
+- Rate limiting, bcrypt, session revocation API
 
 ## Scripts
 
-- npm run dev — concurrent server + Vite
-- npm run server — API only
-- npm run build / npm start — production
-- npm run db:reset — wipe SQLite
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Concurrent server + Vite |
+| `npm run server` | API + frontend |
+| `npm run build` | Vite production build |
+| `npm start` | Production server |
+| `npm test` | VFS integrity tests |
+| `npm run db:reset` | Wipe SQLite |
 
-Database auto-creates at server/data/trosmos.db
-
-See .env.example for configuration.
+Database auto-creates at `server/data/trosmos.db`. See `.env.example`.
