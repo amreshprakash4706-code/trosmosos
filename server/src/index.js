@@ -28,46 +28,51 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.join(__dirname, '../..');
 
-// Ensure DB is initialized
 getDb();
 
 const app = express();
 app.set('sessionCookieName', config.sessionCookieName);
 app.set('trust proxy', 1);
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // Frontend has its own CSP; tighten in production reverse-proxy
-    crossOriginEmbedderPolicy: false,
-  })
-);
-
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin || config.corsOrigins.includes(origin) || config.isDev) return cb(null, true);
-      return cb(null, false);
+app.use(helmet({
+  contentSecurityPolicy: config.isDev ? false : {
+    useDefaults: true,
+    directives: {
+      'default-src': ["'self'"],
+      'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com'],
+      'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.tailwindcss.com', 'https://fonts.googleapis.com'],
+      'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+      'connect-src': ["'self'", 'ws:', 'wss:', 'https://generativelanguage.googleapis.com'],
+      'frame-ancestors': ["'none'"],
+      'base-uri': ["'self'"],
+      'form-action': ["'self'"],
+      'object-src': ["'none'"],
     },
-    credentials: true,
-  })
-);
+  },
+  crossOriginEmbedderPolicy: false,
+  hsts: config.isDev ? false : { maxAge: 31536000, includeSubDomains: true },
+}));
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || config.corsOrigins.includes(origin) || config.isDev) return cb(null, true);
+    return cb(null, false);
+  },
+  credentials: true,
+}));
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
 
-const apiLimiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMax,
-  standardHeaders: true,
-  legacyHeaders: false,
+app.use('/api', rateLimit({
+  windowMs: config.rateLimitWindowMs, max: config.rateLimitMax,
+  standardHeaders: true, legacyHeaders: false,
   message: { error: 'Too many requests', code: 'RATE_LIMIT' },
-});
-
-app.use('/api', apiLimiter);
+}));
 app.use(optionalAuth);
 
-// API v1
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/files', filesRoutes);
 app.use('/api/v1/settings', settingsRoutes);
@@ -79,24 +84,17 @@ app.use('/api/v1/apps', appsRoutes);
 app.use('/api/v1/tasks', tasksRoutes);
 app.use('/api/v1/users', usersRoutes);
 
-// Health shortcut
-app.get('/health', (req, res) => {
-  res.redirect(302, '/api/v1/system/health');
-});
+app.get('/health', (req, res) => res.redirect(302, '/api/v1/system/health'));
 
-// Serve frontend (prefer dist when built, always fall back to public + root)
 if (existsSync(path.join(root, 'dist'))) {
-  app.use(express.static(path.join(root, 'dist'), { index: false }));
+  app.use(express.static(path.join(root, 'dist'), { index: false, maxAge: config.isDev ? 0 : '1h' }));
 }
-app.use(express.static(path.join(root, 'public'), { index: false }));
+app.use(express.static(path.join(root, 'public'), { index: false, maxAge: config.isDev ? 0 : '1h' }));
 app.use(express.static(root, { index: false }));
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/ws')) return next();
-  const indexPath = path.join(root, 'index.html');
-  res.sendFile(indexPath, (err) => {
-    if (err) next();
-  });
+  res.sendFile(path.join(root, 'index.html'), (err) => { if (err) next(); });
 });
 
 app.use(notFound);
@@ -107,13 +105,9 @@ setupWebSocket(server);
 
 function shutdown(signal) {
   console.log(`[trosmos] ${signal} received — shutting down`);
-  server.close(() => {
-    closeDb();
-    process.exit(0);
-  });
+  server.close(() => { closeDb(); process.exit(0); });
   setTimeout(() => process.exit(1), 10000);
 }
-
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 

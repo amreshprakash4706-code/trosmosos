@@ -144,6 +144,10 @@
     async move(path, destination) {
       return request('POST', '/files/move', { path, destination });
     },
+
+    async copy(path, destination, name) {
+      return request('POST', '/files/copy', { path, destination, name });
+    },
     async trash(path) {
       return request('POST', '/files/trash', { path });
     },
@@ -222,15 +226,18 @@
       return request('POST', '/users/password', { currentPassword, newPassword });
     },
     async listSessions() {
-      return request('GET', '/users/sessions');
+      return request('GET', '/auth/sessions');
+    },
+    async revokeSession(id) {
+      return request('DELETE', `/auth/sessions/${encodeURIComponent(id)}`);
     },
 
     // WebSocket
     connectWebSocket(onMessage) {
       const token = getToken();
-      if (!token) return null;
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}`);
+      const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+      const ws = new WebSocket(`${proto}://${location.host}/ws${qs}`);
       ws.addEventListener('message', (ev) => {
         try {
           const msg = JSON.parse(ev.data);
