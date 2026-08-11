@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "4.2.0",
-  "description": "Trosmos OS 4.2 \u2014 full-stack AI-native web operating system. Real multi-user backend (Node.js + SQLite), secure VFS, auth, WebSockets, AI tools, window manager, terminal, and honest browser-capability boundaries.",
+  "version": "4.2.1",
+  "description": "Trosmos OS 4.2.1 \u2014 full-stack AI-native web operating system. Real multi-user backend (Node.js + node:sqlite), secure VFS, auth, WebSockets, AI tools, window manager, terminal, and honest browser-capability boundaries.",
   "type": "module",
   "private": true,
   "scripts": {
@@ -20,13 +20,11 @@
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "ws": "^8.18.0",
-    "better-sqlite3": "^11.7.0"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.20",
@@ -36,6 +34,6 @@
     "vite": "^6.0.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

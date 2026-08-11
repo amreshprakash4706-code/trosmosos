@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.2.1 — Production hardening (continued)
+
+### Database
+- Migrated from `better-sqlite3` to Node.js built-in `node:sqlite` (DatabaseSync)
+- No native addon compilation required; works on any Node 22+ platform
+- Additive schema migrations for lockout fields and trash original_path
+
+### Security
+- Account lockout after repeated failed login attempts (configurable window)
+- Stronger password policy (letter + number required)
+- Session token hash index for faster validation
+- Periodic cleanup of expired sessions and old audit logs
+
+### Virtual filesystem
+- Trash moves nodes to unique `/Trash/{id}_{name}` paths and stores `original_path`
+- Live path is freed on trash so the same name can be recreated immediately
+- Restore accepts original path or trash path and refuses collisions
+- Permanent delete resolves by live path, trash path, or original_path
+- Existence checks only consider non-trashed nodes for live-path collisions
+
+### Deployment
+- Production Dockerfile (node:22-bookworm-slim)
+- Healthcheck against `/api/v1/system/health`
+
 ## 4.2.0 — Production hardening
 
 ### Security

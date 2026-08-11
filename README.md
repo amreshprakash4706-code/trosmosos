@@ -1,6 +1,11 @@
-# Trosmos OS 4.2 — Full-Stack AI-Native Web Operating System
+# Trosmos OS 4.2.1 — Full-Stack AI-Native Web Operating System
 
 Trosmos is a real multi-user web operating environment: window manager, virtual filesystem, applications, AI copilot with tool execution, authentication, WebSockets, and PWA support.
+
+## Requirements
+
+- **Node.js 22+** (uses the built-in `node:sqlite` module — no native SQLite addon)
+- Optional: `GEMINI_API_KEY` for AI features
 
 ## Quick start
 
@@ -21,7 +26,14 @@ export JWT_SECRET="$(openssl rand -hex 32)"
 npm start
 ```
 
-## Security (4.2)
+Docker:
+
+```bash
+docker build -t trosmos-os .
+docker run --rm -p 3000:3000 -e JWT_SECRET="$(openssl rand -hex 32)" -v trosmos-data:/app/server/data trosmos-os
+```
+
+## Security (4.2.1)
 
 - Production refuses to start with a missing/default JWT secret
 - HttpOnly session cookies (Secure + SameSite=Lax in production)
@@ -29,7 +41,12 @@ npm start
 - Helmet CSP + HSTS in production
 - Per-user VFS isolation, path normalization, quotas
 - Transactional filesystem mutations (rename/move/copy/trash/delete)
-- Rate limiting, bcrypt, session revocation API
+- Trash uses unique paths so original paths can be reused safely
+- Account lockout after repeated failed logins
+- Password policy: min 8 chars, letter + number
+- Rate limiting, bcrypt (12 rounds), session revocation API
+- Periodic expired-session and audit-log cleanup
+- Built-in `node:sqlite` (no native compile surface)
 
 ## Scripts
 
@@ -39,7 +56,7 @@ npm start
 | `npm run server` | API + frontend |
 | `npm run build` | Vite production build |
 | `npm start` | Production server |
-| `npm test` | VFS integrity tests |
+| `npm test` | VFS + auth integrity tests |
 | `npm run db:reset` | Wipe SQLite |
 
 Database auto-creates at `server/data/trosmos.db`. See `.env.example`.
