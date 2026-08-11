@@ -1,13 +1,33 @@
-import { config as loadEnv } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '../..');
 
-loadEnv({ path: join(root, '.env') });
+// Load .env without requiring the dotenv package (works offline / minimal installs)
+function loadEnvFile(filePath) {
+  if (!existsSync(filePath)) return;
+  try {
+    const text = readFileSync(filePath, 'utf8');
+    for (const line of text.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eq = trimmed.indexOf('=');
+      if (eq <= 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let val = trimmed.slice(eq + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = val;
+    }
+  } catch (e) {
+    console.warn('[config] could not read .env:', e.message);
+  }
+}
+loadEnvFile(join(root, '.env'));
 
 const dataDir = process.env.TROSMOS_DATA_DIR || join(root, 'server/data');
 if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
@@ -49,7 +69,7 @@ export const config = {
   authRateLimitMax: 20,
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173')
     .split(',').map((s) => s.trim()).filter(Boolean),
-  version: '4.2.0',
+  version: '4.2.1',
   name: 'Trosmos OS',
 };
 

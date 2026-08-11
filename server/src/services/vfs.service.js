@@ -42,7 +42,7 @@ export function createFolder(userId, parentPathInput, name) {
   const parentP = normalizePath(parentPathInput || '/Home');
   const clean = safeName(name);
   const fullPath = parentP === '/' ? `/${clean}` : `${parentP}/${clean}`;
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ?').get(userId, fullPath)) {
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, fullPath)) {
     const err = new Error('A file or folder with that name already exists'); err.status = 409; throw err;
   }
   const parent = db.prepare('SELECT id, is_dir FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, parentP);
@@ -61,7 +61,7 @@ export function createFile(userId, parentPathInput, name, content = '') {
   const body = typeof content === 'string' ? content : String(content || '');
   const size = Buffer.byteLength(body, 'utf8');
   if (size > config.maxFileSizeBytes) { const err = new Error(`File exceeds maximum size of ${config.maxFileSizeBytes} bytes`); err.status = 413; throw err; }
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ?').get(userId, fullPath)) {
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, fullPath)) {
     const err = new Error('A file or folder with that name already exists'); err.status = 409; throw err;
   }
   const parent = db.prepare('SELECT id, is_dir FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, parentP);
@@ -115,7 +115,7 @@ export function renameNode(userId, path, newName) {
   const parent = parentPath(p);
   const newPath = parent === '/' ? `/${clean}` : `${parent}/${clean}`;
   if (newPath === p) return rowToNode(row);
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ?').get(userId, newPath)) {
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, newPath)) {
     const err = new Error('Name already exists'); err.status = 409; throw err;
   }
   const tx = db.transaction(() => {
@@ -143,7 +143,7 @@ export function moveNode(userId, path, newParentPath) {
     const err = new Error('Cannot move a folder into itself'); err.status = 400; throw err;
   }
   const newPath = destParent === '/' ? `/${row.name}` : `${destParent}/${row.name}`;
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ?').get(userId, newPath)) {
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, newPath)) {
     const err = new Error('An item with that name already exists in the destination'); err.status = 409; throw err;
   }
   const tx = db.transaction(() => {
@@ -164,8 +164,32 @@ export function trashNode(userId, path) {
   if (p === '/Home' || p === '/Trash') { const err = new Error('Cannot delete system folders'); err.status = 403; throw err; }
   const row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
   if (!row) { const err = new Error('Not found'); err.status = 404; throw err; }
+  // Move to unique trash paths so UNIQUE(user_id, path) does not block recreating the same name
+  const trashRoot = db.prepare(`SELECT id FROM files WHERE user_id = ? AND path = '/Trash' AND is_dir = 1`).get(userId);
+  const trashParentId = trashRoot?.id || null;
   db.transaction(() => {
-    db.prepare(`UPDATE files SET is_trashed = 1, trashed_at = datetime('now'), updated_at = datetime('now') WHERE user_id = ? AND (path = ? OR path LIKE ?)`).run(userId, p, p + '/%');
+    const nodes = db.prepare(`SELECT id, path, name, parent_id FROM files WHERE user_id = ? AND is_trashed = 0 AND (path = ? OR path LIKE ?) ORDER BY path`).all(userId, p, p + '/%');
+    const idMap = new Map();
+    for (const n of nodes) {
+      const relative = n.path === p ? '' : n.path.slice(p.length);
+      // Unique path under /Trash using node id to avoid collisions
+      const trashPath = n.path === p
+        ? `/Trash/${n.id}_${n.name}`
+        : `/Trash/${row.id}_${row.name}${relative}`;
+      idMap.set(n.id, trashPath);
+      const newParent = n.path === p ? trashParentId : (nodes.find((x) => x.path === parentPath(n.path)) ? nodes.find((x) => x.path === parentPath(n.path)).id : trashParentId);
+      db.prepare(`UPDATE files SET is_trashed = 1, trashed_at = datetime('now'), original_path = ?, path = ?, parent_id = ?, updated_at = datetime('now') WHERE id = ?`)
+        .run(n.path, trashPath, n.path === p ? trashParentId : n.parent_id, n.id);
+    }
+    // Fix parent_ids for descendants so they remain under the trashed root node
+    for (const n of nodes) {
+      if (n.path === p) continue;
+      const parentOriginal = parentPath(n.path);
+      const parentNode = nodes.find((x) => x.path === parentOriginal);
+      if (parentNode) {
+        db.prepare(`UPDATE files SET parent_id = ? WHERE id = ?`).run(parentNode.id, n.id);
+      }
+    }
   })();
   return { ok: true, path: p };
 }
@@ -173,26 +197,71 @@ export function trashNode(userId, path) {
 export function restoreNode(userId, path) {
   const db = getDb();
   const p = normalizePath(path);
-  const row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 1').get(userId, p);
+  // Accept either the current trash path or the original path
+  let row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 1').get(userId, p);
+  if (!row) {
+    row = db.prepare('SELECT * FROM files WHERE user_id = ? AND original_path = ? AND is_trashed = 1').get(userId, p);
+  }
   if (!row) { const err = new Error('Not found in trash'); err.status = 404; throw err; }
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p)) {
+
+  const targetPath = row.original_path || p;
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, targetPath)) {
     const err = new Error('A non-trashed item already exists at this path'); err.status = 409; throw err;
   }
+
+  // Ensure parent of target exists (and is live)
+  const parent = parentPath(targetPath);
+  if (parent && parent !== '/') {
+    const parentLive = db.prepare('SELECT id, is_dir FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, parent);
+    if (!parentLive || !parentLive.is_dir) {
+      const err = new Error('Cannot restore: original parent directory is missing'); err.status = 409; throw err;
+    }
+  }
+
   db.transaction(() => {
-    db.prepare(`UPDATE files SET is_trashed = 0, trashed_at = NULL, updated_at = datetime('now') WHERE user_id = ? AND (path = ? OR path LIKE ?)`).run(userId, p, p + '/%');
+    // Collect this node and descendants currently under the trash path prefix
+    const trashPrefix = row.path;
+    const nodes = db.prepare(`SELECT * FROM files WHERE user_id = ? AND is_trashed = 1 AND (path = ? OR path LIKE ?) ORDER BY path`).all(userId, trashPrefix, trashPrefix + '/%');
+    for (const n of nodes) {
+      const orig = n.original_path;
+      if (!orig) continue;
+      let parentId = null;
+      const pp = parentPath(orig);
+      if (pp && pp !== '/') {
+        const pr = db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, pp)
+          || db.prepare('SELECT id FROM files WHERE user_id = ? AND original_path = ?').get(userId, pp);
+        parentId = pr?.id || null;
+      } else if (pp === '/') {
+        parentId = null;
+      }
+      // For root of restore, reattach to live parent of original path
+      if (n.id === row.id && parent && parent !== '/') {
+        const pr = db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, parent);
+        parentId = pr?.id || null;
+      }
+      db.prepare(`UPDATE files SET is_trashed = 0, trashed_at = NULL, path = ?, original_path = NULL, parent_id = ?, updated_at = datetime('now') WHERE id = ?`)
+        .run(orig, parentId, n.id);
+    }
   })();
-  return getNodeByPath(userId, p);
+  return getNodeByPath(userId, targetPath);
 }
 
 export function permanentlyDelete(userId, path) {
   const db = getDb();
   const p = normalizePath(path);
   if (p === '/Home' || p === '/Trash') { const err = new Error('Cannot permanently delete system folders'); err.status = 403; throw err; }
-  const rows = db.prepare(`SELECT id, size FROM files WHERE user_id = ? AND (path = ? OR path LIKE ?)`).all(userId, p, p + '/%');
+  // Resolve by live path, trash path, or original_path
+  let root = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ?').get(userId, p);
+  if (!root) {
+    root = db.prepare('SELECT * FROM files WHERE user_id = ? AND original_path = ?').get(userId, p);
+  }
+  if (!root) { const err = new Error('Not found'); err.status = 404; throw err; }
+  const prefix = root.path;
+  const rows = db.prepare(`SELECT id, size FROM files WHERE user_id = ? AND (path = ? OR path LIKE ?)`).all(userId, prefix, prefix + '/%');
   if (!rows.length) { const err = new Error('Not found'); err.status = 404; throw err; }
   let freed = 0; for (const r of rows) freed += r.size || 0;
   db.transaction(() => {
-    db.prepare(`DELETE FROM files WHERE user_id = ? AND (path = ? OR path LIKE ?)`).run(userId, p, p + '/%');
+    db.prepare(`DELETE FROM files WHERE user_id = ? AND (path = ? OR path LIKE ?)`).run(userId, prefix, prefix + '/%');
     if (freed) updateStorageUsed(userId, -freed);
   })();
   return { ok: true, freed };
@@ -208,7 +277,7 @@ export function copyNode(userId, path, destParentPath, newName = null) {
   if (!parentRow || !parentRow.is_dir) { const err = new Error('Destination directory not found'); err.status = 404; throw err; }
   const targetName = safeName(newName || src.name);
   const newPath = destParent === '/' ? `/${targetName}` : `${destParent}/${targetName}`;
-  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ?').get(userId, newPath)) {
+  if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, newPath)) {
     const err = new Error('An item with that name already exists in the destination'); err.status = 409; throw err;
   }
   const toCopy = [src];
@@ -280,7 +349,13 @@ export function exportTreeAsClientFormat(userId) {
 
 export function listTrash(userId) {
   const db = getDb();
-  const all = db.prepare(`SELECT id, name, path, is_dir, mime_type, size, trashed_at, parent_id, created_at, updated_at FROM files WHERE user_id = ? AND is_trashed = 1 ORDER BY trashed_at DESC`).all(userId);
+  const all = db.prepare(`SELECT id, name, path, original_path, is_dir, mime_type, size, trashed_at, parent_id, created_at, updated_at FROM files WHERE user_id = ? AND is_trashed = 1 ORDER BY trashed_at DESC`).all(userId);
   const trashedIds = new Set(all.map((r) => r.id));
-  return all.filter((r) => !r.parent_id || !trashedIds.has(r.parent_id)).map(rowToNode);
+  return all.filter((r) => !r.parent_id || !trashedIds.has(r.parent_id)).map((r) => {
+    const node = rowToNode(r);
+    // Present original path to clients so restore(path) works with familiar paths
+    if (r.original_path) node.path = r.original_path;
+    node.trashPath = r.path;
+    return node;
+  });
 }

@@ -37,6 +37,17 @@ export async function registerUser({ username, password, email, displayName }) {
     err.status = 400;
     throw err;
   }
+  if (password.length > 128) {
+    const err = new Error('Password must be at most 128 characters');
+    err.status = 400;
+    throw err;
+  }
+  // Basic complexity: require at least one letter and one number
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+    const err = new Error('Password must contain at least one letter and one number');
+    err.status = 400;
+    throw err;
+  }
 
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(uname);
   if (existing) {
@@ -162,13 +173,42 @@ export function getUserByUsername(username) {
 
 export async function loginUser({ username, password, userAgent, ip }) {
   const row = getUserByUsername(username);
+  // Constant-time-ish failure message to reduce enumeration
   if (!row || !row.is_active) {
     const err = new Error('Invalid username or password');
     err.status = 401;
     throw err;
   }
+
+  // Account lockout check
+  if (row.locked_until) {
+    const lockedUntil = new Date(row.locked_until).getTime();
+    if (lockedUntil > Date.now()) {
+      const err = new Error('Account temporarily locked due to failed login attempts. Try again later.');
+      err.status = 423;
+      err.code = 'ACCOUNT_LOCKED';
+      throw err;
+    }
+  }
+
   const ok = await verifyPassword(password, row.password_hash);
+  const db = getDb();
+
   if (!ok) {
+    const attempts = (row.failed_login_attempts || 0) + 1;
+    const maxAttempts = config.maxLoginAttempts || 8;
+    if (attempts >= maxAttempts) {
+      const lockMs = config.loginWindowMs || 15 * 60 * 1000;
+      const lockedUntil = new Date(Date.now() + lockMs).toISOString();
+      db.prepare(`UPDATE users SET failed_login_attempts = ?, locked_until = ?, updated_at = datetime('now') WHERE id = ?`)
+        .run(attempts, lockedUntil, row.id);
+      const err = new Error('Account temporarily locked due to failed login attempts. Try again later.');
+      err.status = 423;
+      err.code = 'ACCOUNT_LOCKED';
+      throw err;
+    }
+    db.prepare(`UPDATE users SET failed_login_attempts = ?, updated_at = datetime('now') WHERE id = ?`)
+      .run(attempts, row.id);
     const err = new Error('Invalid username or password');
     err.status = 401;
     throw err;
@@ -179,13 +219,12 @@ export async function loginUser({ username, password, userAgent, ip }) {
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const db = getDb();
   db.prepare(
     `INSERT INTO sessions (id, user_id, token_hash, user_agent, ip, expires_at)
      VALUES (?, ?, ?, ?, ?, ?)`
   ).run(sessionId, row.id, tokenHash, userAgent || null, ip || null, expiresAt);
 
-  db.prepare(`UPDATE users SET last_login_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`).run(row.id);
+  db.prepare(`UPDATE users SET last_login_at = datetime('now'), updated_at = datetime('now'), failed_login_attempts = 0, locked_until = NULL WHERE id = ?`).run(row.id);
 
   return {
     token,

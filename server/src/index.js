@@ -8,7 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { config } from './config.js';
-import { getDb, closeDb } from './db.js';
+import { getDb, closeDb, cleanupExpired } from './db.js';
 import { setupWebSocket } from './websocket.js';
 import { notFound, errorHandler } from './middleware/error.js';
 import { optionalAuth } from './middleware/auth.js';
@@ -124,6 +124,9 @@ server.listen(config.port, config.host, () => {
 ║  DB:       ${config.dbPath}  ║
 ╚══════════════════════════════════════════════════════════╝
 `);
+  // Periodic session / audit cleanup
+  cleanupExpired();
+  setInterval(cleanupExpired, 60 * 60 * 1000).unref();
 });
 
 export default app;
