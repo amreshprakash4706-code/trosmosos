@@ -12,6 +12,8 @@ import { getDb, closeDb, cleanupExpired } from './db.js';
 import { setupWebSocket } from './websocket.js';
 import { notFound, errorHandler } from './middleware/error.js';
 import { optionalAuth } from './middleware/auth.js';
+import { correlationId } from './middleware/correlation.js';
+import { ensureCsrfCookie, requireCsrf } from './middleware/csrf.js';
 
 import authRoutes from './routes/auth.js';
 import filesRoutes from './routes/files.js';
@@ -33,6 +35,8 @@ getDb();
 const app = express();
 app.set('sessionCookieName', config.sessionCookieName);
 app.set('trust proxy', 1);
+
+app.use(correlationId);
 
 app.use(helmet({
   contentSecurityPolicy: config.isDev ? false : {
@@ -62,16 +66,21 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '2mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: config.bodyLimit || '2mb' }));
+app.use(express.urlencoded({ extended: false, limit: config.bodyLimit || '2mb' }));
 app.use(cookieParser());
+app.use(ensureCsrfCookie);
 
-app.use('/api', rateLimit({
-  windowMs: config.rateLimitWindowMs, max: config.rateLimitMax,
-  standardHeaders: true, legacyHeaders: false,
+app.use(rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: config.rateLimitMax,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { error: 'Too many requests', code: 'RATE_LIMIT' },
 }));
+
 app.use(optionalAuth);
+app.use(requireCsrf);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/files', filesRoutes);
@@ -124,7 +133,6 @@ server.listen(config.port, config.host, () => {
 ║  DB:       ${config.dbPath}  ║
 ╚══════════════════════════════════════════════════════════╝
 `);
-  // Periodic session / audit cleanup
   cleanupExpired();
   setInterval(cleanupExpired, 60 * 60 * 1000).unref();
 });

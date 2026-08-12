@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { getDb } from '../db.js';
 import { config } from '../config.js';
 import { uid, hashToken } from '../utils/id.js';
+import { grantDefaultCapabilities } from './capability.service.js';
 
 export async function hashPassword(password) {
   return bcrypt.hash(password, config.bcryptRounds);
@@ -83,8 +84,9 @@ export async function registerUser({ username, password, email, displayName }) {
     now
   );
 
-  // Seed default home folders for the user
+  // Seed default home folders and capabilities for the user
   seedUserFilesystem(id);
+  grantDefaultCapabilities(id);
 
   return getUserById(id);
 }
@@ -266,8 +268,8 @@ export function audit(userId, action, resource, resourceId, details, req) {
   try {
     const db = getDb();
     db.prepare(
-      `INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip, user_agent)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip, user_agent, correlation_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       userId || null,
       action,
@@ -275,7 +277,8 @@ export function audit(userId, action, resource, resourceId, details, req) {
       resourceId || null,
       details ? JSON.stringify(details) : null,
       req?.ip || null,
-      req?.headers?.['user-agent'] || null
+      req?.headers?.['user-agent'] || null,
+      req?.correlationId || null
     );
   } catch (e) {
     console.error('[audit]', e.message);

@@ -1,6 +1,11 @@
+import { createHash } from 'crypto';
 import { getDb } from '../db.js';
 import { config } from '../config.js';
 import { uid, safeName, normalizePath, parentPath, mimeFromName } from '../utils/id.js';
+
+function contentHash(body) {
+  return createHash('sha256').update(body || '', 'utf8').digest('hex');
+}
 
 function rowToNode(row) {
   if (!row) return null;
@@ -70,7 +75,11 @@ export function createFile(userId, parentPathInput, name, content = '') {
   const id = uid('fil');
   const mime = mimeFromName(clean);
   const tx = db.transaction(() => {
-    db.prepare(`INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, datetime('now'), datetime('now'))`).run(id, userId, parent.id, clean, fullPath, mime, size, body);
+    try {
+      db.prepare(`INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, content_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, datetime('now'), datetime('now'))`).run(id, userId, parent.id, clean, fullPath, mime, size, body, contentHash(body));
+    } catch {
+      db.prepare(`INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, datetime('now'), datetime('now'))`).run(id, userId, parent.id, clean, fullPath, mime, size, body);
+    }
     updateStorageUsed(userId, size);
   });
   tx();
@@ -98,7 +107,11 @@ export function writeFile(userId, path, content) {
   const delta = size - (row.size || 0);
   if (delta > 0) enforceQuota(userId, delta);
   const tx = db.transaction(() => {
-    db.prepare(`UPDATE files SET content = ?, size = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).run(body, size, row.id);
+    try {
+      db.prepare(`UPDATE files SET content = ?, size = ?, content_hash = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).run(body, size, contentHash(body), row.id);
+    } catch {
+      db.prepare(`UPDATE files SET content = ?, size = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).run(body, size, row.id);
+    }
     if (delta !== 0) updateStorageUsed(userId, delta);
   });
   tx();

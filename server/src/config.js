@@ -6,7 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const root = join(__dirname, '../..');
 
-// Load .env without requiring the dotenv package (works offline / minimal installs)
 function loadEnvFile(filePath) {
   if (!existsSync(filePath)) return;
   try {
@@ -53,9 +52,11 @@ export const config = {
   jwtSecret: jwtSecret || DEFAULT_DEV_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   sessionCookieName: 'trosmos_session',
+  csrfCookieName: 'trosmos_csrf',
   bcryptRounds: 12,
   maxLoginAttempts: 8,
   loginWindowMs: 15 * 60 * 1000,
+  sessionIdleMs: parseInt(process.env.SESSION_IDLE_MS || String(7 * 24 * 60 * 60 * 1000), 10),
   dbPath: process.env.DATABASE_PATH || join(dataDir, 'trosmos.db'),
   dataDir,
   maxStorageBytes: parseInt(process.env.MAX_STORAGE_BYTES || String(50 * 1024 * 1024), 10),
@@ -67,10 +68,12 @@ export const config = {
   rateLimitWindowMs: 60 * 1000,
   rateLimitMax: 120,
   authRateLimitMax: 20,
+  aiRateLimitMax: 30,
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173')
     .split(',').map((s) => s.trim()).filter(Boolean),
-  version: '4.2.1',
+  version: '5.0.0',
   name: 'Trosmos OS',
+  bodyLimit: '2mb',
 };
 
 export default config;
