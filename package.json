@@ -1,7 +1,7 @@
 {
   "name": "trosmos-os",
-  "version": "5.0.0",
-  "description": "Trosmos OS 5.0 — production-grade AI-native multi-user web operating system. Capability-aware VFS, hardened AI tool execution, transactional isolation, structured observability, and real multi-user security.",
+  "version": "4.3.0",
+  "description": "Trosmos OS 4.3 — production-grade AI-native multi-user web operating system. Capability-aware VFS, hardened AI tool execution, transactional isolation, structured observability, and real multi-user security.",
   "type": "module",
   "private": true,
   "scripts": {

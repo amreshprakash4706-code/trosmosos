@@ -1,30 +1,23 @@
 # Changelog
 
-## 5.0.0 — Capability-aware, AI-hardened release
+## 4.3.0 — Engineering upgrade (file versions, binary storage path, expanded AI tools)
 
-### Security & Architecture
-- Introduced explicit capability grants (`vfs:read`, `vfs:write`, `vfs:delete`, `ai:tool`)
-- AI tools now execute exclusively through ToolExecutor with capability checks
-- Mutating AI tools require user confirmation before execution
-- Full audit trail of AI tool invocations (`ai_tool_invocations` table)
-- Correlation IDs on every request and audit row
-- CSRF protection for cookie-authenticated state-changing requests
-- Per-user AI rate limiting
-- Versioned database migrations (`schema_migrations`)
+### VFS
+- **File versioning**: every write snapshots the previous content into `file_versions`. Users (and AI with capability) can list and restore prior versions.
+- **Binary-aware storage**: non-text files prefer `content_blob`; read path returns base64 + encoding hint for binary MIME types.
+- New APIs: `GET /api/v1/files/versions?path=…`, `POST /api/v1/files/restore-version`.
 
-### Virtual filesystem
-- Content hashing on write/create
-- Isolation regression tests
-- Retained transactional guarantees and unique trash paths from 4.2.1
+### AI / Capabilities
+- Expanded ToolExecutor: `list_trash`, `trash_file`, `restore_file`, `list_file_versions`, `restore_file_version` (mutating tools still require confirmation).
 
-### Testing
-- New isolation.test.js covering cross-user VFS and AI tool boundaries
-- Confirmation-flow tests for mutating tools
+### Database
+- Migration v3: `file_versions` table + supporting indexes.
 
-### Compatibility
-- Automatic migration from 4.2.1 databases
-- Default capabilities granted to existing users on upgrade
-- API surface remains compatible for the majority of clients
+### Tests
+- New `server/tests/versions.test.js` covering write→snapshot→restore and cross-user isolation.
 
-## 4.2.1 — Production hardening (previous)
-- node:sqlite, unique trash paths, account lockout, Docker, tests
+### Frontend / identity
+- Version strings, PWA manifest, and service worker bumped to 4.3.
+
+## 4.2.x — Production hardening / capability system
+- Capability grants, AI confirmation, versioned migrations, correlation IDs, CSRF, isolation tests, node:sqlite, Docker.
