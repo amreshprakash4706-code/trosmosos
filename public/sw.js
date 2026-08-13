@@ -1,4 +1,4 @@
-/* Trosmos OS Service Worker v11 — offline shell + asset cache (OS 4.0) */
+/* Trosmos OS Service Worker v13 — offline shell + asset cache (OS 4.3) */
 const CACHE_NAME = 'trosmos-os-v11';
 const ASSETS = [
   '/',

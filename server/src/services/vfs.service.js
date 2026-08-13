@@ -4,7 +4,35 @@ import { config } from '../config.js';
 import { uid, safeName, normalizePath, parentPath, mimeFromName } from '../utils/id.js';
 
 function contentHash(body) {
+  if (Buffer.isBuffer(body)) {
+    return createHash('sha256').update(body).digest('hex');
+  }
   return createHash('sha256').update(body || '', 'utf8').digest('hex');
+}
+
+function isLikelyBinary(mime, name) {
+  if (!mime) return false;
+  if (mime.startsWith('text/') || mime === 'application/json' || mime === 'application/javascript' || mime === 'application/xml') {
+    return false;
+  }
+  const textExt = new Set(['txt', 'md', 'json', 'html', 'css', 'js', 'ts', 'tsx', 'jsx', 'svg', 'csv', 'xml', 'yml', 'yaml', 'toml', 'ini', 'log', 'sh', 'py', 'rb', 'go', 'rs', 'c', 'h', 'cpp', 'java']);
+  const ext = (name || '').split('.').pop()?.toLowerCase() || '';
+  if (textExt.has(ext)) return false;
+  return true;
+}
+
+function toStoredContent(content, mime, name) {
+  if (Buffer.isBuffer(content)) {
+    return { bodyText: null, bodyBlob: content, size: content.length, binary: true };
+  }
+  const str = typeof content === 'string' ? content : String(content ?? '');
+  const binary = isLikelyBinary(mime, name);
+  if (binary) {
+    const buf = Buffer.from(str, 'utf8');
+    return { bodyText: null, bodyBlob: buf, size: buf.length, binary: true };
+  }
+  const size = Buffer.byteLength(str, 'utf8');
+  return { bodyText: str, bodyBlob: null, size, binary: false };
 }
 
 function rowToNode(row) {
@@ -13,6 +41,7 @@ function rowToNode(row) {
     id: row.id, name: row.name, path: row.path, isDir: Boolean(row.is_dir),
     mimeType: row.mime_type, size: row.size, isTrashed: Boolean(row.is_trashed),
     version: row.version, metadata: row.metadata ? JSON.parse(row.metadata) : null,
+    contentHash: row.content_hash || null,
     createdAt: row.created_at, updatedAt: row.updated_at,
   };
 }
@@ -63,24 +92,33 @@ export function createFile(userId, parentPathInput, name, content = '') {
   const parentP = normalizePath(parentPathInput || '/Home/Documents');
   const clean = safeName(name);
   const fullPath = parentP === '/' ? `/${clean}` : `${parentP}/${clean}`;
-  const body = typeof content === 'string' ? content : String(content || '');
-  const size = Buffer.byteLength(body, 'utf8');
-  if (size > config.maxFileSizeBytes) { const err = new Error(`File exceeds maximum size of ${config.maxFileSizeBytes} bytes`); err.status = 413; throw err; }
+  const mime = mimeFromName(clean);
+  const stored = toStoredContent(content, mime, clean);
+  if (stored.size > config.maxFileSizeBytes) {
+    const err = new Error(`File exceeds maximum size of ${config.maxFileSizeBytes} bytes`);
+    err.status = 413;
+    throw err;
+  }
   if (db.prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, fullPath)) {
-    const err = new Error('A file or folder with that name already exists'); err.status = 409; throw err;
+    const err = new Error('A file or folder with that name already exists');
+    err.status = 409;
+    throw err;
   }
   const parent = db.prepare('SELECT id, is_dir FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, parentP);
-  if (!parent || !parent.is_dir) { const err = new Error('Parent directory not found'); err.status = 404; throw err; }
-  enforceQuota(userId, size);
+  if (!parent || !parent.is_dir) {
+    const err = new Error('Parent directory not found');
+    err.status = 404;
+    throw err;
+  }
+  enforceQuota(userId, stored.size);
   const id = uid('fil');
-  const mime = mimeFromName(clean);
+  const hash = contentHash(stored.bodyBlob || stored.bodyText || '');
   const tx = db.transaction(() => {
-    try {
-      db.prepare(`INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, content_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, datetime('now'), datetime('now'))`).run(id, userId, parent.id, clean, fullPath, mime, size, body, contentHash(body));
-    } catch {
-      db.prepare(`INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, datetime('now'), datetime('now'))`).run(id, userId, parent.id, clean, fullPath, mime, size, body);
-    }
-    updateStorageUsed(userId, size);
+    db.prepare(
+      `INSERT INTO files (id, user_id, parent_id, name, path, is_dir, mime_type, size, content, content_blob, content_hash, version, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))`
+    ).run(id, userId, parent.id, clean, fullPath, mime, stored.size, stored.bodyText, stored.bodyBlob, hash);
+    updateStorageUsed(userId, stored.size);
   });
   tx();
   return getNodeByPath(userId, fullPath);
@@ -90,32 +128,146 @@ export function readFile(userId, path) {
   const db = getDb();
   const p = normalizePath(path);
   const row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
-  if (!row) { const err = new Error('File not found'); err.status = 404; throw err; }
-  if (row.is_dir) { const err = new Error('Cannot read a directory as a file'); err.status = 400; throw err; }
-  return { ...rowToNode(row), content: row.content ?? (row.content_blob ? row.content_blob.toString('utf8') : '') };
+  if (!row) {
+    const err = new Error('File not found');
+    err.status = 404;
+    throw err;
+  }
+  if (row.is_dir) {
+    const err = new Error('Cannot read a directory as a file');
+    err.status = 400;
+    throw err;
+  }
+  let content = '';
+  if (row.content != null) content = row.content;
+  else if (row.content_blob) {
+    if (isLikelyBinary(row.mime_type, row.name)) {
+      content = Buffer.from(row.content_blob).toString('base64');
+    } else {
+      content = Buffer.from(row.content_blob).toString('utf8');
+    }
+  }
+  return {
+    ...rowToNode(row),
+    content,
+    encoding: isLikelyBinary(row.mime_type, row.name) && row.content_blob ? 'base64' : 'utf8',
+  };
 }
 
 export function writeFile(userId, path, content) {
   const db = getDb();
   const p = normalizePath(path);
   const row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
-  if (!row) { const err = new Error('File not found'); err.status = 404; throw err; }
-  if (row.is_dir) { const err = new Error('Cannot write to a directory'); err.status = 400; throw err; }
-  const body = typeof content === 'string' ? content : String(content || '');
-  const size = Buffer.byteLength(body, 'utf8');
-  if (size > config.maxFileSizeBytes) { const err = new Error(`File exceeds maximum size of ${config.maxFileSizeBytes} bytes`); err.status = 413; throw err; }
-  const delta = size - (row.size || 0);
+  if (!row) {
+    const err = new Error('File not found');
+    err.status = 404;
+    throw err;
+  }
+  if (row.is_dir) {
+    const err = new Error('Cannot write to a directory');
+    err.status = 400;
+    throw err;
+  }
+  const mime = row.mime_type || mimeFromName(row.name);
+  const stored = toStoredContent(content, mime, row.name);
+  if (stored.size > config.maxFileSizeBytes) {
+    const err = new Error(`File exceeds maximum size of ${config.maxFileSizeBytes} bytes`);
+    err.status = 413;
+    throw err;
+  }
+  const delta = stored.size - (row.size || 0);
   if (delta > 0) enforceQuota(userId, delta);
+  const hash = contentHash(stored.bodyBlob || stored.bodyText || '');
+  const nextVersion = (row.version || 1) + 1;
   const tx = db.transaction(() => {
     try {
-      db.prepare(`UPDATE files SET content = ?, size = ?, content_hash = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).run(body, size, contentHash(body), row.id);
-    } catch {
-      db.prepare(`UPDATE files SET content = ?, size = ?, version = version + 1, updated_at = datetime('now') WHERE id = ?`).run(body, size, row.id);
-    }
+      const prevHash = row.content_hash || contentHash(row.content || row.content_blob || '');
+      db.prepare(
+        `INSERT INTO file_versions (id, file_id, user_id, version, size, content, content_blob, content_hash, mime_type, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`
+      ).run(
+        uid('ver'),
+        row.id,
+        userId,
+        row.version || 1,
+        row.size || 0,
+        row.content ?? null,
+        row.content_blob ?? null,
+        prevHash,
+        row.mime_type
+      );
+    } catch (_) {}
+    db.prepare(
+      `UPDATE files SET content = ?, content_blob = ?, size = ?, content_hash = ?, version = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(stored.bodyText, stored.bodyBlob, stored.size, hash, nextVersion, row.id);
     if (delta !== 0) updateStorageUsed(userId, delta);
   });
   tx();
   return readFile(userId, p);
+}
+
+export function listVersions(userId, path) {
+  const db = getDb();
+  const p = normalizePath(path);
+  const row = db.prepare('SELECT id, version, size, updated_at, content_hash FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
+  if (!row) {
+    const err = new Error('File not found');
+    err.status = 404;
+    throw err;
+  }
+  const versions = db.prepare(
+    `SELECT id, version, size, content_hash, mime_type, created_at FROM file_versions WHERE file_id = ? AND user_id = ? ORDER BY version DESC`
+  ).all(row.id, userId);
+  return {
+    path: p,
+    currentVersion: row.version,
+    versions: [
+      { version: row.version, size: row.size, contentHash: row.content_hash, createdAt: row.updated_at, current: true },
+      ...versions.map((v) => ({
+        version: v.version,
+        size: v.size,
+        contentHash: v.content_hash,
+        mimeType: v.mime_type,
+        createdAt: v.created_at,
+        current: false,
+      })),
+    ],
+  };
+}
+
+export function restoreVersion(userId, path, versionNumber) {
+  const db = getDb();
+  const p = normalizePath(path);
+  const row = db.prepare('SELECT * FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
+  if (!row) {
+    const err = new Error('File not found');
+    err.status = 404;
+    throw err;
+  }
+  if (row.is_dir) {
+    const err = new Error('Cannot restore versions of a directory');
+    err.status = 400;
+    throw err;
+  }
+  const ver = Number(versionNumber);
+  if (!Number.isFinite(ver) || ver < 1) {
+    const err = new Error('Invalid version number');
+    err.status = 400;
+    throw err;
+  }
+  if (ver === row.version) {
+    return readFile(userId, p);
+  }
+  const snap = db.prepare(
+    `SELECT * FROM file_versions WHERE file_id = ? AND user_id = ? AND version = ?`
+  ).get(row.id, userId, ver);
+  if (!snap) {
+    const err = new Error('Version not found');
+    err.status = 404;
+    throw err;
+  }
+  const content = snap.content != null ? snap.content : (snap.content_blob || '');
+  return writeFile(userId, p, content);
 }
 
 export function renameNode(userId, path, newName) {

@@ -279,6 +279,34 @@ const MIGRATIONS = [
       try { database.exec(`ALTER TABLE files ADD COLUMN content_hash TEXT`); } catch (_) {}
     },
   },
+  {
+    version: 3,
+    name: '4_3_file_versions_binary_and_indexes',
+    up(database) {
+      database.exec(`
+        CREATE TABLE IF NOT EXISTS file_versions (
+          id TEXT PRIMARY KEY,
+          file_id TEXT NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          version INTEGER NOT NULL,
+          size INTEGER NOT NULL DEFAULT 0,
+          content TEXT,
+          content_blob BLOB,
+          content_hash TEXT,
+          mime_type TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE(file_id, version)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_file_versions_file ON file_versions(file_id, version DESC);
+        CREATE INDEX IF NOT EXISTS idx_file_versions_user ON file_versions(user_id);
+        CREATE INDEX IF NOT EXISTS idx_files_user_hash ON files(user_id, content_hash);
+        CREATE INDEX IF NOT EXISTS idx_files_mime ON files(user_id, mime_type);
+      `);
+      try { database.exec(`ALTER TABLE files ADD COLUMN content_blob BLOB`); } catch (_) {}
+      try { database.exec(`ALTER TABLE files ADD COLUMN content_hash TEXT`); } catch (_) {}
+    },
+  },
 ];
 
 function migrate(database) {

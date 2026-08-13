@@ -81,6 +81,46 @@ const TOOL_REGISTRY = {
       };
     },
   },
+  list_trash: {
+    capability: SCOPES.VFS_READ,
+    requiresConfirmation: false,
+    mutating: false,
+    handler(userId) {
+      return vfs.listTrash(userId);
+    },
+  },
+  restore_file: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.restoreNode(userId, args.path);
+    },
+  },
+  trash_file: {
+    capability: SCOPES.VFS_DELETE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.trashNode(userId, args.path);
+    },
+  },
+  list_file_versions: {
+    capability: SCOPES.VFS_READ,
+    requiresConfirmation: false,
+    mutating: false,
+    handler(userId, args) {
+      return vfs.listVersions(userId, args.path);
+    },
+  },
+  restore_file_version: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.restoreVersion(userId, args.path, args.version);
+    },
+  },
   // Client-only — never executed server-side
   open_app: { clientOnly: true },
   close_app: { clientOnly: true },
@@ -303,6 +343,50 @@ export function getToolDeclarations() {
       name: 'get_system_info',
       description: 'Get basic system information',
       parameters: { type: 'OBJECT', properties: {} },
+    },
+    {
+      name: 'list_trash',
+      description: 'List items in the trash',
+      parameters: { type: 'OBJECT', properties: {} },
+    },
+    {
+      name: 'trash_file',
+      description: 'Move a file or folder to trash (requires confirmation)',
+      parameters: {
+        type: 'OBJECT',
+        properties: { path: { type: 'STRING' } },
+        required: ['path'],
+      },
+    },
+    {
+      name: 'restore_file',
+      description: 'Restore a file or folder from trash (requires confirmation)',
+      parameters: {
+        type: 'OBJECT',
+        properties: { path: { type: 'STRING' } },
+        required: ['path'],
+      },
+    },
+    {
+      name: 'list_file_versions',
+      description: 'List version history for a file',
+      parameters: {
+        type: 'OBJECT',
+        properties: { path: { type: 'STRING' } },
+        required: ['path'],
+      },
+    },
+    {
+      name: 'restore_file_version',
+      description: 'Restore a previous version of a file (requires confirmation)',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          path: { type: 'STRING' },
+          version: { type: 'NUMBER' },
+        },
+        required: ['path', 'version'],
+      },
     },
   ];
 }

@@ -25,6 +25,17 @@ router.get('/read', asyncHandler(async (req, res) => {
   if (!req.query.path) return res.status(400).json({ error: 'path required' });
   res.json(vfs.readFile(req.user.id, req.query.path));
 }));
+router.get('/versions', asyncHandler(async (req, res) => {
+  if (!req.query.path) return res.status(400).json({ error: 'path required' });
+  res.json(vfs.listVersions(req.user.id, req.query.path));
+}));
+router.post('/restore-version', asyncHandler(async (req, res) => {
+  const { path, version } = req.body || {};
+  if (!path || version == null) return res.status(400).json({ error: 'path and version required' });
+  const file = vfs.restoreVersion(req.user.id, path, version);
+  audit(req.user.id, 'file.restore_version', 'file', file.id, { path, version }, req);
+  res.json(file);
+}));
 router.post('/folder', asyncHandler(async (req, res) => {
   const { parent, name } = req.body || {};
   if (!name) return res.status(400).json({ error: 'name required' });
