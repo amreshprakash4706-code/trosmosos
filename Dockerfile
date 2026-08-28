@@ -1,4 +1,4 @@
-# Trosmos OS 4.3 — production container
+# Trosmos OS 4.4 — production container
 # Requires Node.js 22+ (uses built-in node:sqlite)
 FROM node:22-bookworm-slim
 
