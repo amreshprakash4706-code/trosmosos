@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '4.0.0';
+  const VERSION = '4.4.0';
 
   /* ---------- Device detection ---------- */
   const Device = {

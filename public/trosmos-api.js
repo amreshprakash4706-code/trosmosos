@@ -44,6 +44,11 @@
     };
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
+    try {
+      const m = document.cookie.match(/(?:^|; )trosmos_csrf=([^;]+)/);
+      if (m) headers['X-CSRF-Token'] = decodeURIComponent(m[1]);
+    } catch (_) {}
+    if (!headers['X-Correlation-Id']) headers['X-Correlation-Id'] = 'fe_' + Math.random().toString(36).slice(2, 12);
 
     const res = await fetch(`${API_BASE}${path}`, {
       method,
@@ -231,12 +236,42 @@
     async revokeSession(id) {
       return request('DELETE', `/auth/sessions/${encodeURIComponent(id)}`);
     },
+    async revokeOtherSessions() { return request('DELETE', '/auth/sessions/others'); },
+    async wsTicket() { return request('POST', '/auth/ws-ticket'); },
+    async listTrash() { return request('GET', '/files/trash'); },
+    async emptyTrash() { return request('POST', '/files/empty-trash'); },
+    async fileVersions(path) { return request('GET', `/files/versions?path=${encodeURIComponent(path)}`); },
+    async restoreVersion(path, version) { return request('POST', '/files/restore-version', { path, version }); },
+    async listFavorites() { return request('GET', '/files/favorites'); },
+    async favorite(path, title) { return request('POST', '/files/favorite', { path, title }); },
+    async listWorkspaces() { return request('GET', '/workspaces'); },
+    async createWorkspace(name, state) { return request('POST', '/workspaces', { name, state }); },
+    async switchWorkspace(id) { return request('POST', `/workspaces/${encodeURIComponent(id)}/switch`); },
+    async listNotes() { return request('GET', '/notes'); },
+    async createNote(payload) { return request('POST', '/notes', payload); },
+    async getNote(id) { return request('GET', `/notes/${encodeURIComponent(id)}`); },
+    async updateNote(id, payload) { return request('PATCH', `/notes/${encodeURIComponent(id)}`, payload); },
+    async recentItems() { return request('GET', '/activity/recent'); },
+    async exportBackup() { return request('GET', '/backup/export'); },
+    async importBackup(backup, overwrite = false) { return request('POST', '/backup/import', { backup, overwrite }); },
+    async createTask(payload) { return request('POST', '/tasks', payload); },
+    async getTask(id) { return request('GET', `/tasks/${encodeURIComponent(id)}`); },
+    async cancelTask(id) { return request('POST', `/tasks/${encodeURIComponent(id)}/cancel`); },
+    async ready() { return request('GET', '/system/ready'); },
+    async enableApp(appId) { return request('POST', `/apps/${encodeURIComponent(appId)}/enable`); },
+    async disableApp(appId) { return request('POST', `/apps/${encodeURIComponent(appId)}/disable`); },
 
     // WebSocket
-    connectWebSocket(onMessage) {
-      const token = getToken();
+    async connectWebSocket(onMessage) {
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+      let qs = '';
+      try {
+        const tix = await api.wsTicket();
+        if (tix?.ticket) qs = `?ticket=${encodeURIComponent(tix.ticket)}`;
+      } catch (_) {
+        const token = getToken();
+        if (token) qs = `?token=${encodeURIComponent(token)}`;
+      }
       const ws = new WebSocket(`${proto}://${location.host}/ws${qs}`);
       ws.addEventListener('message', (ev) => {
         try {

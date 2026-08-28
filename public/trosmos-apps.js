@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const OS_VERSION = '4.0.0';
+  const OS_VERSION = '4.4.0';
 
   function esc(s) {
     if (typeof escapeHtml === 'function') return escapeHtml(s);
@@ -37,18 +37,18 @@
   /* ---------- Application Registry (single source of truth) ---------- */
   const AppRegistry = {
     apps: {
-      ai: { id: 'ai', name: 'Trosmos AI', icon: 'fa-robot', category: 'System', version: '4.0', description: 'Intelligent OS copilot', windowId: 'ai-window', singleton: true, defaultSize: { w: 420, h: 560 }, minSize: { w: 320, h: 400 }, permissions: ['EXECUTE'], launch: () => typeof openAIAssistant === 'function' && openAIAssistant() },
-      files: { id: 'files', name: 'Files', icon: 'fa-folder', category: 'System', version: '4.0', description: 'Virtual filesystem manager', windowId: 'file-manager-window', singleton: true, defaultSize: { w: 780, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => typeof openFileManager === 'function' && openFileManager() },
-      browser: { id: 'browser', name: 'Browser', icon: 'fa-globe', category: 'Internet', version: '4.0', description: 'Web browser with tabs', windowId: 'browser-window', singleton: true, defaultSize: { w: 900, h: 600 }, minSize: { w: 480, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openBrowser === 'function' && openBrowser() },
-      settings: { id: 'settings', name: 'Settings', icon: 'fa-gear', category: 'System', version: '4.0', description: 'System preferences', windowId: 'settings-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 480, h: 360 }, permissions: ['SYSTEM'], launch: () => typeof openSettings === 'function' && openSettings() },
-      'app-store': { id: 'app-store', name: 'App Store', icon: 'fa-store', category: 'System', version: '4.0', description: 'Discover Trosmos apps', windowId: 'app-store-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 420, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openAppStore === 'function' && openAppStore() },
-      'task-manager': { id: 'task-manager', name: 'Task Manager', icon: 'fa-chart-simple', category: 'System', version: '4.0', description: 'Process monitor', windowId: 'task-manager-window', singleton: true, defaultSize: { w: 560, h: 420 }, minSize: { w: 360, h: 280 }, permissions: ['EXECUTE'], launch: () => typeof openTaskManager === 'function' && openTaskManager() },
-      terminal: { id: 'terminal', name: 'Terminal', icon: 'fa-terminal', category: 'Developer', version: '4.0', description: 'Sandboxed Trosmos shell', windowId: 'terminal-window', singleton: false, defaultSize: { w: 720, h: 460 }, minSize: { w: 400, h: 280 }, permissions: ['EXECUTE', 'READ', 'WRITE'], launch: () => openTerminal() },
-      calculator: { id: 'calculator', name: 'Calculator', icon: 'fa-calculator', category: 'Utilities', version: '4.0', description: 'Scientific calculator', windowId: 'calculator-window', singleton: true, defaultSize: { w: 340, h: 520 }, minSize: { w: 280, h: 400 }, permissions: ['EXECUTE'], launch: () => openCalculator() },
-      notes: { id: 'notes', name: 'Notes', icon: 'fa-note-sticky', category: 'Productivity', version: '4.0', description: 'Persistent notes editor', windowId: 'notes-window', singleton: true, defaultSize: { w: 760, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => openNotes() },
-      clock: { id: 'clock', name: 'Clock', icon: 'fa-clock', category: 'Utilities', version: '4.0', description: 'Live clock & timezone', windowId: 'clock-window', singleton: true, defaultSize: { w: 380, h: 340 }, minSize: { w: 280, h: 260 }, permissions: ['EXECUTE'], launch: () => openClock() },
-      clipboard: { id: 'clipboard', name: 'Clipboard', icon: 'fa-clipboard', category: 'Utilities', version: '4.0', description: 'Clipboard history', windowId: 'clipboard-window', singleton: true, defaultSize: { w: 480, h: 420 }, minSize: { w: 320, h: 280 }, permissions: ['EXECUTE'], launch: () => openClipboard() },
-      help: { id: 'help', name: 'Help & About', icon: 'fa-circle-question', category: 'System', version: '4.0', description: 'Keyboard shortcuts & about', windowId: 'help-window', singleton: true, defaultSize: { w: 560, h: 480 }, minSize: { w: 360, h: 320 }, permissions: ['EXECUTE'], launch: () => openHelp() }
+      ai: { id: 'ai', name: 'Trosmos AI', icon: 'fa-robot', category: 'System', version: '4.4', description: 'Intelligent OS copilot', windowId: 'ai-window', singleton: true, defaultSize: { w: 420, h: 560 }, minSize: { w: 320, h: 400 }, permissions: ['EXECUTE'], launch: () => typeof openAIAssistant === 'function' && openAIAssistant() },
+      files: { id: 'files', name: 'Files', icon: 'fa-folder', category: 'System', version: '4.4', description: 'Virtual filesystem manager', windowId: 'file-manager-window', singleton: true, defaultSize: { w: 780, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => typeof openFileManager === 'function' && openFileManager() },
+      browser: { id: 'browser', name: 'Browser', icon: 'fa-globe', category: 'Internet', version: '4.4', description: 'Web browser with tabs', windowId: 'browser-window', singleton: true, defaultSize: { w: 900, h: 600 }, minSize: { w: 480, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openBrowser === 'function' && openBrowser() },
+      settings: { id: 'settings', name: 'Settings', icon: 'fa-gear', category: 'System', version: '4.4', description: 'System preferences', windowId: 'settings-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 480, h: 360 }, permissions: ['SYSTEM'], launch: () => typeof openSettings === 'function' && openSettings() },
+      'app-store': { id: 'app-store', name: 'App Store', icon: 'fa-store', category: 'System', version: '4.4', description: 'Discover Trosmos apps', windowId: 'app-store-window', singleton: true, defaultSize: { w: 720, h: 520 }, minSize: { w: 420, h: 360 }, permissions: ['EXECUTE'], launch: () => typeof openAppStore === 'function' && openAppStore() },
+      'task-manager': { id: 'task-manager', name: 'Task Manager', icon: 'fa-chart-simple', category: 'System', version: '4.4', description: 'Process monitor', windowId: 'task-manager-window', singleton: true, defaultSize: { w: 560, h: 420 }, minSize: { w: 360, h: 280 }, permissions: ['EXECUTE'], launch: () => typeof openTaskManager === 'function' && openTaskManager() },
+      terminal: { id: 'terminal', name: 'Terminal', icon: 'fa-terminal', category: 'Developer', version: '4.4', description: 'Sandboxed Trosmos shell', windowId: 'terminal-window', singleton: false, defaultSize: { w: 720, h: 460 }, minSize: { w: 400, h: 280 }, permissions: ['EXECUTE', 'READ', 'WRITE'], launch: () => openTerminal() },
+      calculator: { id: 'calculator', name: 'Calculator', icon: 'fa-calculator', category: 'Utilities', version: '4.4', description: 'Scientific calculator', windowId: 'calculator-window', singleton: true, defaultSize: { w: 340, h: 520 }, minSize: { w: 280, h: 400 }, permissions: ['EXECUTE'], launch: () => openCalculator() },
+      notes: { id: 'notes', name: 'Notes', icon: 'fa-note-sticky', category: 'Productivity', version: '4.4', description: 'Persistent notes editor', windowId: 'notes-window', singleton: true, defaultSize: { w: 760, h: 520 }, minSize: { w: 480, h: 320 }, permissions: ['READ', 'WRITE'], launch: () => openNotes() },
+      clock: { id: 'clock', name: 'Clock', icon: 'fa-clock', category: 'Utilities', version: '4.4', description: 'Live clock & timezone', windowId: 'clock-window', singleton: true, defaultSize: { w: 380, h: 340 }, minSize: { w: 280, h: 260 }, permissions: ['EXECUTE'], launch: () => openClock() },
+      clipboard: { id: 'clipboard', name: 'Clipboard', icon: 'fa-clipboard', category: 'Utilities', version: '4.4', description: 'Clipboard history', windowId: 'clipboard-window', singleton: true, defaultSize: { w: 480, h: 420 }, minSize: { w: 320, h: 280 }, permissions: ['EXECUTE'], launch: () => openClipboard() },
+      help: { id: 'help', name: 'Help & About', icon: 'fa-circle-question', category: 'System', version: '4.4', description: 'Keyboard shortcuts & about', windowId: 'help-window', singleton: true, defaultSize: { w: 560, h: 480 }, minSize: { w: 360, h: 320 }, permissions: ['EXECUTE'], launch: () => openHelp() }
     },
     get(id) { return this.apps[id] || null; },
     list() { return Object.values(this.apps); },
@@ -284,7 +284,8 @@
             this.writeln('  help, clear, pwd, ls, cd, cat, write, touch, mkdir');
             this.writeln('  rm, mv, cp, echo, whoami, date, uname, neofetch');
             this.writeln('  history, open, apps, processes, settings, system');
-            this.writeln('  version, search, notify, exit');
+            this.writeln('  version, search, notify, jobs, trash, notes, exit');
+            this.writeln('  This is the Trosmos shell — not a host OS shell.');
             this.writeln('<span class="text-white/40">Tab completes commands • ↑↓ history • Ctrl+L clear</span>');
             break;
           case 'clear':
@@ -411,11 +412,52 @@
             this.writeln('sent', 'ok');
             break;
           case 'search': {
+            if (window.TrosmosAPI?.isAuthenticated()) {
+              try {
+                const data = await TrosmosAPI.search(args.join(' '));
+                const rows = data.results || [];
+                if (!rows.length) this.writeln('No results', 'muted');
+                rows.slice(0, 20).forEach((x) =>
+                  this.writeln(esc(x.type) + '  ' + esc(x.title) + (x.subtitle ? ' — ' + esc(x.subtitle) : ''))
+                );
+                break;
+              } catch (e) {
+                this.writeln(esc(e.message), 'error');
+                break;
+              }
+            }
             const r = vfs?.search(args.join(' ')) || [];
             if (!r.length) this.writeln('No results', 'muted');
             r.slice(0, 15).forEach((x) =>
               this.writeln((x.type === 'folder' ? '📁 ' : '📄 ') + esc(x.path))
             );
+            break;
+          }
+          case 'jobs':
+          case 'tasks': {
+            if (!window.TrosmosAPI?.isAuthenticated()) { this.writeln('jobs require a signed-in cloud session', 'muted'); break; }
+            const data = await TrosmosAPI.listTasks();
+            const list = data.tasks || [];
+            if (!list.length) this.writeln('(no jobs)', 'muted');
+            list.slice(0, 20).forEach((tk) => this.writeln(esc(tk.status) + '  ' + esc(tk.title)));
+            break;
+          }
+          case 'trash': {
+            if (window.TrosmosAPI?.listTrash) {
+              const data = await TrosmosAPI.listTrash();
+              const items = data.items || [];
+              if (!items.length) this.writeln('(empty)', 'muted');
+              items.forEach((f) => this.writeln(esc(f.path || f.name)));
+            } else this.writeln('cloud session required', 'muted');
+            break;
+          }
+          case 'notes': {
+            if (window.TrosmosAPI?.listNotes) {
+              const data = await TrosmosAPI.listNotes();
+              const items = data.notes || [];
+              if (!items.length) this.writeln('(no notes)', 'muted');
+              items.forEach((n) => this.writeln(esc(n.title)));
+            } else this.writeln('cloud session required', 'muted');
             break;
           }
           case 'write': {

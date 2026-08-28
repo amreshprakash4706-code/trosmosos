@@ -694,3 +694,22 @@
     animation: none !important; transition: none !important;
   }
 }
+
+
+:focus-visible {
+  outline: 2px solid var(--electric);
+  outline-offset: 2px;
+}
+
+body.high-contrast {
+  --text-primary: #fff;
+  --text-secondary: #f3f4f6;
+  --border-subtle: rgba(255,255,255,0.4);
+}
+
+@media (max-width: 768px) {
+  button, .dock-icon, .icon-btn, .window-control {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

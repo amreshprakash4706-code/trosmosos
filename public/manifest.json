@@ -1,7 +1,7 @@
 {
-  "name": "Trosmos OS 4.3",
+  "name": "Trosmos OS 4.4",
   "short_name": "Trosmos",
-  "description": "Trosmos OS 4.3 \u2014 premium AI-native web operating system with real desktop/mobile shell, window manager, virtual filesystem, and intelligent copilot.",
+  "description": "Trosmos OS 4.4 \u2014 premium AI-native web operating system with real desktop/mobile shell, window manager, virtual filesystem, and intelligent copilot.",
   "start_url": "/",
   "display": "standalone",
   "display_override": [
