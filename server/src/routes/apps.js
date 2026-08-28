@@ -11,7 +11,7 @@ const CATALOG = [
   {
     id: 'ai',
     name: 'Trosmos AI',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Intelligent OS copilot with structured tools',
     icon: 'fa-robot',
     category: 'System',
@@ -21,7 +21,7 @@ const CATALOG = [
   {
     id: 'files',
     name: 'Files',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Virtual filesystem manager',
     icon: 'fa-folder',
     category: 'System',
@@ -31,7 +31,7 @@ const CATALOG = [
   {
     id: 'browser',
     name: 'Browser',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Web browser with tabs',
     icon: 'fa-globe',
     category: 'Internet',
@@ -41,7 +41,7 @@ const CATALOG = [
   {
     id: 'settings',
     name: 'Settings',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'System preferences',
     icon: 'fa-gear',
     category: 'System',
@@ -51,7 +51,7 @@ const CATALOG = [
   {
     id: 'terminal',
     name: 'Terminal',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Sandboxed Trosmos command shell',
     icon: 'fa-terminal',
     category: 'System',
@@ -61,7 +61,7 @@ const CATALOG = [
   {
     id: 'notes',
     name: 'Notes',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Simple text and markdown editor',
     icon: 'fa-note-sticky',
     category: 'Productivity',
@@ -71,7 +71,7 @@ const CATALOG = [
   {
     id: 'calculator',
     name: 'Calculator',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Scientific calculator',
     icon: 'fa-calculator',
     category: 'Utilities',
@@ -81,7 +81,7 @@ const CATALOG = [
   {
     id: 'clock',
     name: 'Clock',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'World clock and timers',
     icon: 'fa-clock',
     category: 'Utilities',
@@ -91,7 +91,7 @@ const CATALOG = [
   {
     id: 'clipboard',
     name: 'Clipboard',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Clipboard history',
     icon: 'fa-clipboard',
     category: 'Utilities',
@@ -101,7 +101,7 @@ const CATALOG = [
   {
     id: 'task-manager',
     name: 'Task Manager',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Running processes and background jobs',
     icon: 'fa-list-check',
     category: 'System',
@@ -111,7 +111,7 @@ const CATALOG = [
   {
     id: 'app-store',
     name: 'App Store',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Browse and manage applications',
     icon: 'fa-store',
     category: 'System',
@@ -121,7 +121,7 @@ const CATALOG = [
   {
     id: 'help',
     name: 'Help',
-    version: '4.1.0',
+    version: '4.4.0',
     description: 'Documentation and tips',
     icon: 'fa-circle-question',
     category: 'System',
@@ -187,7 +187,7 @@ router.post(
       `INSERT INTO apps_installed (id, user_id, app_id, version, enabled)
        VALUES (?, ?, ?, ?, 0)
        ON CONFLICT(user_id, app_id) DO UPDATE SET enabled = 0`
-    ).run(uid('app'), req.user.id, appId, '4.1.0');
+    ).run(uid('app'), req.user.id, appId, '4.4.0');
     res.json({ ok: true, appId, enabled: false });
   })
 );

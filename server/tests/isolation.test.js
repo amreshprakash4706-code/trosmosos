@@ -53,16 +53,11 @@ test('user A cannot list user B private paths via VFS', () => {
 });
 
 test('user A cannot write into user B namespace', () => {
-  assert.throws(
-    () => vfs.createFile(userA.id, '/Home/Documents', 'evil.txt', 'nope'),
-    // path is A's own namespace — this should succeed for A
-  );
-  // Cross-user: there is no way to address B's paths because every query is scoped by user_id.
-  // Verify B's file count / content unchanged by creating under A and reading under B.
   const bBefore = vfs.listDirectory(userB.id, '/Home/Documents').length;
   vfs.createFile(userA.id, '/Home/Documents', 'alice-only.txt', 'alice');
   const bAfter = vfs.listDirectory(userB.id, '/Home/Documents').length;
   assert.equal(bAfter, bBefore);
+  assert.throws(() => vfs.readFile(userB.id, '/Home/Documents/alice-only.txt'), /not found/i);
 });
 
 test('AI tool cannot read another user file', async () => {

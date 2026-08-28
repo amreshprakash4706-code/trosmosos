@@ -25,6 +25,12 @@ import searchRoutes from './routes/search.js';
 import appsRoutes from './routes/apps.js';
 import tasksRoutes from './routes/tasks.js';
 import usersRoutes from './routes/users.js';
+import workspacesRoutes from './routes/workspaces.js';
+import notesRoutes from './routes/notes.js';
+import activityRoutes from './routes/activity.js';
+import backupRoutes from './routes/backup.js';
+import { startJobWorker, stopJobWorker } from './services/jobs.service.js';
+import { logger } from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,6 +98,10 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/apps', appsRoutes);
 app.use('/api/v1/tasks', tasksRoutes);
 app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/workspaces', workspacesRoutes);
+app.use('/api/v1/notes', notesRoutes);
+app.use('/api/v1/activity', activityRoutes);
+app.use('/api/v1/backup', backupRoutes);
 
 app.get('/health', (req, res) => res.redirect(302, '/api/v1/system/health'));
 
@@ -113,15 +123,18 @@ const server = http.createServer(app);
 setupWebSocket(server);
 
 function shutdown(signal) {
-  console.log(`[trosmos] ${signal} received — shutting down`);
+  logger.info('shutdown', { signal });
+  stopJobWorker();
   server.close(() => { closeDb(); process.exit(0); });
   setTimeout(() => process.exit(1), 10000);
 }
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
 
-server.listen(config.port, config.host, () => {
-  console.log(`
+export function startServer() {
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  return new Promise((resolve) => {
+    server.listen(config.port, config.host, () => {
+      console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║  Trosmos OS ${config.version.padEnd(10)} — Full-Stack Web OS          ║
 ╠══════════════════════════════════════════════════════════╣
@@ -133,8 +146,19 @@ server.listen(config.port, config.host, () => {
 ║  DB:       ${config.dbPath}  ║
 ╚══════════════════════════════════════════════════════════╝
 `);
-  cleanupExpired();
-  setInterval(cleanupExpired, 60 * 60 * 1000).unref();
-});
+      cleanupExpired();
+      setInterval(cleanupExpired, 60 * 60 * 1000).unref();
+      startJobWorker();
+      logger.info('listening', { host: config.host, port: config.port, version: config.version });
+      resolve(server);
+    });
+  });
+}
 
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isDirectRun || process.env.TROSMOS_LISTEN === '1') {
+  startServer();
+}
+
+export { server };
 export default app;

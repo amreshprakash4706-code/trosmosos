@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error.js';
 import * as vfs from '../services/vfs.service.js';
 import { getDb } from '../db.js';
+import { searchNotes } from '../services/notes.service.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -87,6 +88,16 @@ router.get(
       });
     }
 
+    const notes = searchNotes(req.user.id, q, 8);
+    for (const n of notes) {
+      results.push({ type: 'note', id: n.id, title: n.title, subtitle: n.preview || n.path, path: n.path, score: 7 });
+    }
+    const tasks = db.prepare(
+      `SELECT id, title, status, type FROM tasks WHERE user_id = ? AND title LIKE ? ORDER BY created_at DESC LIMIT 5`
+    ).all(req.user.id, `%${q}%`);
+    for (const tk of tasks) {
+      results.push({ type: 'task', id: tk.id, title: tk.title, subtitle: `${tk.type} · ${tk.status}`, score: 5 });
+    }
     results.sort((a, b) => b.score - a.score);
     res.json({ query: q, results: results.slice(0, 40) });
   })

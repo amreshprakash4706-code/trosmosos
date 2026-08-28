@@ -71,7 +71,7 @@ export const config = {
   aiRateLimitMax: 30,
   corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173')
     .split(',').map((s) => s.trim()).filter(Boolean),
-  version: '4.3.0',
+  version: '4.4.0',
   name: 'Trosmos OS',
   bodyLimit: '2mb',
 };

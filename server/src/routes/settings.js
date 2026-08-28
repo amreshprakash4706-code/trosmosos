@@ -22,6 +22,12 @@ const ALLOWED_KEYS = new Set([
   'clock_format',
   'startup_apps',
   'window_states',
+  'workspaces',
+  'reduced_motion',
+  'font_scale',
+  'high_contrast',
+  'shortcut_overrides',
+  'sync',
   'custom',
 ]);
 

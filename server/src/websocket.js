@@ -1,25 +1,35 @@
 import { WebSocketServer } from 'ws';
-import { validateSession } from './services/auth.service.js';
+import { validateSession, getUserById } from './services/auth.service.js';
 import { parse as parseUrl } from 'url';
 import { config } from './config.js';
+import { consumeWsTicket } from './services/tickets.service.js';
 
 const userSockets = new Map();
 
-function extractToken(req) {
+function extractAuth(req) {
   const cookieHeader = req.headers?.cookie || '';
   const cookies = Object.fromEntries(
     cookieHeader.split(';').map((c) => c.trim().split('=')).filter((p) => p.length === 2).map(([k, v]) => [k, decodeURIComponent(v)])
   );
-  if (cookies[config.sessionCookieName]) return cookies[config.sessionCookieName];
   const { query } = parseUrl(req.url, true);
-  return query?.token || query?.ticket || '';
+  return {
+    cookieToken: cookies[config.sessionCookieName] || '',
+    ticket: query?.ticket || '',
+    token: query?.token || '',
+  };
 }
 
 export function setupWebSocket(server) {
   const wss = new WebSocketServer({ server, path: '/ws' });
   wss.on('connection', (ws, req) => {
-    const token = extractToken(req);
-    const user = validateSession(token);
+    const auth = extractAuth(req);
+    let user = null;
+    if (auth.ticket) {
+      const uid = consumeWsTicket(auth.ticket);
+      if (uid) user = getUserById(uid);
+    }
+    if (!user && auth.cookieToken) user = validateSession(auth.cookieToken);
+    if (!user && auth.token) user = validateSession(auth.token);
     if (!user) { ws.close(4001, 'Unauthorized'); return; }
     ws.userId = user.id; ws.isAlive = true;
     if (!userSockets.has(user.id)) userSockets.set(user.id, new Set());
@@ -30,6 +40,10 @@ export function setupWebSocket(server) {
       try {
         const msg = JSON.parse(String(raw));
         if (msg?.type === 'ping') ws.send(JSON.stringify({ type: 'pong', ts: Date.now() }));
+        if (msg?.type === 'subscribe' && typeof msg.channel === 'string') {
+          ws.channel = String(msg.channel).slice(0, 64);
+          ws.send(JSON.stringify({ type: 'subscribed', channel: ws.channel }));
+        }
       } catch {}
     });
     ws.on('close', () => {
@@ -47,6 +61,7 @@ export function setupWebSocket(server) {
       }
     }
   }, 30000);
+  interval.unref?.();
   wss.on('close', () => clearInterval(interval));
   return wss;
 }

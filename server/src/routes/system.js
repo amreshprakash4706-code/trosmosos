@@ -32,6 +32,19 @@ router.get(
 );
 
 router.get(
+  '/ready',
+  asyncHandler(async (req, res) => {
+    const db = getDb();
+    try {
+      db.prepare('SELECT 1').get();
+      res.json({ ready: true, version: config.version });
+    } catch (e) {
+      res.status(503).json({ ready: false, error: 'database unavailable' });
+    }
+  })
+);
+
+router.get(
   '/info',
   optionalAuth,
   asyncHandler(async (req, res) => {

@@ -1,5 +1,5 @@
 /**
- * Trosmos OS 5.0 database layer.
+ * Trosmos OS 4.4 database layer.
  * node:sqlite (DatabaseSync) — no native addons.
  * Versioned migrations + capability / AI invocation tables.
  */
@@ -307,6 +307,86 @@ const MIGRATIONS = [
       try { database.exec(`ALTER TABLE files ADD COLUMN content_hash TEXT`); } catch (_) {}
     },
   },
+  {
+    version: 4,
+    name: '4_4_workspaces_activity_notes_jobs_tickets',
+    up(database) {
+      database.exec(`
+        CREATE TABLE IF NOT EXISTS workspaces (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          is_active INTEGER NOT NULL DEFAULT 0,
+          sort_order INTEGER NOT NULL DEFAULT 0,
+          state_json TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS recent_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL,
+          ref TEXT NOT NULL,
+          title TEXT,
+          path TEXT,
+          accessed_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS favorites (
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          path TEXT NOT NULL,
+          title TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          PRIMARY KEY (user_id, path)
+        );
+
+        CREATE TABLE IF NOT EXISTS notes (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          title TEXT NOT NULL,
+          path TEXT,
+          content TEXT,
+          preview TEXT,
+          pinned INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS ws_tickets (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_hash TEXT NOT NULL,
+          expires_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS mutations (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          op TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'applied',
+          result_json TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE(user_id, idempotency_key)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_workspaces_user ON workspaces(user_id, is_active);
+        CREATE INDEX IF NOT EXISTS idx_recent_user ON recent_items(user_id, accessed_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+        CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id, updated_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_ws_tickets_hash ON ws_tickets(token_hash);
+        CREATE INDEX IF NOT EXISTS idx_ws_tickets_exp ON ws_tickets(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_mutations_user ON mutations(user_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_files_name ON files(user_id, name);
+        CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(user_id, created_at DESC);
+      `);
+      try { database.exec(`ALTER TABLE tasks ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0`); } catch (_) {}
+      try { database.exec(`ALTER TABLE notifications ADD COLUMN category TEXT`); } catch (_) {}
+      try { database.exec(`ALTER TABLE notifications ADD COLUMN priority TEXT DEFAULT 'normal'`); } catch (_) {}
+      try { database.exec(`ALTER TABLE files ADD COLUMN accessed_at TEXT`); } catch (_) {}
+    },
+  },
 ];
 
 function migrate(database) {
@@ -354,6 +434,8 @@ export function cleanupExpired() {
     d.prepare(`DELETE FROM sessions WHERE expires_at <= datetime('now')`).run();
     d.prepare(`DELETE FROM audit_logs WHERE created_at < datetime('now', '-90 days')`).run();
     d.prepare(`DELETE FROM ai_tool_invocations WHERE status = 'pending' AND created_at < datetime('now', '-1 hour')`).run();
+    d.prepare(`DELETE FROM ws_tickets WHERE expires_at <= datetime('now')`).run();
+    d.prepare(`DELETE FROM mutations WHERE created_at < datetime('now', '-14 days')`).run();
   } catch (e) {
     console.error('[db cleanup]', e.message);
   }

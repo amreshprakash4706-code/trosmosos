@@ -3,6 +3,8 @@ import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error.js';
 import * as vfs from '../services/vfs.service.js';
 import { audit } from '../services/auth.service.js';
+import { recordRecent, addFavorite, removeFavorite, listFavorites } from '../services/activity.service.js';
+import { pushToUser } from '../websocket.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -23,7 +25,58 @@ router.get('/stats', asyncHandler(async (req, res) => res.json(vfs.getStorageSta
 router.get('/trash', asyncHandler(async (req, res) => res.json({ items: vfs.listTrash(req.user.id) })));
 router.get('/read', asyncHandler(async (req, res) => {
   if (!req.query.path) return res.status(400).json({ error: 'path required' });
-  res.json(vfs.readFile(req.user.id, req.query.path));
+  const file = vfs.readFile(req.user.id, req.query.path);
+  recordRecent(req.user.id, { kind: 'file', ref: file.id, title: file.name, path: file.path });
+  res.json(file);
+}));
+router.get('/download', asyncHandler(async (req, res) => {
+  if (!req.query.path) return res.status(400).json({ error: 'path required' });
+  const file = vfs.readFile(req.user.id, req.query.path);
+  const buf = file.encoding === 'base64'
+    ? Buffer.from(file.content || '', 'base64')
+    : Buffer.from(file.content || '', 'utf8');
+  res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+  res.setHeader('Content-Length', buf.length);
+  res.end(buf);
+}));
+router.get('/favorites', asyncHandler(async (req, res) => {
+  res.json({ items: listFavorites(req.user.id) });
+}));
+router.post('/favorite', asyncHandler(async (req, res) => {
+  const { path, title } = req.body || {};
+  if (!path) return res.status(400).json({ error: 'path required' });
+  res.json(addFavorite(req.user.id, path, title));
+}));
+router.delete('/favorite', asyncHandler(async (req, res) => {
+  const path = req.query.path || req.body?.path;
+  if (!path) return res.status(400).json({ error: 'path required' });
+  res.json(removeFavorite(req.user.id, path));
+}));
+router.post('/empty-trash', asyncHandler(async (req, res) => {
+  const result = vfs.emptyTrash(req.user.id);
+  audit(req.user.id, 'file.empty_trash', 'file', null, result, req);
+  pushToUser(req.user.id, { type: 'vfs.changed', payload: { action: 'empty-trash' } });
+  res.json(result);
+}));
+router.patch('/metadata', asyncHandler(async (req, res) => {
+  const { path, metadata } = req.body || {};
+  if (!path) return res.status(400).json({ error: 'path required' });
+  res.json(vfs.setMetadata(req.user.id, path, metadata || {}));
+}));
+router.post('/upload', asyncHandler(async (req, res) => {
+  const { parent, name, content, encoding } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name required' });
+  let body = content || '';
+  if (encoding === 'base64' && typeof content === 'string') {
+    try { body = Buffer.from(content, 'base64'); }
+    catch { return res.status(400).json({ error: 'invalid base64' }); }
+  }
+  const unique = vfs.uniqueName(req.user.id, parent || '/Home/Downloads', name);
+  const node = vfs.createFile(req.user.id, parent || '/Home/Downloads', unique, body);
+  audit(req.user.id, 'file.upload', 'file', node.id, { path: node.path }, req);
+  pushToUser(req.user.id, { type: 'vfs.changed', payload: { action: 'upload', path: node.path } });
+  res.status(201).json(node);
 }));
 router.get('/versions', asyncHandler(async (req, res) => {
   if (!req.query.path) return res.status(400).json({ error: 'path required' });
@@ -41,6 +94,7 @@ router.post('/folder', asyncHandler(async (req, res) => {
   if (!name) return res.status(400).json({ error: 'name required' });
   const node = vfs.createFolder(req.user.id, parent || '/Home', name);
   audit(req.user.id, 'file.mkdir', 'file', node.id, { path: node.path }, req);
+  pushToUser(req.user.id, { type: 'vfs.changed', payload: { action: 'mkdir', path: node.path } });
   res.status(201).json(node);
 }));
 router.post('/file', asyncHandler(async (req, res) => {

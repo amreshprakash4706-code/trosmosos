@@ -6,6 +6,7 @@ import { asyncHandler } from '../middleware/error.js';
 import { config } from '../config.js';
 import { getDb } from '../db.js';
 import { hashToken } from '../utils/id.js';
+import { issueWsTicket } from '../services/tickets.service.js';
 
 const router = Router();
 
@@ -57,6 +58,10 @@ router.get('/sessions', requireAuth, asyncHandler(async (req, res) => {
       lastSeenAt: r.last_seen_at, expiresAt: r.expires_at, current: currentIds.has(r.id),
     })),
   });
+}));
+
+router.post('/ws-ticket', requireAuth, asyncHandler(async (req, res) => {
+  res.json(issueWsTicket(req.user.id));
 }));
 
 router.delete('/sessions/:id', requireAuth, asyncHandler(async (req, res) => {

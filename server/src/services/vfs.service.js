@@ -147,6 +147,9 @@ export function readFile(userId, path) {
       content = Buffer.from(row.content_blob).toString('utf8');
     }
   }
+  try {
+    db.prepare(`UPDATE files SET accessed_at = datetime('now') WHERE id = ?`).run(row.id);
+  } catch (_) {}
   return {
     ...rowToNode(row),
     content,
@@ -469,10 +472,29 @@ export function copyNode(userId, path, destParentPath, newName = null) {
 
 export function searchFiles(userId, query, limit = 50) {
   const db = getDb();
-  const q = `%${String(query || '').trim()}%`;
-  if (q === '%%') return [];
-  return db.prepare(`SELECT id, name, path, is_dir, mime_type, size, created_at, updated_at FROM files WHERE user_id = ? AND is_trashed = 0 AND (name LIKE ? OR path LIKE ?) ORDER BY is_dir DESC, name COLLATE NOCASE LIMIT ?`)
-    .all(userId, q, q, Math.min(limit, 100)).map(rowToNode);
+  const raw = String(query || '').trim();
+  if (!raw) return [];
+  const q = `%${raw}%`;
+  const cap = Math.min(limit, 100);
+  const byName = db.prepare(
+    `SELECT id, name, path, is_dir, mime_type, size, created_at, updated_at FROM files
+     WHERE user_id = ? AND is_trashed = 0 AND (name LIKE ? OR path LIKE ?)
+     ORDER BY is_dir DESC, name COLLATE NOCASE LIMIT ?`
+  ).all(userId, q, q, cap).map(rowToNode);
+  if (byName.length >= cap || raw.length < 2) return byName;
+  const seen = new Set(byName.map((n) => n.id));
+  const contentHits = db.prepare(
+    `SELECT id, name, path, is_dir, mime_type, size, created_at, updated_at FROM files
+     WHERE user_id = ? AND is_trashed = 0 AND is_dir = 0 AND content IS NOT NULL AND content LIKE ?
+     LIMIT ?`
+  ).all(userId, q, cap);
+  for (const row of contentHits) {
+    if (seen.has(row.id)) continue;
+    byName.push(rowToNode(row));
+    seen.add(row.id);
+    if (byName.length >= cap) break;
+  }
+  return byName;
 }
 
 export function getTree(userId, root = '/Home') {
@@ -510,6 +532,55 @@ export function exportTreeAsClientFormat(userId) {
     id: n.id, name: n.name, type: n.isDir ? 'folder' : 'file',
     parent: parentPath(n.path) || null, path: n.path, size: n.size, mime: n.mimeType, modified: n.updatedAt,
   }));
+}
+
+export function emptyTrash(userId) {
+  const db = getDb();
+  const rows = db.prepare(`SELECT id, size, path FROM files WHERE user_id = ? AND is_trashed = 1`).all(userId);
+  let freed = 0;
+  for (const r of rows) freed += r.size || 0;
+  const tx = db.transaction(() => {
+    db.prepare(`DELETE FROM files WHERE user_id = ? AND is_trashed = 1`).run(userId);
+    if (freed) updateStorageUsed(userId, -freed);
+  });
+  tx();
+  return { ok: true, deleted: rows.length, freed };
+}
+
+export function setMetadata(userId, path, metadata) {
+  const db = getDb();
+  const p = normalizePath(path);
+  const row = db.prepare('SELECT id, metadata FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0').get(userId, p);
+  if (!row) { const err = new Error('Not found'); err.status = 404; throw err; }
+  const prev = row.metadata ? JSON.parse(row.metadata) : {};
+  const next = { ...prev, ...(metadata && typeof metadata === 'object' ? metadata : {}) };
+  db.prepare(`UPDATE files SET metadata = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(JSON.stringify(next), row.id);
+  return getNodeByPath(userId, p);
+}
+
+export function touchAccessed(userId, path) {
+  const pth = normalizePath(path);
+  try {
+    getDb().prepare(`UPDATE files SET accessed_at = datetime('now') WHERE user_id = ? AND path = ?`).run(userId, pth);
+  } catch (_) {}
+}
+
+export function uniqueName(userId, parentPathInput, name) {
+  const parentP = normalizePath(parentPathInput || '/Home');
+  const clean = safeName(name);
+  const extIdx = clean.lastIndexOf('.');
+  const stem = extIdx > 0 ? clean.slice(0, extIdx) : clean;
+  const ext = extIdx > 0 ? clean.slice(extIdx) : '';
+  let candidate = clean;
+  let i = 1;
+  while (getDb().prepare('SELECT id FROM files WHERE user_id = ? AND path = ? AND is_trashed = 0')
+    .get(userId, parentP === '/' ? `/${candidate}` : `${parentP}/${candidate}`)) {
+    candidate = `${stem} (${i})${ext}`;
+    i += 1;
+    if (i > 500) break;
+  }
+  return candidate;
 }
 
 export function listTrash(userId) {

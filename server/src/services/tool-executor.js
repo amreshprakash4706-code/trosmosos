@@ -121,7 +121,78 @@ const TOOL_REGISTRY = {
       return vfs.restoreVersion(userId, args.path, args.version);
     },
   },
-  // Client-only — never executed server-side
+  rename_file: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.renameNode(userId, args.path, args.name);
+    },
+  },
+  move_file: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.moveNode(userId, args.path, args.destination);
+    },
+  },
+  copy_file: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return vfs.copyNode(userId, args.path, args.destination, args.name || null);
+    },
+  },
+  empty_trash: {
+    capability: SCOPES.VFS_DELETE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId) {
+      return vfs.emptyTrash(userId);
+    },
+  },
+  list_notes: {
+    capability: SCOPES.VFS_READ,
+    requiresConfirmation: false,
+    mutating: false,
+    handler(userId) {
+      return import('./notes.service.js').then((m) => m.listNotes(userId));
+    },
+  },
+  create_note: {
+    capability: SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    handler(userId, args) {
+      return import('./notes.service.js').then((m) =>
+        m.createNote(userId, { title: args.title || args.name, content: args.content || '' })
+      );
+    },
+  },
+  list_tasks: {
+    capability: SCOPES.AI_TOOL,
+    requiresConfirmation: false,
+    mutating: false,
+    handler(userId) {
+      return import('./jobs.service.js').then((m) => m.listJobs(userId, null, 20));
+    },
+  },
+  inspect_folder: {
+    capability: SCOPES.VFS_READ,
+    requiresConfirmation: false,
+    mutating: false,
+    handler(userId, args) {
+      const tree = vfs.getTree(userId, args.path || '/Home');
+      return {
+        path: args.path || '/Home',
+        nodes: tree.length,
+        files: tree.filter((n) => !n.isDir).length,
+        folders: tree.filter((n) => n.isDir).length,
+      };
+    },
+  },
   open_app: { clientOnly: true },
   close_app: { clientOnly: true },
 };
@@ -130,6 +201,7 @@ function validateArgs(toolName, args) {
   const a = args && typeof args === 'object' ? { ...args } : {};
   if (a.path) a.path = normalizePath(a.path);
   if (a.parent) a.parent = normalizePath(a.parent);
+  if (a.destination) a.destination = normalizePath(a.destination);
   if (a.name) a.name = safeName(a.name);
   if (a.content != null && typeof a.content !== 'string') a.content = String(a.content);
   if (a.content && Buffer.byteLength(a.content, 'utf8') > config.maxFileSizeBytes) {
@@ -388,6 +460,14 @@ export function getToolDeclarations() {
         required: ['path', 'version'],
       },
     },
+    { name: 'rename_file', description: 'Rename a file or folder (requires confirmation)', parameters: { type: 'OBJECT', properties: { path: { type: 'STRING' }, name: { type: 'STRING' } }, required: ['path', 'name'] } },
+    { name: 'move_file', description: 'Move a file or folder (requires confirmation)', parameters: { type: 'OBJECT', properties: { path: { type: 'STRING' }, destination: { type: 'STRING' } }, required: ['path', 'destination'] } },
+    { name: 'copy_file', description: 'Copy a file or folder (requires confirmation)', parameters: { type: 'OBJECT', properties: { path: { type: 'STRING' }, destination: { type: 'STRING' }, name: { type: 'STRING' } }, required: ['path', 'destination'] } },
+    { name: 'empty_trash', description: 'Permanently empty the trash (requires confirmation)', parameters: { type: 'OBJECT', properties: {} } },
+    { name: 'list_notes', description: 'List user notes', parameters: { type: 'OBJECT', properties: {} } },
+    { name: 'create_note', description: 'Create a markdown note (requires confirmation)', parameters: { type: 'OBJECT', properties: { title: { type: 'STRING' }, content: { type: 'STRING' } }, required: ['title'] } },
+    { name: 'list_tasks', description: 'List background jobs and tasks', parameters: { type: 'OBJECT', properties: {} } },
+    { name: 'inspect_folder', description: 'Summarize a folder tree', parameters: { type: 'OBJECT', properties: { path: { type: 'STRING' } } } },
   ];
 }
 

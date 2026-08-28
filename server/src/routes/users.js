@@ -66,6 +66,9 @@ router.post(
     if (!currentPassword || !newPassword || newPassword.length < 8) {
       return res.status(400).json({ error: 'Valid current and new password (min 8) required' });
     }
+    if (newPassword.length > 128 || !/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: 'New password must be 8-128 characters with a letter and a number' });
+    }
     const db = getDb();
     const row = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.user.id);
     const bcrypt = await import('bcryptjs');
