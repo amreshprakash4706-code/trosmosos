@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { runShellFn } from "@/lib/trosmos/api";
+import { decode, runShellFn } from "@/lib/trosmos/api";
+import { OS_VERSION } from "@/lib/trosmos/core";
 import { BUILTINS } from "@/lib/trosmos/terminal";
 import { useOs } from "@/os/store";
 
@@ -8,7 +9,7 @@ type Line = { kind: "in" | "out" | "err"; text: string };
 export function TerminalApp() {
   const [cwd, setCwd] = useState(useOs.getState().cwd || "/Home");
   const [lines, setLines] = useState<Line[]>([
-    { kind: "out", text: "Trosmos shell 5.0 — type help. This is not a host OS shell." },
+    { kind: "out", text: `Trosmos shell ${OS_VERSION} — type help. This is not a host OS shell.` },
   ]);
   const [value, setValue] = useState("");
   const [hist, setHist] = useState<string[]>([]);
@@ -27,15 +28,13 @@ export function TerminalApp() {
       setLines([]);
       return;
     }
-    if (trimmed === "history") {
-      setLines((l) => [...l, { kind: "out", text: hist.join("\n") }]);
-      return;
-    }
     setLines((l) => [...l, { kind: "in", text: `${cwd} % ${trimmed}` }]);
     setHist((h) => [trimmed, ...h].slice(0, 80));
     setHidx(-1);
     try {
-      const out = await runShellFn({ data: { command: trimmed, cwd } });
+      const out = decode<{ cwd: string; stdout: string; stderr?: string; open?: { appId: string; path?: string } }>(
+        await runShellFn({ data: { command: trimmed, cwd } }),
+      );
       setCwd(out.cwd);
       if (out.stdout) setLines((l) => [...l, { kind: "out", text: out.stdout }]);
       if (out.stderr) setLines((l) => [...l, { kind: "err", text: out.stderr || "" }]);
@@ -62,7 +61,7 @@ export function TerminalApp() {
       className="flex h-full flex-col bg-[#07080c] font-mono text-[12.5px] text-emerald-100/90"
       onClick={() => input.current?.focus()}
     >
-      <div ref={scroller} className="min-h-0 flex-1 overflow-auto p-3 space-y-1">
+      <div ref={scroller} className="min-h-0 flex-1 overflow-auto p-3 space-y-1" role="log" aria-live="polite">
         {lines.map((ln, i) => (
           <pre
             key={i}

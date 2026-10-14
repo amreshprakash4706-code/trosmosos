@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Trosmos OS 5.1.0",
+      "hasCanvas": false,
+      "bodyTextLen": 44,
+      "bodyTextHash": "5f2416476a9cff5451733d51acc950a91e6ff5bca7170950f84f7acee011c2eb",
+      "bodyTextPrefix": "T Trosmos OS Starting your workspace · 5.1.0",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Trosmos OS 5.1.0",
+      "hasCanvas": false,
+      "bodyTextLen": 130,
+      "bodyTextHash": "ea6c5afd009b0e17fbaaa4a7f8db8306bacfda1a69b5ac0bb09dcb1e321b0f17",
+      "bodyTextPrefix": "T Trosmos OS AI-native operating environment · 5.1.0 Continue wi",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-preview-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-preview.json"
+}

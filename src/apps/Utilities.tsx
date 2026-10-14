@@ -18,11 +18,24 @@ import {
   statsFn,
   cancelJobFn,
   enqueueJobFn,
+  loadDesktopFn,
+  loadLayoutFn,
+  zipExtractFn,
+  zipListFn,
+  decode,
 } from "@/lib/trosmos/api";
 import { OS_VERSION } from "@/lib/trosmos/core";
 import { AppGlyph } from "@/os/icons";
 import { useOs } from "@/os/store";
 import { Empty, GhostBtn, Toolbar, errMsg } from "./ui";
+
+type FilePayload = {
+  path: string;
+  name?: string;
+  content: string;
+  encoding?: "utf8" | "base64";
+  mimeType?: string | null;
+};
 
 export function CalculatorApp() {
   const [expr, setExpr] = useState("");
@@ -253,12 +266,20 @@ export function HelpApp() {
       <ul className="mt-1 space-y-1 text-muted">
         <li>Ctrl/⌘ K — command palette</li>
         <li>Ctrl/⌘ / — Trosmos AI</li>
+        <li>Ctrl/⌘ ↑ — Mission Control</li>
         <li>Alt Tab — window switcher</li>
         <li>Esc — close overlay or focused window</li>
         <li>Ctrl/⌘ S — save in Editor</li>
+        <li>Ctrl/⌘ F — find in Editor</li>
         <li>Ctrl/⌘ 1–7 — dock apps</li>
         <li>Ctrl/⌘ Alt ←/→ — snap focused window</li>
         <li>Ctrl/⌘ Alt Q — tile visible windows</li>
+        <li>Ctrl/⌘ L — lock session</li>
+        <li>Ctrl/⌘ Alt 1–3 — switch workspaces</li>
+        <li>Files: drag items onto the desktop; rubber-band select icons</li>
+        <li>Editor: tabs, find/replace, syntax overlay</li>
+        <li>Notes: [[wiki links]], folders, backlinks, markdown export</li>
+        <li>Tasks: kanban, recurrence, schedule onto Calendar</li>
       </ul>
       <h3 className="mt-4 font-medium">Honest limits</h3>
       <ul className="mt-1 space-y-1 text-muted">
@@ -278,7 +299,8 @@ export function PhotosApp({ payload }: { payload?: { path?: string } }) {
     const path = typeof payload?.path === "string" ? payload.path : null;
     if (!path) return;
     void readFileFn({ data: { path } })
-      .then((f) => {
+      .then((raw) => {
+        const f = decode<FilePayload>(raw);
         if (f.encoding !== "base64" && !f.mimeType?.startsWith("image/") && !f.path.endsWith(".svg")) {
           setSrc(`data:image/svg+xml,${encodeURIComponent(f.content)}`);
         } else {
@@ -302,7 +324,8 @@ export function ViewerApp({ payload }: { payload?: { path?: string } }) {
   useEffect(() => {
     const path = typeof payload?.path === "string" ? payload.path : null;
     if (!path) return;
-    void readFileFn({ data: { path } }).then((f) => {
+    void readFileFn({ data: { path } }).then((raw) => {
+      const f = decode<FilePayload>(raw);
       const blob =
         f.encoding === "base64"
           ? b64blob(f.content, f.mimeType || "application/pdf")
@@ -318,15 +341,68 @@ export function ViewerApp({ payload }: { payload?: { path?: string } }) {
 }
 
 export function ArchiveApp({ payload }: { payload?: { path?: string } }) {
-  const [info, setInfo] = useState<string>("Open a .zip from Files. Listing uses the stored file size and name — full unzip is not bundled in this hosted build.");
+  const [info, setInfo] = useState<string>("Open a .zip from Files to list and extract it into Downloads.");
+  const [entries, setEntries] = useState<Array<{ path: string; isDir: boolean; size: number }>>([]);
+  const [path, setPath] = useState<string | null>(typeof payload?.path === "string" ? payload.path : null);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function load(p: string) {
+    setError(null);
+    try {
+      const listed = decode<{
+        name: string;
+        size: number;
+        uncompressed: number;
+        entries: Array<{ path: string; isDir: boolean; size: number }>;
+        skipped: string[];
+      }>(await zipListFn({ data: { path: p } }));
+      setPath(p);
+      setEntries(listed.entries);
+      setInfo(
+        `${listed.name} · ${listed.size} bytes stored · ${listed.uncompressed} uncompressed · ${listed.entries.length} entries${listed.skipped.length ? ` · skipped ${listed.skipped.length}` : ""}`,
+      );
+    } catch (e) {
+      setError(errMsg(e));
+    }
+  }
+
   useEffect(() => {
-    const path = typeof payload?.path === "string" ? payload.path : null;
-    if (!path) return;
-    void readFileFn({ data: { path } }).then((f) => {
-      setInfo(`${f.name} · ${f.size} bytes · ${f.encoding}\n\nZip inflation is not included as a native host tool. Download the file from Files to inspect it locally.`);
-    });
+    if (typeof payload?.path === "string") void load(payload.path);
   }, [payload?.path]);
-  return <pre className="h-full overflow-auto p-4 text-sm text-muted">{info}</pre>;
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <Toolbar>
+        <span className="min-w-0 flex-1 truncate text-xs text-muted">{info}</span>
+        {path ? (
+          <GhostBtn
+            onClick={async () => {
+              try {
+                await zipExtractFn({ data: { path, dest: "/Home/Downloads" } });
+                setStatus("Extract queued. Check System Monitor for progress, then open Files → Downloads.");
+              } catch (e) {
+                setError(errMsg(e));
+              }
+            }}
+          >
+            Extract to Downloads
+          </GhostBtn>
+        ) : null}
+      </Toolbar>
+      {error ? <p className="px-3 text-sm text-rose-300">{error}</p> : null}
+      {status ? <p className="px-3 text-sm text-emerald-300">{status}</p> : null}
+      <div className="min-h-0 flex-1 overflow-auto p-3 text-sm">
+        {!entries.length ? <Empty title="Archives" body="Open a .zip from Files. Listing reads the stored archive; extract runs as a job." /> : null}
+        {entries.map((e) => (
+          <div key={e.path} className="flex justify-between border-b border-white/5 py-1">
+            <span className="truncate">{e.isDir ? `${e.path}/` : e.path}</span>
+            <span className="text-xs text-faint">{e.isDir ? "folder" : `${e.size} B`}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function MediaApp({ payload }: { payload?: { path?: string } }) {
@@ -335,7 +411,8 @@ export function MediaApp({ payload }: { payload?: { path?: string } }) {
   useEffect(() => {
     const path = typeof payload?.path === "string" ? payload.path : null;
     if (!path) return;
-    void readFileFn({ data: { path } }).then((f) => {
+    void readFileFn({ data: { path } }).then((raw) => {
+      const f = decode<FilePayload>(raw);
       const blob = f.encoding === "base64" ? b64blob(f.content, f.mimeType || "application/octet-stream") : new Blob([f.content]);
       setMime(f.mimeType || "video/mp4");
       setUrl(URL.createObjectURL(blob));
@@ -394,8 +471,8 @@ export function SearchApp() {
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={async (e) => {
           if (e.key === "Enter" && q.trim()) {
-            const res = await searchFn({ data: { query: q } });
-            setHits(res.results as typeof hits);
+            const res = decode<{ results: typeof hits }>(await searchFn({ data: { query: q } }), { results: [] });
+            setHits(res.results);
           }
         }}
         placeholder="Search files, notes, tasks, apps…"
@@ -409,8 +486,10 @@ export function SearchApp() {
             className="block w-full rounded-xl px-3 py-2 text-left hover:bg-white/8"
             onClick={() => {
               if (h.kind === "app") useOs.getState().openApp(h.id);
-              else if (h.kind === "note") useOs.getState().openApp("notes");
-              else if (h.kind === "task") useOs.getState().openApp("tasks");
+              else if (h.kind === "note") useOs.getState().openApp("notes", { noteId: h.id });
+              else if (h.kind === "task") useOs.getState().openApp("tasks", { taskId: h.id });
+              else if (h.kind === "event") useOs.getState().openApp("calendar", { eventId: h.id });
+              else if (h.kind === "setting") useOs.getState().openApp("settings");
               else if (h.path) useOs.getState().openApp("files", { path: h.path });
             }}
           >
@@ -430,11 +509,11 @@ export function SearchApp() {
 }
 
 export function MonitorApp() {
-  const [stats, setStats] = useState<Awaited<ReturnType<typeof statsFn>> | null>(null);
+  const [stats, setStats] = useState<{ used: number; limit: number; files: number } | null>(null);
   const [jobs, setJobs] = useState<Array<{ id: string; title: string; status: string; progress: number; error: string | null }>>([]);
   const [mem, setMem] = useState<number | null>(null);
   async function refresh() {
-    setStats(await statsFn());
+    setStats(decode<{ used: number; limit: number; files: number }>(await statsFn()));
     setJobs((await listJobsFn()) as typeof jobs);
     const anyPerf = performance as Performance & { memory?: { usedJSHeapSize: number } };
     setMem(anyPerf.memory?.usedJSHeapSize ?? null);
@@ -486,22 +565,35 @@ export function MonitorApp() {
 }
 
 export function ActivityApp() {
-  const [data, setData] = useState<Awaited<ReturnType<typeof activityFn>> | null>(null);
+  const [data, setData] = useState<{
+    recent?: Array<{ title: string; path: string; kind?: string; ref?: string; accessed_at: string }>;
+    audit?: Array<{ action: string; created_at: string; resource?: string }>;
+  } | null>(null);
   useEffect(() => {
-    void activityFn().then(setData);
+    void activityFn().then((d) => setData(d as NonNullable<typeof data>));
   }, []);
   return (
     <div className="h-full overflow-auto p-4 space-y-3 text-sm">
       <h2 className="font-display text-xl">Activity</h2>
-      {(data?.recent as Array<{ title: string; path: string; accessed_at: string }> | undefined)?.map((r, i) => (
-        <div key={i} className="text-muted">
+      {(data?.recent as Array<{ title: string; path: string; kind?: string; ref?: string; accessed_at: string }> | undefined)?.map((r, i) => (
+        <button
+          key={i}
+          type="button"
+          className="block w-full rounded-lg px-2 py-1 text-left text-muted hover:bg-white/8"
+          onClick={() => {
+            if (r.kind === "note" && r.ref) useOs.getState().openApp("notes", { noteId: r.ref });
+            else if (r.kind === "task" && r.ref) useOs.getState().openApp("tasks", { taskId: r.ref });
+            else if (r.path) useOs.getState().openApp("files", { path: r.path });
+          }}
+        >
           {r.title} · {r.path}
-        </div>
+        </button>
       ))}
       <h3 className="pt-2 font-medium">Audit</h3>
-      {(data?.audit as Array<{ action: string; created_at: string }> | undefined)?.map((a, i) => (
+      {(data?.audit as Array<{ action: string; created_at: string; resource?: string }> | undefined)?.map((a, i) => (
         <div key={i} className="text-xs text-faint">
           {a.action} · {new Date(a.created_at).toLocaleString()}
+          {a.resource ? ` · ${a.resource}` : ""}
         </div>
       ))}
     </div>
@@ -541,6 +633,18 @@ export function WorkspacesApp() {
               onClick={async () => {
                 await switchWorkspaceFn({ data: { id: w.id } });
                 useOs.getState().setWorkspace(w.id);
+                const [layout, desk] = await Promise.all([
+                  loadLayoutFn({ data: { workspaceId: w.id } }),
+                  loadDesktopFn({ data: { workspaceId: w.id } }).catch(() => null),
+                ]);
+                if (Array.isArray(layout) && layout.length) useOs.getState().hydrateLayout(layout as never);
+                else useOs.getState().hydrateLayout([]);
+                if (desk) {
+                  const d = decode<{ icons?: unknown[]; dock?: string[] | null; wallpaper?: string | null }>(desk);
+                  if (d.icons?.length) useOs.getState().setIcons(d.icons as never);
+                  if (d.dock?.length) useOs.getState().setDock(d.dock);
+                  useOs.getState().setWallpaperOverride(d.wallpaper ?? null);
+                }
                 await refresh();
               }}
             >
@@ -563,9 +667,19 @@ export function WorkspacesApp() {
 }
 
 export function AppsLibrary() {
-  const [apps, setApps] = useState<Awaited<ReturnType<typeof listAppsFn>>>([]);
+  const [apps, setApps] = useState<
+    Array<{
+      id: string;
+      name: string;
+      icon: string;
+      category: string;
+      offline: string;
+      description: string;
+      enabled: boolean;
+    }>
+  >([]);
   useEffect(() => {
-    void listAppsFn().then(setApps);
+    void listAppsFn().then((rows) => setApps(decode(rows, [])));
   }, []);
   return (
     <div className="h-full overflow-auto p-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -583,7 +697,7 @@ export function AppsLibrary() {
             <GhostBtn onClick={() => useOs.getState().openApp(a.id)}>Open</GhostBtn>
             <GhostBtn
               onClick={async () => {
-                setApps(await setAppEnabledFn({ data: { appId: a.id, enabled: !a.enabled } }));
+                setApps(decode(await setAppEnabledFn({ data: { appId: a.id, enabled: !a.enabled } }), []));
               }}
             >
               {a.enabled ? "Disable" : "Enable"}

@@ -6,15 +6,22 @@ import {
   aiConversationsFn,
   aiDeleteConvFn,
   aiStatusFn,
+  aiUpdateConvFn,
+  decode,
 } from "@/lib/trosmos/api";
 import { Empty, GhostBtn, errMsg } from "./ui";
 import { useOs } from "@/os/store";
 
 type Msg = { role: "user" | "assistant"; text: string; pending?: Array<Record<string, unknown>> };
+type Convo = { id: string; title: string | null; pinned?: boolean | string | number };
+
+function truthy(v: unknown) {
+  return v === true || v === "t" || v === 1 || v === "true";
+}
 
 export function AiApp() {
   const [status, setStatus] = useState<{ configured: boolean; model: string } | null>(null);
-  const [convos, setConvos] = useState<Array<{ id: string; title: string | null }>>([]);
+  const [convos, setConvos] = useState<Convo[]>([]);
   const [cid, setCid] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -24,7 +31,7 @@ export function AiApp() {
 
   useEffect(() => {
     void aiStatusFn().then(setStatus);
-    void aiConversationsFn().then((c) => setConvos(c as typeof convos));
+    void aiConversationsFn().then((c) => setConvos(c as Convo[]));
   }, []);
 
   useEffect(() => {
@@ -39,13 +46,17 @@ export function AiApp() {
     setBusy(true);
     setError(null);
     try {
-      const res = await aiChatFn({ data: { message, conversationId: cid } });
+      const res = decode<{
+        conversationId: string;
+        text: string;
+        pending?: Array<Record<string, unknown>>;
+      }>(await aiChatFn({ data: { message, conversationId: cid } }));
       setCid(res.conversationId);
       setMsgs((m) => [
         ...m,
         { role: "assistant", text: res.text, pending: res.pending as Array<Record<string, unknown>> },
       ]);
-      setConvos(await aiConversationsFn() as typeof convos);
+      setConvos((await aiConversationsFn()) as Convo[]);
     } catch (e) {
       setError(errMsg(e));
     } finally {
@@ -66,50 +77,77 @@ export function AiApp() {
         </GhostBtn>
         <div className="min-h-0 flex-1 overflow-auto">
           {convos.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={async () => {
-                setCid(c.id);
-                const full = await aiConversationFn({ data: { id: c.id } });
-                setMsgs(
-                  (full.messages as Array<{ role: string; content: string }>).map((m) => ({
-                    role: m.role === "assistant" ? "assistant" : "user",
-                    text: m.content,
-                  })),
-                );
-              }}
-              className={`block w-full truncate px-3 py-2 text-left text-sm hover:bg-white/8 ${cid === c.id ? "bg-white/10" : "text-muted"}`}
-            >
-              {c.title || "Chat"}
-            </button>
+            <div key={c.id} className={`flex items-center ${cid === c.id ? "bg-white/10" : ""}`}>
+              <button
+                type="button"
+                onClick={async () => {
+                  setCid(c.id);
+                  const full = (await aiConversationFn({ data: { id: c.id } })) as {
+                    messages: Array<{ role: string; content: string }>;
+                  };
+                  setMsgs(
+                    (full.messages as Array<{ role: string; content: string }>).map((m) => ({
+                      role: m.role === "assistant" ? "assistant" : "user",
+                      text: m.content,
+                    })),
+                  );
+                }}
+                className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm hover:bg-white/8"
+              >
+                {truthy(c.pinned) ? "📌 " : ""}
+                {c.title || "Chat"}
+              </button>
+            </div>
           ))}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="border-b border-white/10 px-3 py-2 text-xs text-muted">
           {status?.configured
-            ? `Connected · ${status.model}`
+            ? `Connected · ${status.model} · tools: search, calendar range, task filters, batch files`
             : "AI is unavailable in this environment — the server has no xAI key."}
           {cid ? (
-            <GhostBtn
-              onClick={async () => {
-                if (!cid) return;
-                await aiDeleteConvFn({ data: { id: cid } });
-                setCid(null);
-                setMsgs([]);
-                setConvos(await aiConversationsFn() as typeof convos);
-              }}
-            >
-              Delete conversation
-            </GhostBtn>
+            <span className="ml-2 inline-flex gap-1">
+              <GhostBtn
+                onClick={async () => {
+                  if (!cid) return;
+                  const cur = convos.find((c) => c.id === cid);
+                  await aiUpdateConvFn({ data: { id: cid, pinned: !truthy(cur?.pinned) } });
+                  setConvos((await aiConversationsFn()) as Convo[]);
+                }}
+              >
+                Pin
+              </GhostBtn>
+              <GhostBtn
+                onClick={async () => {
+                  if (!cid) return;
+                  const name = window.prompt("Conversation name", convos.find((c) => c.id === cid)?.title || "");
+                  if (!name) return;
+                  await aiUpdateConvFn({ data: { id: cid, title: name } });
+                  setConvos((await aiConversationsFn()) as Convo[]);
+                }}
+              >
+                Rename
+              </GhostBtn>
+              <GhostBtn
+                onClick={async () => {
+                  if (!cid) return;
+                  await aiDeleteConvFn({ data: { id: cid } });
+                  setCid(null);
+                  setMsgs([]);
+                  setConvos((await aiConversationsFn()) as Convo[]);
+                }}
+              >
+                Delete
+              </GhostBtn>
+            </span>
           ) : null}
         </div>
         <div ref={scroller} className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
           {!msgs.length ? (
             <Empty
               title="Trosmos AI"
-              body="Ask to inspect files, draft a note, or create a task. Mutating tools will ask before they run."
+              body="Ask to inspect files, draft a note, filter tasks, or search a calendar range. Mutating tools will ask before they run."
             />
           ) : null}
           {msgs.map((m, i) => (

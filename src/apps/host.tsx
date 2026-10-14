@@ -31,7 +31,7 @@ export function AppHost({
 }: {
   appId: string;
   windowId: string;
-  payload?: { path?: string };
+  payload?: { path?: string; noteId?: string; taskId?: string; eventId?: string };
 }) {
   switch (appId) {
     case "files":
@@ -41,11 +41,11 @@ export function AppHost({
     case "terminal":
       return <TerminalApp />;
     case "notes":
-      return <NotesApp />;
+      return <NotesApp payload={payload} />;
     case "tasks":
-      return <TasksApp />;
+      return <TasksApp payload={payload} />;
     case "calendar":
-      return <CalendarApp />;
+      return <CalendarApp payload={payload} />;
     case "settings":
       return <SettingsApp />;
     case "ai":
