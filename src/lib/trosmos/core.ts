@@ -1,7 +1,7 @@
 /** Path, identity, MIME, hashing, and ranking primitives shared by client + server. */
 
 export const OS_NAME = "Trosmos OS";
-export const OS_VERSION = "5.0.0";
+export const OS_VERSION = "5.1.0";
 export const MAX_FILE_SIZE_BYTES = 1_500_000;
 export const MAX_STORAGE_BYTES = 52_428_800;
 export const MAX_FILES_PER_USER = 4000;
@@ -18,6 +18,7 @@ export function uid(prefix = ""): string {
 
 export function safeName(name: unknown): string {
   const cleaned = String(name ?? "")
+    // eslint-disable-next-line no-control-regex -- strip C0 control characters from filenames
     .replace(/[<>:"/\\|?*\u0000-\u001f]/g, "")
     .replace(/^\.+/, "")
     .trim()
@@ -166,9 +167,17 @@ export function isTextMime(mime: string | null | undefined, name?: string): bool
     mime === "application/json" ||
     mime === "application/javascript" ||
     mime === "application/xml" ||
-    mime === "image/svg+xml" ||
-    mime === "application/xml"
+    mime === "image/svg+xml"
   );
+}
+
+export function isImageMime(mime: string | null | undefined, name?: string): boolean {
+  if (mime?.startsWith("image/")) return true;
+  if (name) {
+    const e = extOf(name);
+    return ["png", "jpg", "jpeg", "gif", "webp", "svg", "ico"].includes(e);
+  }
+  return false;
 }
 
 export function uniqueCandidate(original: string, taken: Set<string>): string {
@@ -192,21 +201,60 @@ export type RankedHit = {
   subtitle?: string;
   path?: string;
   score: number;
+  snippet?: string;
 };
+
+export function tokenizeQuery(query: string): string[] {
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/[\s/_.-]+/)
+    .filter((t) => t.length > 0)
+    .slice(0, 8);
+}
 
 export function scoreMatch(query: string, ...fields: Array<string | null | undefined>): number {
   const q = query.trim().toLowerCase();
   if (!q) return 0;
   let best = 0;
-  for (const field of fields) {
+  const tokens = tokenizeQuery(q);
+  for (let fi = 0; fi < fields.length; fi++) {
+    const field = fields[fi];
     if (!field) continue;
     const t = field.toLowerCase();
-    if (t === q) best = Math.max(best, 100);
-    else if (t.startsWith(q)) best = Math.max(best, 80);
-    else if (t.includes(q)) best = Math.max(best, 55);
-    else if (fuzzyIncludes(t, q)) best = Math.max(best, 30);
+    const weight = fi === 0 ? 1 : fi === 1 ? 0.85 : 0.7;
+    if (t === q) best = Math.max(best, 100 * weight);
+    else if (t.startsWith(q)) best = Math.max(best, 86 * weight);
+    else if (t.includes(q)) best = Math.max(best, 62 * weight);
+    else if (fuzzyIncludes(t, q)) best = Math.max(best, 34 * weight);
+    if (tokens.length > 1) {
+      let hit = 0;
+      for (const tok of tokens) {
+        if (t === tok) hit += 18;
+        else if (t.startsWith(tok) || t.includes(tok)) hit += 10;
+      }
+      best = Math.max(best, Math.min(90, hit) * weight);
+    }
   }
-  return best;
+  return Math.round(best);
+}
+
+export function rankHit(
+  query: string,
+  hit: { title: string; subtitle?: string | null; path?: string | null; kind: string; tags?: string[] },
+  extras: { recencyMs?: number; kindBoost?: number } = {},
+): number {
+  let score = scoreMatch(query, hit.title, hit.path, hit.subtitle, ...(hit.tags || []));
+  if (extras.kindBoost) score += extras.kindBoost;
+  if (hit.kind === "app") score += 4;
+  if (hit.kind === "file" || hit.kind === "folder") score += 2;
+  if (extras.recencyMs != null && extras.recencyMs > 0) {
+    const hours = extras.recencyMs / 3_600_000;
+    if (hours < 24) score += 12;
+    else if (hours < 24 * 7) score += 6;
+    else if (hours < 24 * 30) score += 2;
+  }
+  return score;
 }
 
 export function fuzzyIncludes(hay: string, needle: string): boolean {
@@ -222,9 +270,12 @@ export function parseTags(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {
     const v = JSON.parse(raw);
-    return Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean) : [];
+    return Array.isArray(v) ? v.map((x) => String(x).trim().toLowerCase()).filter(Boolean) : [];
   } catch {
-    return [];
+    return String(raw)
+      .split(",")
+      .map((x) => x.trim().toLowerCase())
+      .filter(Boolean);
   }
 }
 
@@ -242,8 +293,6 @@ export function fromJson<T>(raw: string | null | undefined, fallback: T): T {
 }
 
 export function sha256Hex(input: string): string {
-  // Tiny non-crypto fallback for environments without SubtleCrypto sync hashing.
-  // Server code should prefer node:crypto; this is for isomorphic previews.
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i);
@@ -273,6 +322,15 @@ export const DEFAULT_SETTINGS = {
   largePointer: false,
   compactDock: false,
   defaultWorkspace: null as string | null,
+  privacyStoreSearch: true,
+  desktopGrid: 92,
+  mobileSingleWindow: true,
 };
 
 export type OsSettings = typeof DEFAULT_SETTINGS;
+
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}

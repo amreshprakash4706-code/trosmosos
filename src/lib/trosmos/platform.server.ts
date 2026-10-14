@@ -4,14 +4,13 @@ import {
   DEFAULT_SETTINGS,
   OS_VERSION,
   fromJson,
-  scoreMatch,
   toJson,
   uid,
   type OsSettings,
 } from "./core";
 import { fail } from "./errors";
 import * as vfs from "./vfs.server";
-import type { Json, SearchHit } from "./types";
+import type { Json } from "./types";
 
 export const SCOPES = {
   VFS_READ: "vfs:read",
@@ -24,7 +23,7 @@ export const SCOPES = {
 
 const WELCOME_MD = `# Welcome to Trosmos OS ${OS_VERSION}
 
-This is your personal operating environment. Everything here belongs to your account.
+This is your personal operating environment. Everything here belongs to your account. Trosmos OS 5.1 adds share links, tags, comments, ZIP archives, Mission Control, and a stronger Files/Editor/Notes/Tasks workspace.
 
 ## What you can do
 
@@ -551,7 +550,6 @@ export async function updateTodo(
   const cur = await sql.query(`select * from todos where id = $1 and user_id = $2`, [id, userId]);
   if (!cur[0]) fail(404, "Task not found");
   const status = typeof patch.status === "string" ? patch.status : null;
-  const completedAt = status === "done" ? new Date().toISOString() : status ? null : undefined;
   await sql.query(
     `update todos set
         title = coalesce($1, title),
@@ -561,9 +559,16 @@ export async function updateTodo(
         due_at = case when $5 = true then $6 else due_at end,
         remind_at = case when $7 = true then $8 else remind_at end,
         tags_json = coalesce($9, tags_json),
-        completed_at = coalesce($10, completed_at),
+        completed_at = case
+          when $3 = 'done' then now()
+          when $3 is not null then null
+          else completed_at
+        end,
+        recurrence = coalesce($10, recurrence),
+        sort_order = coalesce($11, sort_order),
+        parent_id = case when $12 = true then $13 else parent_id end,
         updated_at = now()
-      where id = $11 and user_id = $12`,
+      where id = $14 and user_id = $15`,
     [
       typeof patch.title === "string" ? patch.title.slice(0, 200) : null,
       typeof patch.notes === "string" ? patch.notes : null,
@@ -574,17 +579,59 @@ export async function updateTodo(
       patch.remindAt !== undefined,
       patch.remindAt === null ? null : typeof patch.remindAt === "string" ? patch.remindAt : null,
       Array.isArray(patch.tags) ? toJson(patch.tags) : null,
-      completedAt === undefined ? null : completedAt,
+      typeof patch.recurrence === "string" || patch.recurrence === null
+        ? (patch.recurrence as string | null)
+        : null,
+      typeof patch.sortOrder === "number" ? patch.sortOrder : null,
+      patch.parentId !== undefined,
+      patch.parentId === null ? null : typeof patch.parentId === "string" ? patch.parentId : null,
       id,
       userId,
     ],
   );
-  const rows = await sql.query(`select * from todos where id = $1`, [id]);
-  return rows[0];
+  const rows = await sql.query<{
+    id: string;
+    title: string;
+    due_at: string | null;
+    calendar_event_id: string | null;
+  }>(`select * from todos where id = $1`, [id]);
+  const row = rows[0];
+  if (row?.calendar_event_id && (typeof patch.title === "string" || typeof patch.dueAt === "string")) {
+    try {
+      await sql.query(
+        `update calendar_events set
+            title = coalesce($1, title),
+            starts_at = coalesce($2, starts_at),
+            updated_at = now()
+          where id = $3 and user_id = $4`,
+        [
+          typeof patch.title === "string" ? patch.title : null,
+          typeof patch.dueAt === "string" ? patch.dueAt : null,
+          row.calendar_event_id,
+          userId,
+        ],
+      );
+    } catch {
+      /* linked event may be gone */
+    }
+  }
+  return row;
 }
 
 export async function deleteTodo(userId: string, id: string) {
   const sql = await getSql();
+  try {
+    const rows = await sql.query<{ calendar_event_id: string | null }>(
+      `select calendar_event_id from todos where id = $1 and user_id = $2`,
+      [id, userId],
+    );
+    const linked = rows[0]?.calendar_event_id;
+    if (linked) {
+      await sql.query(`delete from calendar_events where id = $1 and user_id = $2`, [linked, userId]);
+    }
+  } catch {
+    /* calendar_event_id may be missing until migrate */
+  }
   await sql.query(`delete from todos where user_id = $1 and (id = $2 or parent_id = $2)`, [userId, id]);
   return { ok: true as const };
 }
@@ -611,6 +658,8 @@ export async function createEvent(
     workspaceId?: string | null;
     todoId?: string | null;
     remindMinutes?: number | null;
+    timezone?: string | null;
+    recurrence?: string | null;
   },
 ) {
   const sql = await getSql();
@@ -620,8 +669,8 @@ export async function createEvent(
   const id = uid("evt");
   await sql.query(
     `insert into calendar_events
-      (id, user_id, workspace_id, title, description, location, starts_at, ends_at, all_day, todo_id, remind_minutes, created_at, updated_at)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,now(),now())`,
+      (id, user_id, workspace_id, title, description, location, starts_at, ends_at, all_day, todo_id, remind_minutes, timezone, recurrence, created_at, updated_at)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,now(),now())`,
     [
       id,
       userId,
@@ -634,8 +683,20 @@ export async function createEvent(
       Boolean(input.allDay),
       input.todoId || null,
       input.remindMinutes ?? null,
+      input.timezone || null,
+      input.recurrence || null,
     ],
   );
+  if (input.todoId) {
+    try {
+      await sql.query(
+        `update todos set calendar_event_id = $1, due_at = coalesce(due_at, $2), updated_at = now() where id = $3 and user_id = $4`,
+        [id, input.startsAt, input.todoId, userId],
+      );
+    } catch {
+      /* calendar_event_id may be missing until migrate */
+    }
+  }
   const rows = await sql.query(`select * from calendar_events where id = $1`, [id]);
   return rows[0];
 }
@@ -652,8 +713,12 @@ export async function updateEvent(userId: string, id: string, patch: { [key: str
         starts_at = coalesce($4, starts_at),
         ends_at = case when $5 = true then $6 else ends_at end,
         all_day = coalesce($7, all_day),
+        remind_minutes = case when $8 = true then $9 else remind_minutes end,
+        recurrence = coalesce($10, recurrence),
+        timezone = coalesce($11, timezone),
+        todo_id = case when $12 = true then $13 else todo_id end,
         updated_at = now()
-      where id = $8 and user_id = $9`,
+      where id = $14 and user_id = $15`,
     [
       typeof patch.title === "string" ? patch.title : null,
       typeof patch.description === "string" ? patch.description : null,
@@ -662,16 +727,55 @@ export async function updateEvent(userId: string, id: string, patch: { [key: str
       patch.endsAt !== undefined,
       patch.endsAt === null ? null : typeof patch.endsAt === "string" ? patch.endsAt : null,
       typeof patch.allDay === "boolean" ? patch.allDay : null,
+      patch.remindMinutes !== undefined,
+      patch.remindMinutes === null ? null : typeof patch.remindMinutes === "number" ? patch.remindMinutes : null,
+      typeof patch.recurrence === "string" ? patch.recurrence : null,
+      typeof patch.timezone === "string" ? patch.timezone : null,
+      patch.todoId !== undefined,
+      patch.todoId === null ? null : typeof patch.todoId === "string" ? patch.todoId : null,
       id,
       userId,
     ],
   );
-  const rows = await sql.query(`select * from calendar_events where id = $1`, [id]);
-  return rows[0];
+  const rows = await sql.query<{
+    id: string;
+    todo_id: string | null;
+    title: string;
+    starts_at: string;
+  }>(`select * from calendar_events where id = $1`, [id]);
+  const ev = rows[0];
+  if (ev?.todo_id && (typeof patch.title === "string" || typeof patch.startsAt === "string")) {
+    try {
+      await sql.query(
+        `update todos set
+            title = coalesce($1, title),
+            due_at = coalesce($2, due_at),
+            updated_at = now()
+          where id = $3 and user_id = $4`,
+        [
+          typeof patch.title === "string" ? patch.title : null,
+          typeof patch.startsAt === "string" ? patch.startsAt : null,
+          ev.todo_id,
+          userId,
+        ],
+      );
+    } catch {
+      /* linked task may be gone */
+    }
+  }
+  return ev;
 }
 
 export async function deleteEvent(userId: string, id: string) {
   const sql = await getSql();
+  try {
+    await sql.query(`update todos set calendar_event_id = null where calendar_event_id = $1 and user_id = $2`, [
+      id,
+      userId,
+    ]);
+  } catch {
+    /* column may be missing */
+  }
   await sql.query(`delete from calendar_events where id = $1 and user_id = $2`, [id, userId]);
   return { ok: true as const };
 }
@@ -768,6 +872,28 @@ async function runJob(job: JobRow) {
   }
   if (job.type === "export_backup") {
     return exportBackup(job.user_id);
+  }
+  if (job.type === "zip_create") {
+    const extra = await import("./vfs-extra.server");
+    const paths = Array.isArray(payload.paths) ? payload.paths.map(String) : [];
+    const dest = String(payload.dest || "/Home/Documents");
+    const name = String(payload.name || "archive.zip");
+    return extra.createZipArchive(job.user_id, paths, dest, name, async (p) => {
+      await sql.query(`update jobs set progress = $1, updated_at = now() where id = $2`, [p, job.id]);
+    });
+  }
+  if (job.type === "zip_extract") {
+    const extra = await import("./vfs-extra.server");
+    const path = String(payload.path || "");
+    const dest = String(payload.dest || "/Home/Downloads");
+    return extra.extractZipArchive(job.user_id, path, dest, async (p) => {
+      await sql.query(`update jobs set progress = $1, updated_at = now() where id = $2`, [p, job.id]);
+    });
+  }
+  if (job.type === "bulk_move") {
+    const extra = await import("./vfs-extra.server");
+    const paths = Array.isArray(payload.paths) ? payload.paths.map(String) : [];
+    return extra.bulkMove(job.user_id, paths, String(payload.dest || "/Home"), (payload.onConflict as "overwrite" | "rename" | "skip") || "rename");
   }
   if (job.type === "generic") return { ok: true, note: "Completed" };
   fail(400, `Unknown job type: ${job.type}`);
@@ -905,96 +1031,21 @@ export async function setAppEnabled(userId: string, appId: string, enabled: bool
     `insert into apps_installed (id, user_id, app_id, version, enabled, installed_at)
      values ($1,$2,$3,$4,$5,now())
      on conflict (user_id, app_id) do update set enabled = excluded.enabled`,
-    [uid("app"), userId, appId, "5.0", enabled],
+    [uid("app"), userId, appId, OS_VERSION, enabled],
   );
   await audit(userId, enabled ? "app.enable" : "app.disable", "app", appId);
   return listInstalledApps(userId);
 }
 
 export async function unifiedSearch(userId: string, query: string) {
-  const q = String(query || "").trim().slice(0, 120);
-  if (!q) return { query: q, results: [] as SearchHit[] };
-  const sql = await getSql();
-  await sql.query(`insert into search_history (id, user_id, query, created_at) values ($1,$2,$3,now())`, [
-    uid("srh"),
-    userId,
-    q,
-  ]);
-  await sql.query(
-    `delete from search_history where id in (
-       select id from search_history where user_id = $1 order by created_at desc offset 40
-     )`,
-    [userId],
-  );
-
-  const results: SearchHit[] = [];
-  const files = await vfs.searchFiles(userId, q, 20);
-  for (const f of files) {
-    results.push({
-      id: f.id,
-      kind: f.isDir ? "folder" : "file",
-      title: f.name,
-      subtitle: f.path,
-      path: f.path,
-      score: scoreMatch(q, f.name, f.path),
-    });
-  }
-  const notes = await sql.query<{ id: string; title: string; preview: string | null }>(
-    `select id, title, preview from notes where user_id = $1 and (title ilike $2 or content ilike $2) limit 12`,
-    [userId, `%${q}%`],
-  );
-  for (const n of notes) {
-    results.push({
-      id: n.id,
-      kind: "note",
-      title: n.title,
-      subtitle: n.preview || undefined,
-      score: scoreMatch(q, n.title, n.preview),
-    });
-  }
-  const todos = await sql.query<{ id: string; title: string; status: string }>(
-    `select id, title, status from todos where user_id = $1 and (title ilike $2 or notes ilike $2) limit 12`,
-    [userId, `%${q}%`],
-  );
-  for (const t of todos) {
-    results.push({
-      id: t.id,
-      kind: "task",
-      title: t.title,
-      subtitle: t.status,
-      score: scoreMatch(q, t.title, t.status),
-    });
-  }
-  const events = await sql.query<{ id: string; title: string; starts_at: string }>(
-    `select id, title, starts_at from calendar_events where user_id = $1 and title ilike $2 limit 8`,
-    [userId, `%${q}%`],
-  );
-  for (const e of events) {
-    results.push({
-      id: e.id,
-      kind: "event",
-      title: e.title,
-      subtitle: String(e.starts_at),
-      score: scoreMatch(q, e.title),
-    });
-  }
-  for (const app of APP_CATALOG) {
-    const s = scoreMatch(q, app.name, app.description, app.id, ...app.keywords);
-    if (s > 0) results.push({ id: app.id, kind: "app", title: app.name, subtitle: app.description, score: s });
-  }
-  const settingKeys = Object.keys(DEFAULT_SETTINGS);
-  for (const key of settingKeys) {
-    const s = scoreMatch(q, key, "settings");
-    if (s > 0) results.push({ id: key, kind: "setting", title: key, subtitle: "Settings", score: s });
-  }
-  results.sort((a, b) => Number(b.score) - Number(a.score));
-  return { query: q, results: results.slice(0, 40) };
+  const extra = await import("./platform-extra.server");
+  return extra.rankedSearch(userId, query);
 }
 
 export async function searchHistory(userId: string) {
   const sql = await getSql();
   return sql.query(
-    `select distinct on (query) query, created_at from search_history where user_id = $1 order by query, created_at desc limit 20`,
+    `select query, max(created_at) as created_at from search_history where user_id = $1 group by query order by max(created_at) desc limit 20`,
     [userId],
   );
 }
@@ -1020,20 +1071,27 @@ export async function exportBackup(userId: string) {
       contents.push({ path: f.path, content: "", encoding: "utf8", isDir: false });
     }
   }
-  const [settings, notes, todos, events, workspaces, memories] = await Promise.all([
-    getSettings(userId),
-    sql.query(`select title, content, pinned, tags_json from notes where user_id = $1`, [userId]),
-    sql.query(
-      `select title, notes, status, priority, due_at, tags_json from todos where user_id = $1 and parent_id is null`,
-      [userId],
-    ),
-    sql.query(
-      `select title, description, location, starts_at, ends_at, all_day from calendar_events where user_id = $1`,
-      [userId],
-    ),
-    sql.query(`select name, color, sort_order from workspaces where user_id = $1`, [userId]),
-    sql.query(`select kind, content, source from ai_memories where user_id = $1`, [userId]),
-  ]);
+  const [settings, notes, todos, events, workspaces, memories, favorites, shares, comments, tags, folders, aliases] =
+    await Promise.all([
+      getSettings(userId),
+      sql.query(`select title, content, pinned, tags_json, folder_path from notes where user_id = $1`, [userId]),
+      sql.query(
+        `select title, notes, status, priority, due_at, remind_at, recurrence, tags_json, parent_id, sort_order from todos where user_id = $1`,
+        [userId],
+      ),
+      sql.query(
+        `select title, description, location, starts_at, ends_at, all_day, timezone, recurrence, remind_minutes, todo_id from calendar_events where user_id = $1`,
+        [userId],
+      ),
+      sql.query(`select name, color, sort_order, settings_json from workspaces where user_id = $1`, [userId]),
+      sql.query(`select kind, content, source from ai_memories where user_id = $1`, [userId]),
+      sql.query(`select path, title from favorites where user_id = $1`, [userId]),
+      sql.query(`select path, title, expires_at from share_grants where user_id = $1 and revoked_at is null`, [userId]),
+      sql.query(`select path, body, created_at from file_comments where user_id = $1`, [userId]),
+      sql.query(`select path, tag from file_tags where user_id = $1`, [userId]),
+      sql.query(`select name, path, parent_id from note_folders where user_id = $1`, [userId]),
+      sql.query(`select name, command from shell_aliases where user_id = $1`, [userId]),
+    ]);
   return {
     version: OS_VERSION,
     exportedAt: new Date().toISOString(),
@@ -1044,6 +1102,12 @@ export async function exportBackup(userId: string) {
     events,
     workspaces,
     memories,
+    favorites,
+    shares,
+    comments,
+    tags,
+    folders,
+    aliases,
   };
 }
 
@@ -1079,6 +1143,127 @@ export async function importBackup(userId: string, backup: { [key: string]: Json
   }
   if (backup.settings && typeof backup.settings === "object") {
     await setSettings(userId, backup.settings as Partial<OsSettings>);
+  }
+  if (Array.isArray(backup.notes)) {
+    for (const n of backup.notes as Array<{ title?: string; content?: string; pinned?: boolean; tags_json?: string }>) {
+      if (!n?.title) continue;
+      try {
+        await createNote(userId, {
+          title: String(n.title),
+          content: String(n.content || ""),
+          tags: fromJson(n.tags_json || "[]", []),
+        });
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.todos)) {
+    for (const t of backup.todos as Array<{
+      title?: string;
+      notes?: string;
+      priority?: string;
+      due_at?: string;
+      recurrence?: string;
+    }>) {
+      if (!t?.title) continue;
+      try {
+        await createTodo(userId, {
+          title: String(t.title),
+          notes: t.notes,
+          priority: t.priority,
+          dueAt: t.due_at || null,
+          recurrence: t.recurrence || null,
+        });
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.events)) {
+    for (const e of backup.events as Array<{ title?: string; starts_at?: string; ends_at?: string; all_day?: boolean }>) {
+      if (!e?.title || !e.starts_at) continue;
+      try {
+        await createEvent(userId, {
+          title: String(e.title),
+          startsAt: String(e.starts_at),
+          endsAt: e.ends_at || null,
+          allDay: Boolean(e.all_day),
+        });
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.memories)) {
+    for (const m of backup.memories as Array<{ content?: string; kind?: string; source?: string }>) {
+      if (!m?.content) continue;
+      try {
+        await addMemory(userId, String(m.content), m.kind || "explicit", m.source);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.favorites)) {
+    for (const f of backup.favorites as Array<{ path?: string; title?: string }>) {
+      if (!f?.path) continue;
+      try {
+        await vfs.setFavorite(userId, String(f.path), f.title, true);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.tags)) {
+    const extra = await import("./vfs-extra.server");
+    const byPath = new Map<string, string[]>();
+    for (const t of backup.tags as Array<{ path?: string; tag?: string }>) {
+      if (!t?.path || !t.tag) continue;
+      const arr = byPath.get(t.path) || [];
+      arr.push(t.tag);
+      byPath.set(t.path, arr);
+    }
+    for (const [path, tags] of byPath) {
+      try {
+        await extra.setTags(userId, path, tags);
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.folders)) {
+    const extra = await import("./platform-extra.server");
+    for (const f of backup.folders as Array<{ name?: string }>) {
+      if (!f?.name) continue;
+      try {
+        await extra.createNoteFolder(userId, String(f.name));
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.comments)) {
+    const extra = await import("./vfs-extra.server");
+    for (const c of backup.comments as Array<{ path?: string; body?: string }>) {
+      if (!c?.path || !c.body) continue;
+      try {
+        await extra.addComment(userId, String(c.path), String(c.body));
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  if (Array.isArray(backup.aliases)) {
+    const extra = await import("./platform-extra.server");
+    for (const a of backup.aliases as Array<{ name?: string; command?: string }>) {
+      if (!a?.name || !a.command) continue;
+      try {
+        await extra.setAlias(userId, String(a.name), String(a.command));
+      } catch {
+        /* skip */
+      }
+    }
   }
   await audit(userId, "backup.import", "backup", undefined, { overwrite, files: files.length });
   return { ok: true as const, imported: files.length };
@@ -1149,14 +1334,19 @@ export async function dueReminders(userId: string) {
       limit 20`,
     [userId],
   );
-  const events = await sql.query(
-    `select id, title, starts_at, remind_minutes from calendar_events
-      where user_id = $1 and remind_minutes is not null
-        and starts_at - (remind_minutes || ' minutes')::interval <= now()
-        and starts_at >= now() - interval '1 hour'
-      limit 20`,
-    [userId],
-  );
+  let events: Array<{ id: string; title: string; starts_at: string; remind_minutes: number | null }> = [];
+  try {
+    events = await sql.query(
+      `select id, title, starts_at, remind_minutes from calendar_events
+        where user_id = $1 and remind_minutes is not null and last_reminded_at is null
+          and starts_at - (remind_minutes || ' minutes')::interval <= now()
+          and starts_at >= now() - interval '1 hour'
+        limit 20`,
+      [userId],
+    );
+  } catch {
+    events = [];
+  }
   return { todos, events };
 }
 

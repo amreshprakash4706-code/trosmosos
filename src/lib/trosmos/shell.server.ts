@@ -20,10 +20,37 @@ function resolve(cwd: string, p?: string | null): string {
   return joinPath(cwd, p);
 }
 
+function flagNumber(flags: Record<string, string | boolean>, keys: string[], fallback: number): number {
+  for (const k of keys) {
+    const v = flags[k];
+    if (typeof v === "string" && Number.isFinite(Number(v))) return Number(v);
+  }
+  return fallback;
+}
+
 export async function runShell(userId: string, input: string, cwdIn: string): Promise<ShellResult> {
   let cwd = normalizePath(cwdIn || "/Home");
-  const line = input.trim();
+  let line = input.trim();
   if (!line) return { cwd, stdout: "" };
+
+  const extra = await import("./platform-extra.server");
+  try {
+    await extra.pushShellHistory(userId, line, cwd);
+  } catch {
+    /* history is best-effort */
+  }
+
+  if (!line.startsWith("alias ")) {
+    try {
+      const aliases = (await extra.listAliases(userId)) as Array<{ name: string; command: string }>;
+      const first = line.split(/\s+/)[0];
+      const hit = aliases.find((a) => a.name === first);
+      if (hit) line = hit.command + line.slice(first.length);
+    } catch {
+      /* aliases table may be missing before migrate */
+    }
+  }
+
   const pipe = parsePipeline(line);
   if (!pipe.commands.length) return { cwd, stdout: "" };
 
@@ -104,11 +131,18 @@ async function execOne(
     return { cwd, stdout: file.content };
   }
   if (name === "head" || name === "tail") {
+    const nFlag = flagNumber(flags, ["n"], 10);
     const text = p[0] ? (await vfs.readFile(userId, resolve(cwd, p[0]))).content : stdin;
-    const n = Number(flags.n) || 10;
     const lines = text.split("\n");
-    const slice = name === "head" ? lines.slice(0, n) : lines.slice(-n);
+    const slice = name === "head" ? lines.slice(0, nFlag) : lines.slice(-nFlag);
     return { cwd, stdout: slice.join("\n") };
+  }
+  if (name === "wc") {
+    const text = p[0] ? (await vfs.readFile(userId, resolve(cwd, p[0]))).content : stdin;
+    const lines = text ? text.split("\n").length : 0;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const bytes = new TextEncoder().encode(text).length;
+    return { cwd, stdout: `${lines} ${words} ${bytes}${p[0] ? " " + p[0] : ""}` };
   }
   if (name === "touch") {
     if (!p[0]) return { cwd, stdout: "", stderr: "touch: name required" };
@@ -132,12 +166,26 @@ async function execOne(
   }
   if (name === "mv") {
     if (p.length < 2) return { cwd, stdout: "", stderr: "mv: src dest required" };
-    await vfs.moveNode(userId, resolve(cwd, p[0]), resolve(cwd, p[1]));
+    const src = resolve(cwd, p[0]);
+    const dest = resolve(cwd, p[1]);
+    const destNode = await vfs.getNodeByPath(userId, dest);
+    if (destNode?.isDir) await vfs.moveNode(userId, src, dest);
+    else {
+      const parent = parentPath(dest) || cwd;
+      const moved = await vfs.moveNode(userId, src, parent);
+      if (moved.name !== dest.slice(dest.lastIndexOf("/") + 1)) {
+        await vfs.renameNode(userId, moved.path, dest.slice(dest.lastIndexOf("/") + 1));
+      }
+    }
     return { cwd, stdout: "" };
   }
   if (name === "cp") {
     if (p.length < 2) return { cwd, stdout: "", stderr: "cp: src dest required" };
-    await vfs.copyNode(userId, resolve(cwd, p[0]), resolve(cwd, p[1]));
+    const src = resolve(cwd, p[0]);
+    const dest = resolve(cwd, p[1]);
+    const destNode = await vfs.getNodeByPath(userId, dest);
+    if (destNode?.isDir) await vfs.copyNode(userId, src, dest);
+    else await vfs.copyNode(userId, src, parentPath(dest) || cwd, dest.slice(dest.lastIndexOf("/") + 1));
     return { cwd, stdout: "" };
   }
   if (name === "stat") {
@@ -149,19 +197,57 @@ async function execOne(
   if (name === "tree") {
     const dest = resolve(cwd, p[0]);
     const tree = await vfs.getTree(userId, dest);
-    return { cwd, stdout: tree.map((n) => n.path).join("\n") };
+    const lines = tree.map((n) => {
+      const rel = n.path === dest ? "." : n.path.slice(dest.length).replace(/^\//, "");
+      const depth = rel === "." ? 0 : rel.split("/").length;
+      const pad = "  ".repeat(Math.max(0, depth - 1));
+      return `${pad}${n.isDir ? n.name + "/" : n.name}`;
+    });
+    return { cwd, stdout: lines.join("\n") };
   }
   if (name === "find") {
     const dest = resolve(cwd, p[1] ? p[0] : cwd);
     const q = p[1] || p[0] || "";
-    const hits = await vfs.searchFiles(userId, q || "");
-    return { cwd, stdout: hits.filter((h) => h.path.startsWith(dest)).map((h) => h.path).join("\n") };
+    const tree = await vfs.getTree(userId, dest);
+    const needle = (q || "").toLowerCase();
+    const hits = needle ? tree.filter((h) => h.name.toLowerCase().includes(needle) || h.path.toLowerCase().includes(needle)) : tree;
+    return { cwd, stdout: hits.map((h) => h.path).join("\n") };
   }
   if (name === "grep") {
     const q = p[0];
     if (!q) return { cwd, stdout: "", stderr: "grep: query required" };
-    const hay = p[1] ? (await vfs.readFile(userId, resolve(cwd, p[1]))).content : stdin;
-    const lines = hay.split("\n").filter((l) => l.toLowerCase().includes(q.toLowerCase()));
+    if (p[1] || !stdin) {
+      const dest = resolve(cwd, p[1] || cwd);
+      const node = await vfs.getNodeByPath(userId, dest);
+      if (node && !node.isDir) {
+        const file = await vfs.readFile(userId, dest);
+        if (file.encoding === "base64") return { cwd, stdout: "", stderr: "grep: binary file" };
+        const lines = file.content
+          .split("\n")
+          .map((l, i) => ({ l, i }))
+          .filter((x) => x.l.toLowerCase().includes(q.toLowerCase()))
+          .map((x) => `${dest}:${x.i + 1}:${x.l}`);
+        return { cwd, stdout: lines.join("\n") };
+      }
+      const tree = await vfs.getTree(userId, dest);
+      const out: string[] = [];
+      for (const n of tree) {
+        if (n.isDir) continue;
+        try {
+          const file = await vfs.readFile(userId, n.path);
+          if (file.encoding === "base64") continue;
+          file.content.split("\n").forEach((line, i) => {
+            if (line.toLowerCase().includes(q.toLowerCase())) out.push(`${n.path}:${i + 1}:${line}`);
+          });
+        } catch {
+          /* skip */
+        }
+      }
+      return { cwd, stdout: out.join("\n") };
+    }
+    const lines = stdin
+      .split("\n")
+      .filter((l) => l.toLowerCase().includes(q.toLowerCase()));
     return { cwd, stdout: lines.join("\n") };
   }
   if (name === "whoami") {
@@ -223,7 +309,7 @@ async function execOne(
     const jobs = await platform.listJobs(userId);
     return {
       cwd,
-      stdout: (jobs as Array<{ status: string; title: string }>).map((j) => `${j.status}\t${j.title}`).join("\n"),
+      stdout: (jobs as Array<{ status: string; title: string; progress: number }>).map((j) => `${j.status}\t${Math.round((j.progress || 0) * 100)}%\t${j.title}`).join("\n"),
     };
   }
   if (name === "settings") {
@@ -241,7 +327,52 @@ async function execOne(
   if (name === "ai") {
     return { cwd, stdout: "", stderr: "Use the Trosmos AI app for model conversations. The shell does not spend AI quota on its own." };
   }
-  if (name === "clear" || name === "history" || name === "alias") {
+  if (name === "history") {
+    const extra = await import("./platform-extra.server");
+    const rows = (await extra.listShellHistory(userId)) as Array<{ command: string }>;
+    return { cwd, stdout: rows.map((r, i) => `${rows.length - i}  ${r.command}`).join("\n") };
+  }
+  if (name === "alias") {
+    const extra = await import("./platform-extra.server");
+    if (!p[0]) {
+      const rows = (await extra.listAliases(userId)) as Array<{ name: string; command: string }>;
+      return { cwd, stdout: rows.map((a) => `${a.name}='${a.command}'`).join("\n") };
+    }
+    const spec = p.join(" ");
+    const eq = spec.indexOf("=");
+    if (eq > 0) {
+      await extra.setAlias(userId, spec.slice(0, eq), spec.slice(eq + 1).replace(/^['"]|['"]$/g, ""));
+      return { cwd, stdout: "ok" };
+    }
+    return { cwd, stdout: "", stderr: "alias: use name=command" };
+  }
+  if (name === "unalias") {
+    const extra = await import("./platform-extra.server");
+    if (!p[0]) return { cwd, stdout: "", stderr: "unalias: name required" };
+    await extra.deleteAlias(userId, p[0]);
+    return { cwd, stdout: "ok" };
+  }
+  if (name === "zip") {
+    if (!p.length) return { cwd, stdout: "", stderr: "zip: path required" };
+    const paths = p.map((x) => resolve(cwd, x));
+    const job = await platform.enqueueJob(userId, {
+      type: "zip_create",
+      title: `ZIP ${paths.length} item(s)`,
+      payload: { paths, dest: cwd, name: "archive.zip" },
+    });
+    return { cwd, stdout: `queued ${(job as { id: string }).id}` };
+  }
+  if (name === "unzip") {
+    if (!p[0]) return { cwd, stdout: "", stderr: "unzip: archive path required" };
+    const dest = p[1] ? resolve(cwd, p[1]) : cwd;
+    const job = await platform.enqueueJob(userId, {
+      type: "zip_extract",
+      title: `Extract ${p[0]}`,
+      payload: { path: resolve(cwd, p[0]), dest },
+    });
+    return { cwd, stdout: `queued ${(job as { id: string }).id}` };
+  }
+  if (name === "clear") {
     return { cwd, stdout: "" };
   }
   if (!isBuiltin(name)) {

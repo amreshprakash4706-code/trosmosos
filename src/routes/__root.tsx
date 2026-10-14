@@ -5,7 +5,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Trosmos OS";
+const APP_NAME = "Trosmos OS 5.1.0";
 
 export const Route = createRootRoute({
   head: () => ({

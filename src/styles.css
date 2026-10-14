@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import "tailwindcss";
 
 @theme {
   --color-deep: #09090b;
@@ -160,6 +160,51 @@
 }
 .dock-icon:hover {
   transform: translateY(-7px) scale(1.08);
+}
+
+.dock-magnify:hover {
+  transform: translateY(-10px) scale(1.14);
+}
+
+.tok-kw {
+  color: #7dd3fc;
+}
+.tok-str {
+  color: #86efac;
+}
+.tok-cmt {
+  color: #94a3b8;
+}
+.tok-num {
+  color: #fbbf24;
+}
+.tok-ident {
+  color: #c4b5fd;
+}
+
+.editor-overlay {
+  white-space: pre;
+  word-wrap: normal;
+  overflow: hidden;
+}
+.editor-overlay.wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.kanban-col {
+  min-height: 12rem;
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
 
 .sr-only {

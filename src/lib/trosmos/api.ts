@@ -7,17 +7,24 @@ import type { Json } from "./types";
 async function withUser<T>(
   context: { userId: string },
   fn: (userId: string) => Promise<T>,
-): Promise<T> {
+): Promise<Json> {
   try {
     const { ensureBootstrapped } = await import("./platform.server");
     await ensureBootstrapped(context.userId, {});
-    return await fn(context.userId);
+    const out = await fn(context.userId);
+    return JSON.parse(JSON.stringify(out ?? null)) as Json;
   } catch (err) {
     if (err instanceof TrosmosError) throw err;
     const anyErr = err as { status?: number; message?: string };
     if (anyErr?.status && anyErr.message) throw err;
     throw err;
   }
+}
+
+/** Narrow a server-fn JSON payload to a concrete client type. */
+export function decode<T>(value: unknown, fallback?: T): T {
+  if ((value === null || value === undefined) && fallback !== undefined) return fallback;
+  return value as T;
 }
 
 export const bootOs = createServerFn({ method: "GET" })
@@ -42,20 +49,28 @@ export const bootOs = createServerFn({ method: "GET" })
         import("./ai.server").then((m) => m.aiStatus()),
       ]);
     const reminders = await platform.dueReminders(context.userId);
-    return {
-      profile,
-      settings,
-      workspaces,
-      notifications,
-      apps,
-      stats,
-      health,
-      favorites,
-      recent,
-      capabilities,
-      ai,
-      reminders,
-    };
+    try {
+      const extra = await import("./platform-extra.server");
+      await extra.fireDueReminders(context.userId);
+    } catch {
+      /* reminder table columns may not exist until migrate */
+    }
+    return JSON.parse(
+      JSON.stringify({
+        profile,
+        settings,
+        workspaces,
+        notifications,
+        apps,
+        stats,
+        health,
+        favorites,
+        recent,
+        capabilities,
+        ai,
+        reminders,
+      }),
+    ) as Json;
   });
 
 export const listDirFn = createServerFn({ method: "POST" })
@@ -378,6 +393,7 @@ export const createTodoFn = createServerFn({ method: "POST" })
       workspaceId?: string | null;
       parentId?: string | null;
       tags?: string[];
+      recurrence?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) =>
@@ -396,6 +412,9 @@ export const updateTodoFn = createServerFn({ method: "POST" })
       dueAt?: string | null;
       remindAt?: string | null;
       tags?: string[];
+      recurrence?: string | null;
+      sortOrder?: number;
+      parentId?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) =>
@@ -432,6 +451,8 @@ export const createEventFn = createServerFn({ method: "POST" })
       workspaceId?: string | null;
       todoId?: string | null;
       remindMinutes?: number | null;
+      timezone?: string | null;
+      recurrence?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) =>
@@ -449,6 +470,10 @@ export const updateEventFn = createServerFn({ method: "POST" })
       startsAt?: string;
       endsAt?: string | null;
       allDay?: boolean;
+      remindMinutes?: number | null;
+      recurrence?: string | null;
+      timezone?: string | null;
+      todoId?: string | null;
     }) => input,
   )
   .handler(async ({ context, data }) =>
@@ -640,3 +665,366 @@ export const healthFn = createServerFn({ method: "GET" }).handler(async () => {
   const { systemHealth } = await import("./platform.server");
   return systemHealth();
 });
+
+export const bulkTrashFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[] }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.bulkTrash(userId, data.paths))),
+  );
+
+export const bulkRestoreFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[] }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.bulkRestore(userId, data.paths))),
+  );
+
+export const bulkMoveFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[]; destination: string; onConflict?: "overwrite" | "rename" | "skip" }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./vfs-extra.server").then((m) =>
+        m.bulkMove(userId, data.paths, data.destination, data.onConflict || "rename"),
+      ),
+    ),
+  );
+
+export const bulkCopyFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[]; destination: string; onConflict?: "overwrite" | "rename" | "skip" }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./vfs-extra.server").then((m) =>
+        m.bulkCopy(userId, data.paths, data.destination, data.onConflict || "rename"),
+      ),
+    ),
+  );
+
+export const createShareFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string; title?: string; expiresAt?: string | null }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, async (userId) => {
+      const extra = await import("./vfs-extra.server");
+      const platform = await import("./platform.server");
+      const share = await extra.createShare(userId, data.path, { title: data.title, expiresAt: data.expiresAt });
+      await platform.audit(userId, "share.create", "file", share.id, { path: data.path });
+      return share;
+    }),
+  );
+
+export const listSharesFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.listShares(userId))),
+  );
+
+export const revokeShareFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, async (userId) => {
+      const extra = await import("./vfs-extra.server");
+      const platform = await import("./platform.server");
+      const out = await extra.revokeShare(userId, data.id);
+      await platform.audit(userId, "share.revoke", "file", data.id);
+      return out;
+    }),
+  );
+
+export const resolveShareFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { token: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, async (userId) => {
+      const extra = await import("./vfs-extra.server");
+      const platform = await import("./platform.server");
+      const out = await extra.resolveShare(userId, data.token);
+      await platform.audit(userId, "share.access", "file", out.grant.id, { path: out.grant.path });
+      return out;
+    }),
+  );
+
+export const listCommentsFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.listComments(userId, data.path))),
+  );
+
+export const addCommentFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string; body: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.addComment(userId, data.path, data.body))),
+  );
+
+export const deleteCommentFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.deleteComment(userId, data.id))),
+  );
+
+export const setTagsFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string; tags: string[] }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.setTags(userId, data.path, data.tags))),
+  );
+
+export const listTagsFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path?: string } | undefined) => input ?? {})
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.listTags(userId, data.path))),
+  );
+
+export const filesByTagFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { tag: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.filesByTag(userId, data.tag))),
+  );
+
+export const thumbnailFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.thumbnailFor(userId, data.path))),
+  );
+
+export const zipCreateFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[]; dest?: string; name?: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform.server").then((m) =>
+        m.enqueueJob(userId, {
+          type: "zip_create",
+          title: `ZIP ${data.name || "archive"}`,
+          payload: { paths: data.paths, dest: data.dest || "/Home/Documents", name: data.name || "archive.zip" },
+        }),
+      ),
+    ),
+  );
+
+export const zipExtractFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string; dest?: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform.server").then((m) =>
+        m.enqueueJob(userId, {
+          type: "zip_extract",
+          title: `Extract ${data.path}`,
+          payload: { path: data.path, dest: data.dest || "/Home/Downloads" },
+        }),
+      ),
+    ),
+  );
+
+export const noteFoldersFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.listNoteFolders(userId))),
+  );
+
+export const createNoteFolderFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { name: string; parentId?: string | null }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.createNoteFolder(userId, data.name, data.parentId)),
+    ),
+  );
+
+export const deleteNoteFolderFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.deleteNoteFolder(userId, data.id))),
+  );
+
+export const moveNoteFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string; folderId: string | null }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.moveNoteToFolder(userId, data.id, data.folderId)),
+    ),
+  );
+
+export const noteLinksFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, async (userId) => {
+      const extra = await import("./platform-extra.server");
+      const [backlinks, outgoing] = await Promise.all([
+        extra.noteBacklinks(userId, data.id),
+        extra.noteOutgoingLinks(userId, data.id),
+      ]);
+      return { backlinks, outgoing };
+    }),
+  );
+
+export const exportNoteFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.exportNoteMarkdown(userId, data.id))),
+  );
+
+export const sessionsFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.listSessions(userId))),
+  );
+
+export const revokeSessionFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.revokeSession(userId, data.id))),
+  );
+
+export const deleteAccountFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { confirm: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.deleteAccount(userId, data.confirm))),
+  );
+
+export const saveDesktopFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      workspaceId: string;
+      icons?: Array<{ id: string; appId?: string; path?: string; kind: "app" | "file"; x: number; y: number; label?: string }>;
+      dock?: string[];
+      wallpaper?: string | null;
+    }) => input,
+  )
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => {
+      const { workspaceId, ...payload } = data;
+      return import("./platform-extra.server").then((m) => m.saveDesktopLayout(userId, workspaceId, payload));
+    }),
+  );
+
+export const loadDesktopFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { workspaceId: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.loadDesktopLayout(userId, data.workspaceId)),
+    ),
+  );
+
+export const applyMutationFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { op: string; idempotencyKey: string; payload: Json }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.applyMutation(userId, data))),
+  );
+
+export const completeRecurringFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.completeRecurringTodo(userId, data.id))),
+  );
+
+export const filterTodosFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      status?: string;
+      priority?: string;
+      tag?: string;
+      due?: "overdue" | "today" | "upcoming" | "none";
+      workspaceId?: string | null;
+    }) => input ?? {},
+  )
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.filterTodos(userId, data))),
+  );
+
+export const listEventsExpandedFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { from: string; to: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.expandEventRange(userId, data.from, data.to)),
+    ),
+  );
+
+export const clearSearchHistoryFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.clearSearchHistory(userId))),
+  );
+
+export const aiUpdateConvFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string; title?: string; pinned?: boolean }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => {
+      const { id, ...patch } = data;
+      return import("./platform-extra.server").then((m) => m.updateConversation(userId, id, patch));
+    }),
+  );
+
+export const shortcutsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { SHORTCUTS } = await import("./shortcuts");
+  return SHORTCUTS;
+});
+
+export const bulkDeleteFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[] }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.bulkDelete(userId, data.paths))),
+  );
+
+export const bulkTagFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { paths: string[]; tags: string[] }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.bulkTag(userId, data.paths, data.tags))),
+  );
+
+export const zipListFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { path: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) => import("./vfs-extra.server").then((m) => m.listZipEntries(userId, data.path))),
+  );
+
+export const notificationActionFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string; action: "dismiss" | "read" | "snooze" | "complete" }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.notificationAction(userId, data.id, data.action)),
+    ),
+  );
+
+export const updateMemoryFn = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id: string; content: string }) => input)
+  .handler(async ({ context, data }) =>
+    withUser(context, (userId) =>
+      import("./platform-extra.server").then((m) => m.updateMemory(userId, data.id, data.content)),
+    ),
+  );
+
+export const pendingMutationsFn = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) =>
+    withUser(context, (userId) => import("./platform-extra.server").then((m) => m.listPendingMutations(userId))),
+  );
+

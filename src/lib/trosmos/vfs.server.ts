@@ -164,7 +164,7 @@ export async function listDirectory(
   let rows = await sql.query<NodeRow>(
     `select id, user_id, workspace_id, parent_id, name, path, is_dir, mime_type, size,
             content_encoding, content_hash, is_trashed, trashed_at, original_path, version,
-            metadata_json, accessed_at, created_at, updated_at, content
+            metadata_json, accessed_at, created_at, updated_at
        from vfs_nodes
       where user_id = $1 and parent_id = $2 and is_trashed = false
       order by is_dir desc, lower(name) asc`,
@@ -178,6 +178,23 @@ export async function listDirectory(
   if (opts.sort === "size") nodes.sort((a, b) => b.size - a.size);
   else if (opts.sort === "modified") nodes.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
   else if (opts.sort === "name") nodes.sort((a, b) => a.name.localeCompare(b.name));
+  if (nodes.length) {
+    try {
+      const tags = await sql.query<{ path: string; tag: string }>(
+        `select path, tag from file_tags where user_id = $1 and path = any($2::text[])`,
+        [userId, nodes.map((n) => n.path)],
+      );
+      const map = new Map<string, string[]>();
+      for (const t of tags) {
+        const arr = map.get(t.path) || [];
+        arr.push(t.tag);
+        map.set(t.path, arr);
+      }
+      for (const n of nodes) n.tags = map.get(n.path) || [];
+    } catch {
+      /* file_tags may not exist until 5.1 migrate */
+    }
+  }
   return nodes;
 }
 
@@ -517,7 +534,7 @@ export async function trashNode(userId: string, path: string) {
 export async function restoreNode(userId: string, path: string): Promise<VfsNode> {
   const sql = await getSql();
   const p = normalizePath(path);
-  let row =
+  const row =
     (
       await sql.query<NodeRow>(
         `select * from vfs_nodes where user_id = $1 and path = $2 and is_trashed = true limit 1`,
@@ -579,7 +596,7 @@ export async function permanentlyDelete(userId: string, path: string) {
   const sql = await getSql();
   const p = normalizePath(path);
   if (isSystemPath(p)) fail(403, "Cannot permanently delete system folders");
-  let root =
+  const root =
     (await sql.query<NodeRow>(`select * from vfs_nodes where user_id = $1 and path = $2 limit 1`, [userId, p]))[0] ||
     (
       await sql.query<NodeRow>(`select * from vfs_nodes where user_id = $1 and original_path = $2 limit 1`, [
@@ -634,7 +651,7 @@ export async function searchFiles(userId: string, query: string, limit = 50): Pr
   const cap = Math.min(limit, 100);
   const byName = await sql.query<NodeRow>(
     `select id, user_id, workspace_id, parent_id, name, path, is_dir, mime_type, size, content_encoding, content_hash,
-            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at, content
+            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at
        from vfs_nodes
       where user_id = $1 and is_trashed = false and (name ilike $2 or path ilike $2)
       order by is_dir desc, lower(name) asc
@@ -646,7 +663,7 @@ export async function searchFiles(userId: string, query: string, limit = 50): Pr
   const seen = new Set(nodes.map((n) => n.id));
   const contentHits = await sql.query<NodeRow>(
     `select id, user_id, workspace_id, parent_id, name, path, is_dir, mime_type, size, content_encoding, content_hash,
-            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at, content
+            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at
        from vfs_nodes
       where user_id = $1 and is_trashed = false and is_dir = false and content is not null and content ilike $2
       limit $3`,
@@ -666,7 +683,7 @@ export async function getTree(userId: string, root = "/Home"): Promise<VfsNode[]
   const p = normalizePath(root);
   const rows = await sql.query<NodeRow>(
     `select id, user_id, workspace_id, parent_id, name, path, is_dir, mime_type, size, content_encoding, content_hash,
-            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at, content
+            is_trashed, trashed_at, original_path, version, metadata_json, accessed_at, created_at, updated_at
        from vfs_nodes
       where user_id = $1 and is_trashed = false and (path = $2 or path like $3)
       order by path`,

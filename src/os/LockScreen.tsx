@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { OS_VERSION } from "@/lib/trosmos/core";
 
 export function LockScreen({ title = "Trosmos OS" }: { title?: string }) {
   const [mode, setMode] = useState<"in" | "up">("in");
@@ -38,7 +39,7 @@ export function LockScreen({ title = "Trosmos OS" }: { title?: string }) {
           </span>
           <div>
             <h1 className="font-display text-2xl">{title}</h1>
-            <p className="text-sm text-muted">AI-native operating environment</p>
+            <p className="text-sm text-muted">AI-native operating environment · {OS_VERSION}</p>
           </div>
         </div>
         {authEnabled ? (

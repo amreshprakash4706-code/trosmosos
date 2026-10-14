@@ -25,6 +25,8 @@ export type VfsNode = {
   originalPath?: string | null;
   trashPath?: string | null;
   encoding?: "utf8" | "base64";
+  tags?: string[];
+  thumbnail?: string | null;
 };
 
 export type SearchHit = {
@@ -34,4 +36,36 @@ export type SearchHit = {
   subtitle?: string;
   path?: string;
   score?: number;
+  snippet?: string;
 };
+
+export type ShareGrant = {
+  id: string;
+  token: string;
+  path: string;
+  title: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  accessCount: number;
+  createdAt: string;
+};
+
+export type FileComment = {
+  id: string;
+  path: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DesktopIcon = {
+  id: string;
+  appId?: string;
+  path?: string;
+  kind: "app" | "file";
+  x: number;
+  y: number;
+  label?: string;
+};
+
+export type ConflictAction = "overwrite" | "rename" | "skip";

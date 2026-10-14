@@ -320,6 +320,117 @@ export const TOOLS: ToolDef[] = [
       required: ["content"],
     },
   },
+  {
+    name: "filter_tasks",
+    description: "Filter tasks by status, priority, tag, or due window",
+    capability: platform.SCOPES.AI_TOOL,
+    requiresConfirmation: false,
+    mutating: false,
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "string" },
+        priority: { type: "string" },
+        tag: { type: "string" },
+        due: { type: "string", description: "overdue | today | upcoming | none" },
+      },
+    },
+  },
+  {
+    name: "batch_trash",
+    description: "Move several files to Trash",
+    capability: platform.SCOPES.VFS_DELETE,
+    requiresConfirmation: true,
+    mutating: true,
+    parameters: {
+      type: "object",
+      properties: { paths: { type: "string", description: "JSON array of paths" } },
+      required: ["paths"],
+    },
+  },
+  {
+    name: "batch_move",
+    description: "Move several files into a destination folder",
+    capability: platform.SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    parameters: {
+      type: "object",
+      properties: {
+        paths: { type: "string", description: "JSON array of paths" },
+        destination: { type: "string" },
+      },
+      required: ["paths", "destination"],
+    },
+  },
+  {
+    name: "list_tags",
+    description: "List file tags",
+    capability: platform.SCOPES.VFS_READ,
+    requiresConfirmation: false,
+    mutating: false,
+    parameters: { type: "object", properties: {} },
+  },
+  {
+    name: "batch_copy",
+    description: "Copy several files into a destination folder",
+    capability: platform.SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    parameters: {
+      type: "object",
+      properties: {
+        paths: { type: "string", description: "JSON array of paths" },
+        destination: { type: "string" },
+      },
+      required: ["paths", "destination"],
+    },
+  },
+  {
+    name: "batch_tag",
+    description: "Apply tags to several files",
+    capability: platform.SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    parameters: {
+      type: "object",
+      properties: {
+        paths: { type: "string", description: "JSON array of paths" },
+        tags: { type: "string", description: "Comma-separated tags" },
+      },
+      required: ["paths", "tags"],
+    },
+  },
+  {
+    name: "calendar_range",
+    description: "List calendar events in a range, expanding recurrences",
+    capability: platform.SCOPES.AI_TOOL,
+    requiresConfirmation: false,
+    mutating: false,
+    parameters: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "ISO start" },
+        to: { type: "string", description: "ISO end" },
+      },
+    },
+  },
+  {
+    name: "zip_files",
+    description: "Create a ZIP archive of several VFS paths as a background job",
+    capability: platform.SCOPES.VFS_WRITE,
+    requiresConfirmation: true,
+    mutating: true,
+    parameters: {
+      type: "object",
+      properties: {
+        paths: { type: "string", description: "JSON array of paths" },
+        dest: { type: "string" },
+        name: { type: "string" },
+      },
+      required: ["paths"],
+    },
+  },
 ];
 
 const TOOL_BY_NAME = Object.fromEntries(TOOLS.map((t) => [t.name, t]));
@@ -474,7 +585,8 @@ async function runTool(userId: string, name: string, args: { [key: string]: Json
         typeof args.to === "string"
           ? args.to
           : new Date(Date.now() + 7 * 86400000).toISOString();
-      return platform.listEvents(userId, from, to);
+      const extra = await import("./platform-extra.server");
+      return extra.expandEventRange(userId, from, to);
     }
     case "create_event":
       return platform.createEvent(userId, {
@@ -491,9 +603,84 @@ async function runTool(userId: string, name: string, args: { [key: string]: Json
       });
     case "remember":
       return platform.addMemory(userId, String(args.content), "explicit", "ai");
+    case "filter_tasks": {
+      const extra = await import("./platform-extra.server");
+      return extra.filterTodos(userId, {
+        status: typeof args.status === "string" ? args.status : undefined,
+        priority: typeof args.priority === "string" ? args.priority : undefined,
+        tag: typeof args.tag === "string" ? args.tag : undefined,
+        due:
+          args.due === "overdue" || args.due === "today" || args.due === "upcoming" || args.due === "none"
+            ? args.due
+            : undefined,
+      });
+    }
+    case "batch_trash": {
+      const extra = await import("./vfs-extra.server");
+      const paths = parsePathList(args.paths);
+      return extra.bulkTrash(userId, paths);
+    }
+    case "batch_move": {
+      const extra = await import("./vfs-extra.server");
+      const paths = parsePathList(args.paths);
+      return extra.bulkMove(userId, paths, String(args.destination || "/Home"));
+    }
+    case "list_tags": {
+      const extra = await import("./vfs-extra.server");
+      return extra.listTags(userId);
+    }
+    case "batch_copy": {
+      const extra = await import("./vfs-extra.server");
+      const paths = parsePathList(args.paths);
+      return extra.bulkCopy(userId, paths, String(args.destination || "/Home"));
+    }
+    case "batch_tag": {
+      const extra = await import("./vfs-extra.server");
+      const paths = parsePathList(args.paths);
+      const tags =
+        typeof args.tags === "string"
+          ? args.tags.split(",").map((t) => t.trim()).filter(Boolean)
+          : parsePathList(args.tags);
+      return extra.bulkTag(userId, paths, tags);
+    }
+    case "calendar_range": {
+      const extra = await import("./platform-extra.server");
+      const from = typeof args.from === "string" ? args.from : new Date().toISOString();
+      const to =
+        typeof args.to === "string" ? args.to : new Date(Date.now() + 7 * 86400000).toISOString();
+      return extra.expandEventRange(userId, from, to);
+    }
+    case "zip_files": {
+      const paths = parsePathList(args.paths);
+      return platform.enqueueJob(userId, {
+        type: "zip_create",
+        title: `ZIP ${typeof args.name === "string" ? args.name : "archive"}`,
+        payload: {
+          paths,
+          dest: String(args.dest || "/Home/Documents"),
+          name: String(args.name || "archive.zip"),
+        },
+      });
+    }
     default:
       fail(400, `Unhandled tool ${name}`);
   }
+}
+
+function parsePathList(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === "string") {
+    try {
+      const v = JSON.parse(raw);
+      if (Array.isArray(v)) return v.map(String);
+    } catch {
+      return raw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
 }
 
 export async function confirmInvocation(userId: string, invocationId: string, allow: boolean) {
@@ -550,10 +737,17 @@ Keep replies concise. Use light, precise language. If a capability is limited, s
 
 export async function listConversations(userId: string) {
   const sql = await getSql();
-  return sql.query(
-    `select id, title, created_at, updated_at from ai_conversations where user_id = $1 order by updated_at desc limit 40`,
-    [userId],
-  );
+  try {
+    return await sql.query(
+      `select id, title, pinned, created_at, updated_at from ai_conversations where user_id = $1 order by pinned desc, updated_at desc limit 60`,
+      [userId],
+    );
+  } catch {
+    return sql.query(
+      `select id, title, created_at, updated_at from ai_conversations where user_id = $1 order by updated_at desc limit 60`,
+      [userId],
+    );
+  }
 }
 
 export async function getConversation(userId: string, id: string) {

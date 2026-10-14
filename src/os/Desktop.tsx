@@ -1,22 +1,51 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  applyMutationFn,
   bootOs,
+  createFileFn,
+  dismissNotifFn,
   listNotificationsFn,
+  loadDesktopFn,
   loadLayoutFn,
   markNotifFn,
+  notificationActionFn,
+  saveDesktopFn,
   saveLayoutFn,
   searchFn,
-  workspacesFn,
+  searchHistoryFn,
   switchWorkspaceFn,
+  workspacesFn,
+  decode,
 } from "@/lib/trosmos/api";
 import { APP_BY_ID, APP_CATALOG } from "@/lib/trosmos/catalog";
+import { flushQueue } from "@/lib/trosmos/offline";
+import { formatShortcut, matchShortcut } from "@/lib/trosmos/shortcuts";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
 import { AppGlyph } from "./icons";
-import { useOs, type OsWindow } from "./store";
+import { useOs, type DeskIcon, type OsWindow } from "./store";
 import { WindowFrame } from "./Window";
 import { Wifi, WifiOff, Bell, Search, Grid3x3, Layers } from "lucide-react";
+
+type Notif = {
+  id: string;
+  title: string;
+  body: string | null;
+  is_read: boolean | string | number;
+  created_at: string;
+  category?: string;
+  data_json?: string | null;
+};
+
+function parseNotifData(raw: string | null | undefined): { kind?: string; id?: string } {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as { kind?: string; id?: string };
+  } catch {
+    return {};
+  }
+}
 
 export function DesktopShell() {
   const user = useCurrentUser();
@@ -27,13 +56,21 @@ export function DesktopShell() {
   const paletteOpen = useOs((s) => s.paletteOpen);
   const notifOpen = useOs((s) => s.notifOpen);
   const switcherOpen = useOs((s) => s.switcherOpen);
+  const missionOpen = useOs((s) => s.missionOpen);
   const contextMenu = useOs((s) => s.contextMenu);
   const online = useOs((s) => s.online);
   const desktopIcons = useOs((s) => s.desktopIcons);
+  const selection = useOs((s) => s.selection);
+  const rubber = useOs((s) => s.rubber);
   const dockApps = useOs((s) => s.dockApps);
+  const wallpaperOverride = useOs((s) => s.wallpaperOverride);
+  const locked = useOs((s) => s.locked);
   const [clock, setClock] = useState(new Date());
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Array<{ id: string; kind: string; title: string; subtitle?: string; path?: string }>>([]);
+  const [history, setHistory] = useState<Array<{ query: string }>>([]);
+  const rubberOrigin = useRef<{ x: number; y: number } | null>(null);
+  const iconDrag = useRef<{ ids: string[]; x: number; y: number } | null>(null);
 
   const boot = useQuery({
     queryKey: ["trosmos-boot"],
@@ -45,32 +82,67 @@ export function DesktopShell() {
     refetchInterval: 12000,
   });
 
+  async function hydrateWorkspace(workspaceId: string) {
+    useOs.getState().setWorkspace(workspaceId);
+    const [layout, desk] = await Promise.all([
+      loadLayoutFn({ data: { workspaceId } }),
+      loadDesktopFn({ data: { workspaceId } }).catch(() => null),
+    ]);
+    if (Array.isArray(layout) && layout.length) {
+      useOs.getState().hydrateLayout(layout as OsWindow[]);
+    } else {
+      useOs.getState().hydrateLayout([]);
+    }
+    if (desk) {
+      const layoutDesk = decode<{ icons?: DeskIcon[]; dock?: string[] | null; wallpaper?: string | null }>(desk);
+      if (layoutDesk.icons?.length) useOs.getState().setIcons(layoutDesk.icons);
+      if (layoutDesk.dock?.length) useOs.getState().setDock(layoutDesk.dock);
+      useOs.getState().setWallpaperOverride(layoutDesk.wallpaper ?? null);
+    }
+  }
+
   useEffect(() => {
     if (!boot.data) return;
-    useOs.getState().setSettings(boot.data.settings);
-    document.documentElement.style.setProperty("--accent", boot.data.settings.accentColor);
-    document.documentElement.classList.toggle("reduce-motion", boot.data.settings.reduceMotion);
-    document.documentElement.classList.toggle("high-contrast", boot.data.settings.highContrast);
-    const active = (boot.data.workspaces as Array<{ id: string; is_active: boolean | string }>).find(
-      (w) => w.is_active === true || w.is_active === "t",
-    );
-    if (active) {
-      useOs.getState().setWorkspace(active.id);
-      void loadLayoutFn({ data: { workspaceId: active.id } }).then((layout) => {
-        if (Array.isArray(layout) && layout.length) {
-          useOs.getState().hydrateLayout(layout as OsWindow[]);
-        }
-      });
+    const data = boot.data as {
+      settings: typeof settings;
+      workspaces: Array<{ id: string; is_active: boolean | string }>;
+    };
+    useOs.getState().setSettings(data.settings);
+    document.documentElement.style.setProperty("--accent", data.settings.accentColor);
+    document.documentElement.classList.toggle("reduce-motion", data.settings.reduceMotion);
+    document.documentElement.classList.toggle("high-contrast", data.settings.highContrast);
+    const active = data.workspaces.find((w) => w.is_active === true || w.is_active === "t");
+    if (!active) return;
+    const live = useOs.getState();
+    if (!live.workspaceId && live.windows.length) {
+      live.setWorkspace(active.id);
+      void loadDesktopFn({ data: { workspaceId: active.id } })
+        .then((desk) => {
+          const layoutDesk = decode<{ icons?: DeskIcon[]; dock?: string[] | null; wallpaper?: string | null }>(desk);
+          if (layoutDesk.icons?.length) useOs.getState().setIcons(layoutDesk.icons);
+          if (layoutDesk.dock?.length) useOs.getState().setDock(layoutDesk.dock);
+          if (layoutDesk.wallpaper) useOs.getState().setWallpaperOverride(layoutDesk.wallpaper);
+        })
+        .catch(() => undefined);
+      return;
     }
-    const reminders = boot.data.reminders as { todos?: Array<{ title: string }>; events?: Array<{ title: string }> };
-    if (reminders?.todos?.length || reminders?.events?.length) {
-      /* due items already stored as notifications by jobs/boot; surface via notification center */
-    }
+    if (live.workspaceId === active.id) return;
+    void hydrateWorkspace(active.id);
   }, [boot.data]);
 
   useEffect(() => {
     const t = window.setInterval(() => setClock(new Date()), 1000);
-    const on = () => useOs.getState().setOnline(navigator.onLine);
+    const on = () => {
+      const next = navigator.onLine;
+      useOs.getState().setOnline(next);
+      if (next) {
+        void flushQueue((rec) =>
+          applyMutationFn({
+            data: { op: rec.op, idempotencyKey: rec.idempotencyKey, payload: rec.payload as never },
+          }),
+        );
+      }
+    };
     window.addEventListener("online", on);
     window.addEventListener("offline", on);
     on();
@@ -83,43 +155,125 @@ export function DesktopShell() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        useOs.getState().setPalette(!useOs.getState().paletteOpen);
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement | null)?.isContentEditable;
+      const hit = matchShortcut({
+        metaKey: e.metaKey,
+        ctrlKey: e.ctrlKey,
+        altKey: e.altKey,
+        shiftKey: e.shiftKey,
+        key: e.key,
+      });
+      const s = useOs.getState();
+      if (!hit && !typing) {
+        if (e.key === "Enter" && s.selection.length) {
+          e.preventDefault();
+          const ic = s.desktopIcons.find((i) => i.id === s.selection[0]);
+          if (ic?.path) s.openApp(ic.appId || "files", { path: ic.path });
+          else if (ic?.appId) s.openApp(ic.appId);
+          return;
+        }
+        if ((e.key === "Delete" || e.key === "Backspace") && s.selection.length && !s.focusedId) {
+          e.preventDefault();
+          s.setIcons(s.desktopIcons.filter((ic) => !s.selection.includes(ic.id)));
+          s.selectIcons([]);
+          return;
+        }
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key) && s.desktopIcons.length) {
+          e.preventDefault();
+          const icons = [...s.desktopIcons].sort((a, b) => a.y - b.y || a.x - b.x);
+          const cur = icons.findIndex((ic) => s.selection.includes(ic.id));
+          let next = cur < 0 ? 0 : cur;
+          if (e.key === "ArrowDown" || e.key === "ArrowRight") next = Math.min(icons.length - 1, next + 1);
+          else next = Math.max(0, next - 1);
+          s.selectIcons([icons[next].id]);
+          return;
+        }
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+      if (!hit) return;
+      if (typing && hit.action !== "escape" && hit.action !== "save" && hit.action !== "find") return;
+      if (hit.action === "palette") {
         e.preventDefault();
-        useOs.getState().openApp("ai");
-      }
-      if (e.altKey && e.key === "Tab") {
+        s.setPalette(!s.paletteOpen);
+      } else if (hit.action === "ai") {
         e.preventDefault();
-        useOs.getState().setSwitcher(true);
-        useOs.getState().cycle();
-      }
-      if (e.key === "Escape") {
-        const s = useOs.getState();
+        s.openApp("ai");
+      } else if (hit.action === "search") {
+        e.preventDefault();
+        s.openApp("search");
+      } else if (hit.action === "launcher") {
+        e.preventDefault();
+        s.setStart(!s.startOpen);
+      } else if (hit.action === "overview") {
+        e.preventDefault();
+        s.setMission(!s.missionOpen);
+      } else if (hit.action === "cycle") {
+        e.preventDefault();
+        s.setSwitcher(true);
+        s.cycle();
+      } else if (hit.action === "close") {
+        e.preventDefault();
+        s.closeFocused();
+      } else if (hit.action === "minimize") {
+        e.preventDefault();
+        if (s.focusedId) s.minimize(s.focusedId);
+      } else if (hit.action === "maximize") {
+        e.preventDefault();
+        if (s.focusedId) s.toggleMax(s.focusedId);
+      } else if (hit.action === "snap-left") {
+        e.preventDefault();
+        s.tile("left");
+      } else if (hit.action === "snap-right") {
+        e.preventDefault();
+        s.tile("right");
+      } else if (hit.action === "snap-max") {
+        e.preventDefault();
+        s.tile("max");
+      } else if (hit.action === "tile-quad") {
+        e.preventDefault();
+        s.tile("quad");
+      } else if (hit.action === "escape") {
+        if (s.missionOpen) return s.setMission(false);
         if (s.paletteOpen) return s.setPalette(false);
         if (s.startOpen) return s.setStart(false);
         if (s.notifOpen) return s.setNotif(false);
+        if (s.switcherOpen) return s.setSwitcher(false);
         if (s.contextMenu) return s.setContext(null);
         s.closeFocused();
-      }
-      if ((e.metaKey || e.ctrlKey) && e.altKey && e.key === "ArrowLeft") {
+      } else if (hit.action === "lock") {
         e.preventDefault();
-        useOs.getState().tile("left");
-      }
-      if ((e.metaKey || e.ctrlKey) && e.altKey && e.key === "ArrowRight") {
+        s.setLocked(true);
+      } else if (hit.action === "files") {
         e.preventDefault();
-        useOs.getState().tile("right");
-      }
-      if ((e.metaKey || e.ctrlKey) && e.altKey && e.key.toLowerCase() === "q") {
+        s.openApp("files");
+      } else if (hit.action === "terminal") {
         e.preventDefault();
-        useOs.getState().tile("quad");
-      }
-      if ((e.metaKey || e.ctrlKey) && "1234567".includes(e.key)) {
+        s.openApp("terminal");
+      } else if (hit.action === "notes") {
         e.preventDefault();
-        const id = useOs.getState().dockApps[Number(e.key) - 1];
-        if (id) useOs.getState().openApp(id);
+        s.openApp("notes");
+      } else if (hit.action === "tasks") {
+        e.preventDefault();
+        s.openApp("tasks");
+      } else if (hit.action === "settings") {
+        e.preventDefault();
+        s.openApp("settings");
+      } else if (hit.action.startsWith("dock-")) {
+        e.preventDefault();
+        const id = s.dockApps[Number(hit.action.slice(5)) - 1];
+        if (id) s.openApp(id);
+      } else if (hit.action === "select-all" && !typing) {
+        e.preventDefault();
+        s.selectIcons(s.desktopIcons.map((i) => i.id));
+      } else if (hit.action.startsWith("workspace-") && !typing) {
+        e.preventDefault();
+        const idx = Number(hit.action.slice("workspace-".length)) - 1;
+        void workspacesFn().then((list) => {
+          const ws = (list as Array<{ id: string }>)[idx];
+          if (ws) {
+            void switchWorkspaceFn({ data: { id: ws.id } }).then(() => hydrateWorkspace(ws.id));
+          }
+        });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -135,29 +289,70 @@ export function DesktopShell() {
     return () => window.clearTimeout(id);
   }, [windows]);
 
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const ws = useOs.getState().workspaceId;
+      if (!ws) return;
+      void saveDesktopFn({
+        data: {
+          workspaceId: ws,
+          icons: useOs.getState().desktopIcons.map((ic) => ({
+            id: ic.id,
+            appId: ic.appId,
+            path: ic.path,
+            kind: ic.kind ?? (ic.path ? "file" : "app"),
+            x: ic.x,
+            y: ic.y,
+            label: ic.label,
+          })),
+          dock: useOs.getState().dockApps,
+          wallpaper: useOs.getState().wallpaperOverride,
+        },
+      });
+    }, 900);
+    return () => window.clearTimeout(id);
+  }, [desktopIcons, dockApps, wallpaperOverride]);
+
   const unread = useMemo(
     () =>
-      ((notifs.data as Array<{ is_read: boolean | string | number }> | undefined) || []).filter(
+      ((notifs.data as Notif[] | undefined) || []).filter(
         (n) => n.is_read !== true && n.is_read !== "t" && n.is_read !== 1,
       ).length,
     [notifs.data],
   );
 
-  const time = settings.clockFormat === "12h" ? clock.toLocaleTimeString() : clock.toLocaleTimeString(undefined, { hour12: false });
+  const time =
+    settings.clockFormat === "12h" ? clock.toLocaleTimeString() : clock.toLocaleTimeString(undefined, { hour12: false });
+  const paper = wallpaperOverride || settings.wallpaper || "aurora";
+
+  function openHit(h: { id: string; kind: string; path?: string }) {
+    if (h.kind === "app") useOs.getState().openApp(h.id);
+    else if (h.kind === "note") useOs.getState().openApp("notes", { noteId: h.id });
+    else if (h.kind === "task") useOs.getState().openApp("tasks", { taskId: h.id });
+    else if (h.kind === "event") useOs.getState().openApp("calendar", { eventId: h.id });
+    else if (h.kind === "setting") useOs.getState().openApp("settings");
+    else if (h.path) useOs.getState().openApp("files", { path: h.path });
+    useOs.getState().setPalette(false);
+  }
 
   return (
     <div
-      className={`relative h-full min-h-0 overflow-hidden wallpaper-${settings.wallpaper || "aurora"} ${settings.reduceMotion ? "reduce-motion" : ""} ${settings.largePointer ? "large-pointer" : ""}`}
+      className={`relative h-full min-h-0 overflow-hidden wallpaper-${paper} ${settings.reduceMotion ? "reduce-motion" : ""} ${settings.largePointer ? "large-pointer" : ""}`}
       onClick={() => {
         useOs.getState().setStart(false);
         useOs.getState().setContext(null);
+        useOs.getState().selectIcons([]);
       }}
     >
+      <a href="#desktop-main" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:bg-black focus:p-2">
+        Skip to desktop
+      </a>
       <header className="relative z-50 flex h-9 items-center justify-between border-b border-white/10 bg-black/30 px-3 text-xs backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <button
             type="button"
             className="font-display text-sm"
+            aria-expanded={startOpen}
             onClick={(e) => {
               e.stopPropagation();
               useOs.getState().setStart(!startOpen);
@@ -168,11 +363,11 @@ export function DesktopShell() {
           <span className="hidden text-faint sm:inline">{user?.displayName || "Operator"}</span>
         </div>
         <div className="flex items-center gap-2">
-          {online ? <Wifi size={14} /> : <WifiOff size={14} className="text-amber-300" />}
+          {online ? <Wifi size={14} aria-label="Online" /> : <WifiOff size={14} className="text-amber-300" aria-label="Offline" />}
           <button
             type="button"
             className="relative"
-            aria-label="Notifications"
+            aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}
             onClick={(e) => {
               e.stopPropagation();
               useOs.getState().setNotif(!notifOpen);
@@ -186,30 +381,226 @@ export function DesktopShell() {
           <button type="button" aria-label="Search" onClick={() => useOs.getState().setPalette(true)}>
             <Search size={14} />
           </button>
+          <button type="button" aria-label="Mission Control" onClick={() => useOs.getState().setMission(true)}>
+            <Layers size={14} />
+          </button>
           <span className="tabular-nums">{time}</span>
         </div>
       </header>
 
-      {settings.showDesktopIcons ? (
-        <div className="absolute inset-0 top-9">
-          {desktopIcons.map((ic) => {
-            const def = APP_BY_ID[ic.appId];
-            if (!def) return null;
-            return (
-              <button
-                key={ic.id}
-                type="button"
-                style={{ left: ic.x, top: ic.y }}
-                className="absolute flex w-20 flex-col items-center gap-1 text-center"
-                onDoubleClick={() => useOs.getState().openApp(ic.appId)}
-              >
-                <AppGlyph id={ic.appId} icon={def.icon} size={18} />
-                <span className="text-[11px] drop-shadow">{def.name}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      <div
+        id="desktop-main"
+        className="absolute inset-0 top-9"
+        onContextMenu={(e) => {
+          if ((e.target as HTMLElement).closest("[data-desk-icon]")) return;
+          e.preventDefault();
+          useOs.getState().setContext({
+            x: e.clientX,
+            y: e.clientY,
+            items: [
+              { label: "Mission Control", action: "mission" },
+              { label: "Tile windows", action: "tile" },
+              { label: "New Files window", action: "files" },
+              { label: "Change wallpaper", action: "wallpaper" },
+            ],
+            onAction: (action) => {
+              const s = useOs.getState();
+              if (action === "mission") s.setMission(true);
+              if (action === "tile") s.tile("quad");
+              if (action === "files") s.openApp("files");
+              if (action === "wallpaper") {
+                const order = ["aurora", "nebula", "dusk", "void"] as const;
+                const cur = s.wallpaperOverride || s.settings.wallpaper || "aurora";
+                const next = order[(order.indexOf(cur as (typeof order)[number]) + 1) % order.length];
+                s.setWallpaperOverride(next);
+              }
+            },
+          });
+        }}
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          if ((e.target as HTMLElement).closest("[data-desk-icon]")) return;
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          rubberOrigin.current = { x, y };
+          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          useOs.getState().setRubber({ x, y, w: 0, h: 0 });
+          useOs.getState().selectIcons([]);
+        }}
+        onPointerMove={(e) => {
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const px = e.clientX - rect.left;
+          const py = e.clientY - rect.top;
+          if (iconDrag.current) {
+            const dx = e.clientX - iconDrag.current.x;
+            const dy = e.clientY - iconDrag.current.y;
+            iconDrag.current = { ...iconDrag.current, x: e.clientX, y: e.clientY };
+            useOs.getState().moveIcons(iconDrag.current.ids, dx, dy);
+            return;
+          }
+          if (!rubberOrigin.current) return;
+          const x = Math.min(rubberOrigin.current.x, px);
+          const y = Math.min(rubberOrigin.current.y, py);
+          const w = Math.abs(px - rubberOrigin.current.x);
+          const h = Math.abs(py - rubberOrigin.current.y);
+          useOs.getState().setRubber({ x, y, w, h });
+          const ids = useOs
+            .getState()
+            .desktopIcons.filter((ic) => ic.x + 80 > x && ic.x < x + w && ic.y + 72 > y && ic.y < y + h)
+            .map((ic) => ic.id);
+          useOs.getState().selectIcons(ids);
+        }}
+        onPointerUp={() => {
+          rubberOrigin.current = null;
+          iconDrag.current = null;
+          useOs.getState().setRubber(null);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const vfsPath = e.dataTransfer.getData("application/x-trosmos-path");
+          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          if (vfsPath) {
+            const name = vfsPath.slice(vfsPath.lastIndexOf("/") + 1) || "Item";
+            const icons = useOs.getState().desktopIcons;
+            useOs.getState().setIcons([
+              ...icons,
+              {
+                id: `desk_file_${Date.now().toString(16)}`,
+                appId: name.includes(".") ? "editor" : "files",
+                path: vfsPath,
+                kind: "file",
+                x,
+                y,
+                label: name,
+              },
+            ]);
+            return;
+          }
+          const files = e.dataTransfer.files;
+          if (!files?.length) return;
+          void (async () => {
+            for (const file of Array.from(files)) {
+              try {
+                const buf = await file.arrayBuffer();
+                const isText = file.type.startsWith("text/") || /\.(md|json|txt|js|ts|css|html|svg)$/i.test(file.name);
+                let created: { path?: string; name?: string } | null = null;
+                if (isText) {
+                  created = decode<{ path: string; name: string }>(
+                    await createFileFn({
+                      data: { parent: "/Home/Desktop", name: file.name, content: new TextDecoder().decode(buf) },
+                    }),
+                  );
+                } else {
+                  const bytes = new Uint8Array(buf);
+                  let bin = "";
+                  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+                  created = decode<{ path: string; name: string }>(
+                    await createFileFn({
+                      data: {
+                        parent: "/Home/Desktop",
+                        name: file.name,
+                        content: btoa(bin),
+                        encoding: "base64",
+                      },
+                    }),
+                  );
+                }
+                if (created?.path) {
+                  const icons = useOs.getState().desktopIcons;
+                  useOs.getState().setIcons([
+                    ...icons,
+                    {
+                      id: `desk_file_${Date.now().toString(16)}_${icons.length}`,
+                      appId: /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name) ? "photos" : "editor",
+                      path: created.path,
+                      kind: "file",
+                      x: x + icons.length * 8,
+                      y: y + icons.length * 8,
+                      label: created.name || file.name,
+                    },
+                  ]);
+                }
+              } catch {
+                /* quota or auth */
+              }
+            }
+          })();
+        }}
+      >
+        {settings.showDesktopIcons
+          ? desktopIcons.map((ic) => {
+              const def = ic.appId ? APP_BY_ID[ic.appId] : null;
+              const selected = selection.includes(ic.id);
+              return (
+                <button
+                  key={ic.id}
+                  type="button"
+                  data-desk-icon
+                  style={{ left: ic.x, top: ic.y }}
+                  aria-pressed={selected}
+                  className={`absolute flex w-20 flex-col items-center gap-1 text-center ${selected ? "rounded-xl bg-white/15 ring-1 ring-white/30" : ""}`}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    if (e.shiftKey || e.metaKey || e.ctrlKey) useOs.getState().toggleIcon(ic.id);
+                    else if (!selection.includes(ic.id)) useOs.getState().selectIcons([ic.id]);
+                    iconDrag.current = {
+                      ids: useOs.getState().selection.includes(ic.id) ? useOs.getState().selection : [ic.id],
+                      x: e.clientX,
+                      y: e.clientY,
+                    };
+                  }}
+                  onDoubleClick={() => {
+                    if (ic.path) {
+                      const name = ic.path.toLowerCase();
+                      if (/\.(png|jpe?g|gif|webp|svg)$/.test(name)) useOs.getState().openApp("photos", { path: ic.path });
+                      else if (name.endsWith(".zip")) useOs.getState().openApp("archive", { path: ic.path });
+                      else if (/\.(mp3|wav|ogg|mp4|webm)$/.test(name)) useOs.getState().openApp("media", { path: ic.path });
+                      else if (name.endsWith(".pdf")) useOs.getState().openApp("viewer", { path: ic.path });
+                      else useOs.getState().openApp(ic.appId || "files", { path: ic.path });
+                    } else if (ic.appId) useOs.getState().openApp(ic.appId);
+                  }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    useOs.getState().setContext({
+                      x: e.clientX,
+                      y: e.clientY,
+                      items: [
+                        { label: "Open", action: "open" },
+                        { label: "Remove from desktop", action: "remove", danger: true },
+                      ],
+                      onAction: (action) => {
+                        if (action === "open") {
+                          if (ic.path) useOs.getState().openApp(ic.appId || "files", { path: ic.path });
+                          else if (ic.appId) useOs.getState().openApp(ic.appId);
+                        }
+                        if (action === "remove") {
+                          const next = useOs.getState().desktopIcons.filter((x) => x.id !== ic.id);
+                          useOs.getState().setIcons(next);
+                        }
+                      },
+                    });
+                  }}
+                >
+                  <AppGlyph id={ic.appId || "files"} icon={def?.icon || "folder"} size={18} />
+                  <span className="text-[11px] drop-shadow">{def?.name || ic.label || "Item"}</span>
+                </button>
+              );
+            })
+          : null}
+        {rubber ? (
+          <div
+            className="pointer-events-none absolute border border-[var(--accent)] bg-[var(--accent)]/15"
+            style={{ left: rubber.x, top: rubber.y, width: rubber.w, height: rubber.h }}
+          />
+        ) : null}
+      </div>
 
       {snap ? (
         <div
@@ -222,7 +613,9 @@ export function DesktopShell() {
         <WindowFrame key={w.id} win={w} />
       ))}
 
-      <nav className="absolute bottom-3 left-1/2 z-[60] flex -translate-x-1/2 items-end gap-1 rounded-2xl border border-white/10 bg-black/35 px-2 py-2 backdrop-blur-2xl">
+      <nav
+        className={`absolute bottom-3 left-1/2 z-[60] hidden -translate-x-1/2 items-end gap-1 rounded-2xl border border-white/10 bg-black/35 px-2 py-2 backdrop-blur-2xl md:flex ${settings.compactDock ? "scale-90" : ""}`}
+      >
         <button
           type="button"
           className="dock-icon grid size-11 place-items-center rounded-xl bg-white/10"
@@ -243,7 +636,7 @@ export function DesktopShell() {
             <button
               key={id}
               type="button"
-              className={`dock-icon ${settings.dockMagnify ? "" : ""}`}
+              className={`dock-icon ${settings.dockMagnify ? "dock-magnify" : ""}`}
               aria-label={def.name}
               onClick={() => useOs.getState().openApp(id)}
             >
@@ -287,18 +680,21 @@ export function DesktopShell() {
           className="fixed inset-0 z-[80] grid place-items-start bg-black/40 pt-[12vh]"
           onClick={() => useOs.getState().setPalette(false)}
         >
-          <div
-            className="glass-strong w-[min(92vw,560px)] rounded-2xl p-3"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="glass-strong w-[min(92vw,560px)] rounded-2xl p-3" onClick={(e) => e.stopPropagation()}>
             <input
               autoFocus
               value={q}
+              aria-label="Command palette"
+              onFocus={() => {
+                void searchHistoryFn().then((h) => setHistory(h as typeof history));
+              }}
               onChange={async (e) => {
                 setQ(e.target.value);
                 if (e.target.value.trim().length >= 2) {
-                  const res = await searchFn({ data: { query: e.target.value } });
-                  setHits(res.results as typeof hits);
+                  const res = decode<{ results: typeof hits }>(await searchFn({ data: { query: e.target.value } }), {
+                    results: [],
+                  });
+                  setHits(res.results);
                 } else {
                   setHits(
                     APP_CATALOG.filter((a) => a.name.toLowerCase().includes(e.target.value.toLowerCase())).map((a) => ({
@@ -306,7 +702,6 @@ export function DesktopShell() {
                       kind: "app",
                       title: a.name,
                       subtitle: a.description,
-                      path: undefined as string | undefined,
                     })),
                   );
                 }
@@ -314,26 +709,48 @@ export function DesktopShell() {
               placeholder="Search apps, files, notes…"
               className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 outline-none"
             />
-            <div className="mt-2 max-h-80 overflow-auto">
-              {(hits.length ? hits : APP_CATALOG.map((a) => ({ id: a.id, kind: "app", title: a.name, subtitle: a.description, path: undefined as string | undefined }))).map(
-                (h) => (
+            {!q && history.length ? (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {history.slice(0, 8).map((h) => (
                   <button
-                    key={h.kind + h.id}
+                    key={h.query}
                     type="button"
-                    className="block w-full rounded-xl px-3 py-2 text-left hover:bg-white/8"
-                    onClick={() => {
-                      if (h.kind === "app") useOs.getState().openApp(h.id);
-                      else if (h.kind === "note") useOs.getState().openApp("notes");
-                      else if (h.kind === "task") useOs.getState().openApp("tasks");
-                      else if (h.path) useOs.getState().openApp("files", { path: h.path });
-                      useOs.getState().setPalette(false);
+                    className="rounded-full bg-white/8 px-2 py-0.5 text-[11px] text-muted"
+                    onClick={async () => {
+                      setQ(h.query);
+                      const res = decode<{ results: typeof hits }>(await searchFn({ data: { query: h.query } }), {
+                        results: [],
+                      });
+                      setHits(res.results);
                     }}
                   >
-                    <div className="text-[10px] uppercase text-faint">{h.kind}</div>
-                    <div>{h.title}</div>
+                    {h.query}
                   </button>
-                ),
-              )}
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-2 max-h-80 overflow-auto">
+              {(hits.length
+                ? hits
+                : APP_CATALOG.map((a) => ({
+                    id: a.id,
+                    kind: "app",
+                    title: a.name,
+                    subtitle: a.description,
+                    path: undefined as string | undefined,
+                  }))
+              ).map((h) => (
+                <button
+                  key={h.kind + h.id}
+                  type="button"
+                  className="block w-full rounded-xl px-3 py-2 text-left hover:bg-white/8"
+                  onClick={() => openHit(h)}
+                >
+                  <div className="text-[10px] uppercase text-faint">{h.kind}</div>
+                  <div>{h.title}</div>
+                  {h.subtitle ? <div className="truncate text-[11px] text-muted">{h.subtitle}</div> : null}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -354,20 +771,62 @@ export function DesktopShell() {
               Mark all read
             </button>
           </div>
-          {((notifs.data as Array<{ id: string; title: string; body: string | null; created_at: string }> | undefined) || []).map(
-            (n) => (
+          {((notifs.data as Notif[] | undefined) || []).map((n) => {
+            const data = parseNotifData(n.data_json);
+            return (
               <article key={n.id} className="mb-2 rounded-xl bg-white/5 p-2 text-sm">
                 <div>{n.title}</div>
                 {n.body ? <div className="text-xs text-muted">{n.body}</div> : null}
+                <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    className="rounded bg-white/10 px-1.5 py-0.5"
+                    onClick={() => {
+                      if (data.kind === "task") useOs.getState().openApp("tasks", { taskId: data.id });
+                      else if (data.kind === "event") useOs.getState().openApp("calendar", { eventId: data.id });
+                      else if (n.category === "jobs") useOs.getState().openApp("monitor");
+                      void notificationActionFn({ data: { id: n.id, action: "read" } }).then(() => notifs.refetch());
+                    }}
+                  >
+                    Open
+                  </button>
+                  {data.kind === "task" ? (
+                    <button
+                      type="button"
+                      className="rounded bg-white/10 px-1.5 py-0.5"
+                      onClick={() =>
+                        void notificationActionFn({ data: { id: n.id, action: "complete" } }).then(() => notifs.refetch())
+                      }
+                    >
+                      Complete
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="rounded bg-white/10 px-1.5 py-0.5"
+                    onClick={() =>
+                      void notificationActionFn({ data: { id: n.id, action: "snooze" } }).then(() => notifs.refetch())
+                    }
+                  >
+                    Snooze 30m
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded bg-white/10 px-1.5 py-0.5 text-rose-200"
+                    onClick={() => void dismissNotifFn({ data: { id: n.id } }).then(() => notifs.refetch())}
+                  >
+                    Dismiss
+                  </button>
+                </div>
               </article>
-            ),
-          )}
+            );
+          })}
         </aside>
       ) : null}
 
       {switcherOpen ? (
         <div className="fixed inset-0 z-[75] grid place-items-center bg-black/40" onClick={() => useOs.getState().setSwitcher(false)}>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {windows.map((w) => (
               <button
                 key={w.id}
@@ -385,17 +844,72 @@ export function DesktopShell() {
         </div>
       ) : null}
 
-      {contextMenu ? (
-        <ul
-          className="glass-strong fixed z-[90] min-w-40 rounded-xl py-1 text-sm"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+      {missionOpen ? (
+        <div
+          className="fixed inset-0 z-[85] bg-black/55 p-8 backdrop-blur-md"
+          onClick={() => useOs.getState().setMission(false)}
         >
+          <h2 className="mb-4 font-display text-xl">Mission Control</h2>
+          <p className="mb-4 text-xs text-muted">{formatShortcut("Mod+Up")} to toggle · click a window to focus</p>
+          <div className="mb-4 flex gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="rounded-lg bg-white/10 px-3 py-1 text-xs"
+              onClick={() => {
+                const ids = useOs.getState().windows.filter((w) => !w.minimized).map((w) => w.id);
+                if (ids.length > 1) useOs.getState().groupWindows(ids);
+              }}
+            >
+              Group visible windows
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-white/10 px-3 py-1 text-xs"
+              onClick={() => {
+                const s = useOs.getState();
+                s.windows.forEach((w) => s.ungroup(w.id));
+              }}
+            >
+              Ungroup all
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {windows.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                className="glass-strong rounded-2xl p-4 text-left"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  useOs.getState().focus(w.id);
+                  useOs.getState().setMission(false);
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <AppGlyph id={w.appId} icon={APP_BY_ID[w.appId]?.icon} size={14} />
+                  <span className="truncate">{w.title}</span>
+                </div>
+                <div className="mt-2 text-[11px] text-muted">
+                  {w.minimized ? "Minimized" : w.maximized ? "Maximized" : w.snapped || "Floating"}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {contextMenu ? (
+        <ul className="glass-strong fixed z-[90] min-w-40 rounded-xl py-1 text-sm" style={{ left: contextMenu.x, top: contextMenu.y }}>
           {contextMenu.items.map((it) => (
             <li key={it.action}>
-              <button type="button" className={`block w-full px-3 py-1.5 text-left hover:bg-white/10 ${it.danger ? "text-rose-300" : ""}`} onClick={() => {
-                contextMenu.onAction?.(it.action);
-                useOs.getState().setContext(null);
-              }}>
+              <button
+                type="button"
+                className={`block w-full px-3 py-1.5 text-left hover:bg-white/10 ${it.danger ? "text-rose-300" : ""}`}
+                onClick={() => {
+                  contextMenu.onAction?.(it.action);
+                  useOs.getState().setContext(null);
+                }}
+              >
                 {it.label}
               </button>
             </li>
@@ -409,13 +923,29 @@ export function DesktopShell() {
         </div>
       ) : null}
 
-      <WorkspaceStrip />
+      {locked ? (
+        <div className="aurora fixed inset-0 z-[120] grid place-items-center">
+          <div className="glass-strong w-[min(92vw,360px)] rounded-3xl p-8 text-center">
+            <div className="font-display text-2xl">Trosmos OS</div>
+            <p className="mt-2 text-sm text-muted">{user?.displayName || "Session locked"}</p>
+            <button
+              type="button"
+              className="mt-6 w-full rounded-xl bg-[var(--accent)] py-2 text-sm"
+              onClick={() => useOs.getState().setLocked(false)}
+            >
+              Unlock
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <WorkspaceStrip onSwitch={hydrateWorkspace} />
       <MobileDock />
     </div>
   );
 }
 
-function WorkspaceStrip() {
+function WorkspaceStrip({ onSwitch }: { onSwitch: (id: string) => Promise<void> }) {
   const [list, setList] = useState<Array<{ id: string; name: string; is_active: boolean | string }>>([]);
   useEffect(() => {
     void workspacesFn().then((w) => setList(w as typeof list));
@@ -431,13 +961,7 @@ function WorkspaceStrip() {
           className={`size-2 rounded-full ${w.is_active === true || w.is_active === "t" ? "bg-white" : "bg-white/30"}`}
           onClick={async () => {
             await switchWorkspaceFn({ data: { id: w.id } });
-            useOs.getState().setWorkspace(w.id);
-            const layout = await loadLayoutFn({ data: { workspaceId: w.id } });
-            if (Array.isArray(layout) && layout.length) {
-              useOs.getState().hydrateLayout(layout as OsWindow[]);
-            } else {
-              useOs.getState().hydrateLayout([]);
-            }
+            await onSwitch(w.id);
             setList((await workspacesFn()) as typeof list);
           }}
         />

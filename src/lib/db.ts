@@ -27,11 +27,11 @@ export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
  *   const rows2 = await sql.query("select * from todos where id = $1", [id]);
  */
 export interface Sql {
-  <T = Record<string, string | number | boolean | null>>(
+  <T = Record<string, unknown>>(
     strings: TemplateStringsArray,
     ...values: unknown[]
   ): Promise<T[]>;
-  query<T = Record<string, string | number | boolean | null>>(
+  query<T = Record<string, unknown>>(
     text: string,
     params?: unknown[],
   ): Promise<T[]>;
@@ -71,7 +71,7 @@ type Run = <T>(text: string, params: unknown[]) => Promise<T[]>;
 
 /** Wrap a query runner in the tagged-template + `.query()` `Sql` surface. */
 function toSql(run: Run): Sql {
-  const sql = (async <T = Record<string, string | number | boolean | null>>(
+  const sql = (async <T = Record<string, unknown>>(
     strings: TemplateStringsArray,
     ...values: unknown[]
   ): Promise<T[]> => {
@@ -80,7 +80,7 @@ function toSql(run: Run): Sql {
     for (let i = 0; i < values.length; i += 1) text += `$${i + 1}${strings[i + 1]}`;
     return run<T>(text, values);
   }) as unknown as Sql;
-  sql.query = <T = Record<string, string | number | boolean | null>>(text: string, params: unknown[] = []) =>
+  sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
     run<T>(text, params);
   return sql;
 }

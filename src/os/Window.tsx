@@ -1,24 +1,20 @@
-import { useCallback, useEffect, useRef } from "react";
-import { APP_BY_ID } from "@/lib/trosmos/catalog";
-import { AppGlyph } from "./icons";
-import { useOs, type OsWindow } from "./store";
 import { AppHost } from "@/apps/host";
+import { APP_BY_ID } from "@/lib/trosmos/catalog";
+import { useCallback, useEffect, useRef } from "react";
+import { AppGlyph } from "./icons";
+import { snapFromPoint, useOs, type OsWindow } from "./store";
 
-function snapFromPoint(x: number, y: number) {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const edge = 18;
-  const workH = h - 36 - 72;
-  if (y < 36 + edge) return { x: 0, y: 36, w, h: workH, kind: "max" };
-  if (x < edge) return { x: 0, y: 36, w: Math.floor(w / 2), h: workH, kind: "left" };
-  if (x > w - edge) return { x: Math.floor(w / 2), y: 36, w: Math.floor(w / 2), h: workH, kind: "right" };
-  return null;
-}
+const NO_MATES: OsWindow[] = [];
 
 export function WindowFrame({ win }: { win: OsWindow }) {
   const reduce = useOs((s) => s.settings.reduceMotion);
   const focused = useOs((s) => s.focusedId === win.id);
   const snapOn = useOs((s) => s.settings.snapWindows);
+  const windows = useOs((s) => s.windows);
+  const groupMates = win.groupId
+    ? windows.filter((w) => w.groupId === win.groupId && !w.minimized)
+    : NO_MATES;
+  const focusedId = useOs((s) => s.focusedId);
   const def = APP_BY_ID[win.appId];
   const minW = def?.minSize.w ?? 280;
   const minH = def?.minSize.h ?? 200;
@@ -33,10 +29,11 @@ export function WindowFrame({ win }: { win: OsWindow }) {
       const t = e.target as HTMLElement;
       if (t.closest("button, input, textarea, a, [data-no-drag]")) return;
       useOs.getState().focus(win.id);
+      if (win.snapped) useOs.getState().restoreFromSnap(win.id);
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       drag.current = { dx: e.clientX - win.x, dy: e.clientY - win.y, sx: win.x, sy: win.y };
     },
-    [win.id, win.x, win.y],
+    [win.id, win.x, win.y, win.snapped],
   );
 
   useEffect(() => {
@@ -85,6 +82,9 @@ export function WindowFrame({ win }: { win: OsWindow }) {
   }, [win.id, minW, minH, snapOn]);
 
   if (win.minimized) return null;
+  if (win.groupId && groupMates.length > 1 && focusedId && groupMates.some((g) => g.id === focusedId) && focusedId !== win.id) {
+    return null;
+  }
 
   const style: React.CSSProperties = win.maximized
     ? { left: 0, top: 36, width: "100%", height: "calc(100% - 108px)" }
@@ -136,6 +136,27 @@ export function WindowFrame({ win }: { win: OsWindow }) {
         </div>
         <span className="w-14" />
       </header>
+      {groupMates.length > 1 ? (
+        <div className="flex gap-1 overflow-x-auto border-b border-white/10 px-2 py-1" data-no-drag>
+          {groupMates.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className={`rounded-lg px-2 py-0.5 text-[11px] ${g.id === win.id ? "bg-white/15" : "text-muted hover:bg-white/8"}`}
+              onClick={() => useOs.getState().focus(g.id)}
+            >
+              {g.title}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="ml-auto text-[11px] text-muted"
+            onClick={() => useOs.getState().ungroup(win.id)}
+          >
+            Ungroup
+          </button>
+        </div>
+      ) : null}
       <div className="min-h-0 flex-1 overflow-hidden bg-black/20">
         <AppHost appId={win.appId} windowId={win.id} payload={win.payload} />
       </div>
@@ -145,10 +166,7 @@ export function WindowFrame({ win }: { win: OsWindow }) {
           <span className="absolute right-0 bottom-0 left-0 h-1.5 cursor-s-resize" onPointerDown={startResize("s")} />
           <span className="absolute top-0 bottom-0 left-0 w-1.5 cursor-w-resize" onPointerDown={startResize("w")} />
           <span className="absolute top-0 right-0 bottom-0 w-1.5 cursor-e-resize" onPointerDown={startResize("e")} />
-          <span
-            className="absolute right-0 bottom-0 size-3 cursor-se-resize"
-            onPointerDown={startResize("se")}
-          />
+          <span className="absolute right-0 bottom-0 size-3 cursor-se-resize" onPointerDown={startResize("se")} />
         </>
       )}
     </section>

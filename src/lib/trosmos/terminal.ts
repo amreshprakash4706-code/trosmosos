@@ -20,6 +20,7 @@ const BUILTINS = [
   "clear",
   "history",
   "alias",
+  "unalias",
   "echo",
   "pwd",
   "cd",
@@ -34,6 +35,7 @@ const BUILTINS = [
   "grep",
   "head",
   "tail",
+  "wc",
   "stat",
   "tree",
   "whoami",
@@ -53,6 +55,8 @@ const BUILTINS = [
   "ai",
   "version",
   "man",
+  "zip",
+  "unzip",
 ];
 
 export const HELP: Record<string, string> = {
@@ -67,8 +71,13 @@ export const HELP: Record<string, string> = {
   mv: "mv <src> <destDir> — move",
   cp: "cp <src> <destDir> — copy",
   find: "find [path] [query] — search names under a path",
-  grep: "grep <query> [path] — search file contents",
-  open: "open <app|path> — launch an app or open a file",
+  wc: "wc [path] — count lines, words, bytes",
+  head: "head [-n N] [path] — first N lines (default 10)",
+  tail: "tail [-n N] [path] — last N lines",
+  tree: "tree [path] — indented directory tree",
+  history: "history — persisted command history",
+  alias: "alias [name[=command]] — list or set an alias",
+  unalias: "unalias <name> — remove an alias",
   notes: "notes [list|new <title>] — notes",
   tasks: "tasks [list|add <title>] — tasks",
   search: "search <query> — unified search",
@@ -79,8 +88,9 @@ export const HELP: Record<string, string> = {
   echo: "echo <text> — print text; use > file to write",
   ai: "ai <prompt> — ask Trosmos AI (online)",
   clear: "clear — clear the terminal view",
-  history: "history — local command history",
   version: "version — Trosmos OS version",
+  zip: "zip <paths...> — queue a ZIP archive of those VFS paths",
+  unzip: "unzip <archive.zip> [dest] — extract a ZIP into dest (default cwd)",
 };
 
 export function tokenize(input: string): ShellToken[] {

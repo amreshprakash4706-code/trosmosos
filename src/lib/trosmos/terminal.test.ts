@@ -30,5 +30,7 @@ test("parsePipeline handles append redirect", () => {
 test("builtins", () => {
   assert.equal(isBuiltin("ls"), true);
   assert.equal(isBuiltin("rm"), true);
+  assert.equal(isBuiltin("zip"), true);
+  assert.equal(isBuiltin("unzip"), true);
   assert.equal(isBuiltin("sudo"), false);
 });
